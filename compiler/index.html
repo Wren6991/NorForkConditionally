@@ -42,7 +42,7 @@ function funcmacro(str)
 	str.replace(/def[\t ]+([a-zA-Z_]+)/, function(match, p1){name = p1; return match;})
 	.replace(/\(([^\)]*)\)/, function(match, p1){strarglist = p1; return match;})
 	.replace(/\)([\s\S]*?)end/m, function(match, p1){body = p1; return match;});
-	strarglist.replace(/[\t ]*([a-zA-Z_]+)[\t ]*(,|$)/gm, function(match, p1){arglist.push(p1); return "";});
+	strarglist.replace(/[\t ]*([a-zA-Z0-9_]+)[\t ]*(,|$)/gm, function(match, p1){arglist.push(p1); return "";});
 	this.name = name;
 	this.body = body;
 	this.arglist = arglist;
@@ -293,7 +293,7 @@ function execute()
 			compiledstring = "";
 			currentaddress += 8;
 		}
-		nextaddresslist.push(currentaddress);
+		nextaddresslist.push(pad(currentaddress.toString(16)));
 	}
 	proglength = currentaddress;
 
@@ -355,7 +355,7 @@ function execute()
 
 <body>
 <p>Fork Compiler</p>
-<textarea name="Prog" rows=35 cols=70>def debugout 3000
+<textarea name="Prog" rows=25 cols=70>def debugout 3000
 def debugin 3001
 
 def clear(address)

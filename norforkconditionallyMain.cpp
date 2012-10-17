@@ -17,6 +17,7 @@
 #include <wx/string.h>
 //*)
 
+#include <sstream>
 #include <iomanip>
 
 #include "vm.h"
@@ -69,6 +70,7 @@ const long norforkconditionallyFrame::ID_MENUITEM2 = wxNewId();
 const long norforkconditionallyFrame::idMenuQuit = wxNewId();
 const long norforkconditionallyFrame::idMenuAbout = wxNewId();
 const long norforkconditionallyFrame::ID_TIMER1 = wxNewId();
+const long norforkconditionallyFrame::ID_TOOLBAR1 = wxNewId();
 //*)
 
 BEGIN_EVENT_TABLE(norforkconditionallyFrame,wxFrame)
@@ -105,7 +107,7 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     BoxSizer4->Add(btnLoad, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer1->Add(BoxSizer4, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
     BoxSizer2 = new wxBoxSizer(wxVERTICAL);
-    txtOutput = new wxTextCtrl(this, ID_TEXTCTRL2, _("Text"), wxDefaultPosition, wxDefaultSize, wxTE_AUTO_SCROLL|wxTE_MULTILINE, wxDefaultValidator, _T("ID_TEXTCTRL2"));
+    txtOutput = new wxTextCtrl(this, ID_TEXTCTRL2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_AUTO_SCROLL|wxTE_MULTILINE, wxDefaultValidator, _T("ID_TEXTCTRL2"));
     wxFont txtOutputFont(10,wxSWISS,wxFONTSTYLE_NORMAL,wxNORMAL,false,_T("Consolas"),wxFONTENCODING_DEFAULT);
     txtOutput->SetFont(txtOutputFont);
     BoxSizer2->Add(txtOutput, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
@@ -220,6 +222,9 @@ void norforkconditionallyFrame::step()
 void norforkconditionallyFrame::OnbtnStepClick(wxCommandEvent& event)
 {
     step();
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0') << std::setw(4) << machine.PC;
+    (*txtOutput) << "PC: " << ss.str() << "\n";
 }
 
 void norforkconditionallyFrame::OnbtnRunStopClick(wxCommandEvent& event)

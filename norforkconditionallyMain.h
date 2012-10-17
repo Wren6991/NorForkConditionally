@@ -15,6 +15,7 @@
 #include <wx/stattext.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
+#include <wx/toolbar.h>
 #include <wx/slider.h>
 #include <wx/button.h>
 #include <wx/frame.h>
@@ -67,10 +68,12 @@ class norforkconditionallyFrame: public wxFrame
         static const long idMenuQuit;
         static const long idMenuAbout;
         static const long ID_TIMER1;
+        static const long ID_TOOLBAR1;
         //*)
 
         //(*Declarations(norforkconditionallyFrame)
         wxSlider* dbg3;
+        wxToolBar* ToolBar1;
         wxTimer tmrStep;
         wxSlider* dbg4;
         wxSlider* dbg5;
