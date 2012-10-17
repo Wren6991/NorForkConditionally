@@ -99,12 +99,12 @@ function printAlignedAndPadded(str, put)
 	{
 		for (var j = 0; j < 16; j++)
 		{
-			var stringpos = i + j;
+			var stringpos = i * 16 + j;
 			if (stringpos < str.length)
 				put(str.substr(stringpos, 1));
 			else
 				put("0");
-			if (stringpos % 4 == 3 && stringpos < 15)
+			if (stringpos % 4 == 3 && j < 15)
 				put(" ");
 		}
 		put("\n");
@@ -153,8 +153,9 @@ function execute()
 	var funcdefs = [];
 	var constdefs = [];
 	var literals = [];
-	progstring = progstring.replace(/#[^\n]*/gm, "")		//strip out comments
-	.replace(/'([0-9a-fA-F]+)/g, function(match, name){		//detect literals and push onto literal list
+	progstring = progstring.replace(/#[^\n]*/gm, "")		// strip out comments
+	.replace(/&[\r\n\t ]+/, " ")							// remove line continuations
+	.replace(/'([0-9a-fA-F]+)/g, function(match, name){		// detect literals and push onto literal list
 		if (literals.indexOf(name) < 0)
 			literals.push(name);
 		return match;})
@@ -224,6 +225,7 @@ function execute()
 	var proglength = 0;
 	var varoffset = parseInt("2002", 16);
 	var dictionary = new vardict();
+	var nextaddresslist = [];
 	function put(str)
 	{
 		compiledstring += str;
@@ -238,7 +240,7 @@ function execute()
 		if (/^[a-zA-Z0-9_]+$/.test(str) && constants[str])
 				return constants[str].value;
 		else if (/^[0-9a-fA-F]+$/.test(str))
-			return str;
+			return pad(str);
 		else if (/^'/.test(str))
 			return pad((literals.indexOf(str.substr(1)) + proglength).toString(16));
 		else
@@ -253,44 +255,52 @@ function execute()
 		var args = codelist[i].split(/[\t ]+/);
 		if (args.length == 0 || codelist[i] == "")
 			continue;
-		if (args[0] == "dat")
+		if (args[0] == "dat" || args[0] == "buffer")
 		{
 			var datstring = "";
-			for (var j = 1; j < args.length; j++)
+			if (args[0] == "buffer")
+				datstring = Array(parseInt(args[1], 16) + 1 - currentaddress).join("00");
+			else
 			{
-				datstring += padto(args[j], Math.ceil(args[j].length / 2) * 2);
+				for (var j = 1; j < args.length; j++)
+				{
+					datstring += padto(args[j], Math.ceil(args[j].length / 2) * 2);
+				}
 			}
 			var roundedlength = Math.ceil((args.length - 1) / 16) * 16;			//8 bytes -> 16 nibbles
 			for (var j = datstring.length; j < roundedlength; j++)
 				datstring += 0;
 			firstpasslist.push("dat " + datstring);
 			currentaddress += roundedlength;
-			continue;
 		}
-		else if (args[0] == "var" || args[0] == "free")
+		else if (args[0] == "var" || args[0] == "free" || args[0] == "buffer")
 		{
 			firstpasslist.push(codelist[i]);
-			continue;
 		}
 		else if (args.length != 2 && args.length != 4)
 			alert("Error: incomplete command!");
-
-		for (var j = 0; j < args.length; j++)
+		else
 		{
-			put(firstpass(args[j]));
-			if (j < args.length - 1)
-				put(" ");
+			for (var j = 0; j < args.length; j++)
+			{
+				put(firstpass(args[j]));
+				if (j < args.length - 1)
+					put(" ");
+			}
+			for (var j = args.length; j < 4; j++)
+				put(" " + pad((currentaddress + 8).toString(16)));
+			firstpasslist.push(compiledstring);
+			compiledstring = "";
+			currentaddress += 8;
 		}
-		for (var j = args.length; j < 4; j++)
-			put(" " + pad((currentaddress + 8).toString(16)));
-		firstpasslist.push(compiledstring);
-		compiledstring = "";
-		currentaddress += 8;
+		nextaddresslist.push(currentaddress);
 	}
 	proglength = currentaddress;
 
+
 	for (var i = 0; i < firstpasslist.length; i++)
 	{
+		constants["next"] = {name: "next", value: nextaddresslist[i]};
 		var args = firstpasslist[i].split(/[\t ]+/);
 		if (args[0] == "var")
 		{
@@ -299,29 +309,29 @@ function execute()
 				var pos = dictionary.insert(args[argindex]);
 				constants[args[argindex]] = {name: args[argindex], value: pad((varoffset + pos).toString(16))};
 			}
-			continue;
 		}
-		if (args[0] == "free")
+		else if (args[0] == "free")
 		{
 			for (var argindex = 1; argindex < args.length; argindex++)
 			{
 				dictionary.remove(args[argindex]);
 				constants[args[argindex]].value = pad((varoffset + dictionary.find(args[argindex])).toString(16));
 			}
-			continue;
 		}
-		if (args[0] == "dat")
+		else if (args[0] == "dat")
 		{
 			printAlignedAndPadded(args[1], put);
-			continue;
 		}
-		for (var j = 0; j < args.length; j++)
+		else
 		{
-			put(secondpass(args[j]));
-			if (j < args.length - 1)
-				put(" ");
+			for (var j = 0; j < args.length; j++)
+			{
+				put(secondpass(args[j]));
+				if (j < args.length - 1)
+					put(" ");
+			}
+			put("\n");
 		}
-		put("\n");
 	}
 	// Output constants:
 	var conststring = "";
@@ -332,7 +342,7 @@ function execute()
 
 	print("Output:");
 	print(compiledstring);
-	/*var tokens = progstring.split(/Â¬+/);
+	/*var tokens = progstring.split(/¬+/);
 	for (i in tokens)
 	{
 		write("\"" + tokens[i] + (i < tokens.length - 1? "\", " : "\"\n"));
@@ -345,7 +355,7 @@ function execute()
 
 <body>
 <p>Fork Compiler</p>
-<textarea name="Prog" rows=10 cols=120>def debugout 3000
+<textarea name="Prog" rows=35 cols=70>def debugout 3000
 def debugin 3001
 
 def clear(address)
@@ -397,6 +407,6 @@ jump(loopStart)
 <br/>
 <input type=button name="btnExecute" onclick="execute();" value="Run" width=500px>
 <br/>
-<textarea name="Output" rows=15 cols=120></textarea>
+<textarea name="Output" rows=15 cols=70></textarea>
 </body>
 </html>
