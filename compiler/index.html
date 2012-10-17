@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fork Compiler</title>
+<link rel="stylesheet" type="text/css" href="./style.css">
+<script type="text/javascript">
+
+/*
+example code:
+
+3000 3000 0000 0000 	#comment: this is pure machine code. we don't need to assemble this.
+						# This clears the debug output and then loops to instruction 0.
+1230 4560 				# If the address fields are left blank, we stitch in the next instruction's address.
+2312 2312 7412			# If only one address is given, that address is assembled into both fields. (i.e. non-conditional jump)
+
+
+def zero 2312			# macros are defined with the def keyword. They are replaced textually at compile time.
+def clear(a)			# if a macro is defined with arguments, it is ended with an end keyword.
+	a a 				# they are expanded textually before assembly.
+end
+
+def copy(dest, src)
+	unused src
+	dest unused
+end
+
+def goto(address)
+	clear(unused)
+	unused zero address
+end
+
+def brz(testloc, address)
+	unused testloc
+	zero zero $ address	# $ gets replaced with the current location at compile time.
+end
+*/
+
+function funcmacro(str)
+{
+	var strarglist, name, body;
+	var arglist = [];
+	str.replace(/def[\t ]+([a-zA-Z_]+)/, function(match, p1){name = p1; return match;})
+	.replace(/\(([^\)]*)\)/, function(match, p1){strarglist = p1; return match;})
+	.replace(/\)([\s\S]*?)end/m, function(match, p1){body = p1; return match;});
+	strarglist.replace(/[\t ]*([a-zA-Z_]+)[\t ]*(,|$)/gm, function(match, p1){arglist.push(p1); return "";});
+	this.name = name;
+	this.body = body;
+	this.arglist = arglist;
+}
+
+function constmacro(str)
+{
+	var name, value;
+	str.replace(/def[\t ]+([a-zA-Z_]+)[\t ]+([a-zA-Z0-9_]+)/, function(match, p1, p2){name = p1; value = p2; return "";});
+	this.name = name;
+	this.value = value;
+}
+
+function vardict()
+{
+	this.vars = [];
+	this.find = function(name)
+	{
+		return this.vars.lastIndexOf(name);
+	}
+	this.insert = function(name)		// search for a free space; if one isn't found, push the var name onto the end.	Return the position of insertion.
+	{
+		var result = this._insert(name);
+		return result;
+	}
+	this._insert = function(name)
+	{
+		for (var i = 0; i < this.vars.length; i++)
+		{
+			if (!this.vars[i])
+			{
+				this.vars[i] = name;
+				return i;
+			}
+		}
+		this.vars.push(name);
+		return this.vars.length - 1;
+	}
+	this.remove = function(name)
+	{
+		var pos = this.vars.lastIndexOf(name);
+		if (pos >= 0)
+			this.vars[pos] = null;
+	}
+}
+
+function escaperegex(str) {
+ 	 return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+function printAlignedAndPadded(str, put)
+{
+	for (var i = 0; i < Math.ceil(str.length / 16); i++)	//line number
+	{
+		for (var j = 0; j < 16; j++)
+		{
+			var stringpos = i + j;
+			if (stringpos < str.length)
+				put(str.substr(stringpos, 1));
+			else
+				put("0");
+			if (stringpos % 4 == 3 && stringpos < 15)
+				put(" ");
+		}
+		put("\n");
+	}
+}
+
+function pad(str)
+{
+	return ("0000" + str).substr(-4);
+}
+function padto(str, n)
+{
+	return (Array(n + 1).join("0") + str).substr(-n);
+}
+
+function firstpass(str)
+{
+	if (/^[0-9a-fA-F]+$/.test(str))
+		return str;//pad(str);
+	else
+		return str;
+}
+
+function execute()
+{
+	// compilation steps:
+	// parse  definitions
+	// expand definitions
+	// first pass of assembly: loop through each line, output it if it's a literal command, if it's a label then note its position. 
+	//	- we now know the length of the program; we can stick the literals on the end.
+	// second pass: 
+	// loop through each of the new set of lines, stitch in all of the labels and the locations of the literals.
+
+	var progstring = document.getElementsByName("Prog")[0].value;
+	var outbox = document.getElementsByName("Output")[0];
+
+	function print(str)
+	{
+		outbox.value += str + "\n";
+	}
+	function write(str)
+	{
+		outbox.value += str;
+	}
+
+	var funcdefs = [];
+	var constdefs = [];
+	var literals = [];
+	progstring = progstring.replace(/#[^\n]*/gm, "")		//strip out comments
+	.replace(/'([0-9a-fA-F]+)/g, function(match, name){		//detect literals and push onto literal list
+		if (literals.indexOf(name) < 0)
+			literals.push(name);
+		return match;})
+	.replace(/def[\t ]+[a-zA-Z_]+[\t ]*\([^\)]*\)[\s\S]*?end/g, function(match){funcdefs.push(match); return "";})	// find and strip macro definitions.
+	.replace(/def[\t ]+[a-zA-Z_]+[\t ]+[a-zA-Z0-9_]+/g, function(match){constdefs.push(match); return "";});		// do the same for constants
+
+
+	var functions = {};
+	var constants = {};
+
+
+	print("Function defs:");
+	for (var i = 0; i < funcdefs.length; i++)
+	{
+		var f = new funcmacro(funcdefs[i]);
+		functions[f.name] = f;
+		print("=============================");
+		print("Name: " + f.name);
+		print("Arguments: ");
+		for (var j = 0; j < f.arglist.length; j++)
+			write(" " + f.arglist[j]);
+		print("");
+		print("Macro body:");
+		print(f.body);
+	}
+	print("=============================");
+	print("Constant defs:");
+	for (var i = 0; i < constdefs.length; i++)
+	{
+		var c = new constmacro(constdefs[i]);
+		constants[c.name] = c;
+		print("=============================");
+		print("Name: " + c.name);
+		print("Value: " + c.value);
+	}
+	print("=============================");
+
+
+	while (/\(/.test(progstring))
+	{
+		progstring = progstring.replace(/([a-zA-Z_]+)[\t ]*\(([^\)]*)\)/gm, function(match, name, args)		// fetch the entire function call, picking out the name and the arg list.
+		{
+			if (!functions[name])
+			{
+				print("Error: unknown function " + name);
+				return "XXXXXXXXXXX";
+			}
+			var f = functions[name];
+			var newbody = new String(f.body);
+			var arglist = [];
+			args.replace(/[\t ]*('?[a-zA-Z0-9_]+)[\t ]*(,|$)/gm, function(match, arg) {arglist.push(arg); return "";});		// nb the '?  ; if the argument is literal then we must include the leading quote.
+			if (arglist.length != f.arglist.length)
+				alert("Error: wrong number of arguments to function " + name);
+			for (var i = 0; i < f.arglist.length; i++)
+			{
+				newbody = newbody.replace(new RegExp("\\b" + f.arglist[i] + "\\b", "gm"), arglist[i]);
+			}
+			return newbody;
+		});
+	}
+	progstring = progstring.replace(/\n\s*\n/gm, "\n").replace(/\n[\t ]*/g, "\n"); 	// trim out the blank lines.
+	var codelist = progstring.split(/\n?\s*\n/);
+	var firstpasslist = [];
+	var currentaddress = 0;
+	var compiledstring = ""
+	var labels = {};
+	var proglength = 0;
+	var varoffset = parseInt("2002", 16);
+	var dictionary = new vardict();
+	function put(str)
+	{
+		compiledstring += str;
+	}
+	function secondpass(str)
+	{
+		var s = _secondpass(str);
+		return s;
+	}
+	function _secondpass(str)
+	{
+		if (/^[a-zA-Z0-9_]+$/.test(str) && constants[str])
+				return constants[str].value;
+		else if (/^[0-9a-fA-F]+$/.test(str))
+			return str;
+		else if (/^'/.test(str))
+			return pad((literals.indexOf(str.substr(1)) + proglength).toString(16));
+		else
+			alert("Unrecognised constant: " + str);
+	}
+
+	for (var i = 0; i < codelist.length; i++)
+	{
+		if (codelist[i] == "")
+			continue;
+		codelist[i] = codelist[i].replace(/^([a-zA-Z0-9_]+):[\t ]*/, function(match, name) {constants[name] = {value: pad(currentaddress.toString(16))}; return "";});		// search out labels and add their positions to constant table
+		var args = codelist[i].split(/[\t ]+/);
+		if (args.length == 0 || codelist[i] == "")
+			continue;
+		if (args[0] == "dat")
+		{
+			var datstring = "";
+			for (var j = 1; j < args.length; j++)
+			{
+				datstring += padto(args[j], Math.ceil(args[j].length / 2) * 2);
+			}
+			var roundedlength = Math.ceil((args.length - 1) / 16) * 16;			//8 bytes -> 16 nibbles
+			for (var j = datstring.length; j < roundedlength; j++)
+				datstring += 0;
+			firstpasslist.push("dat " + datstring);
+			currentaddress += roundedlength;
+			continue;
+		}
+		else if (args[0] == "var" || args[0] == "free")
+		{
+			firstpasslist.push(codelist[i]);
+			continue;
+		}
+		else if (args.length != 2 && args.length != 4)
+			alert("Error: incomplete command!");
+
+		for (var j = 0; j < args.length; j++)
+		{
+			put(firstpass(args[j]));
+			if (j < args.length - 1)
+				put(" ");
+		}
+		for (var j = args.length; j < 4; j++)
+			put(" " + pad((currentaddress + 8).toString(16)));
+		firstpasslist.push(compiledstring);
+		compiledstring = "";
+		currentaddress += 8;
+	}
+	proglength = currentaddress;
+
+	for (var i = 0; i < firstpasslist.length; i++)
+	{
+		var args = firstpasslist[i].split(/[\t ]+/);
+		if (args[0] == "var")
+		{
+			for (var argindex = 1; argindex < args.length; argindex++)
+			{
+				var pos = dictionary.insert(args[argindex]);
+				constants[args[argindex]] = {name: args[argindex], value: pad((varoffset + pos).toString(16))};
+			}
+			continue;
+		}
+		if (args[0] == "free")
+		{
+			for (var argindex = 1; argindex < args.length; argindex++)
+			{
+				dictionary.remove(args[argindex]);
+				constants[args[argindex]].value = pad((varoffset + dictionary.find(args[argindex])).toString(16));
+			}
+			continue;
+		}
+		if (args[0] == "dat")
+		{
+			printAlignedAndPadded(args[1], put);
+			continue;
+		}
+		for (var j = 0; j < args.length; j++)
+		{
+			put(secondpass(args[j]));
+			if (j < args.length - 1)
+				put(" ");
+		}
+		put("\n");
+	}
+	// Output constants:
+	var conststring = "";
+	for (var i in literals)
+		conststring += ("00" + literals[i]).substr(-2);
+	printAlignedAndPadded(conststring, put);
+
+
+	print("Output:");
+	print(compiledstring);
+	/*var tokens = progstring.split(/¬+/);
+	for (i in tokens)
+	{
+		write("\"" + tokens[i] + (i < tokens.length - 1? "\", " : "\"\n"));
+	}*/
+
+}
+
+</script>
+</head>
+
+<body>
+<p>Fork Compiler</p>
+<textarea name="Prog" rows=10 cols=120>def debugout 3000
+def debugin 3001
+
+def clear(address)
+  address 'ff
+end
+
+def invcopy(src, dest)
+  clear(dest)
+  dest src
+end
+
+def andnot(a, b, dest)    #dest = a & ~b
+  invcopy(a, dest)
+  dest b
+end
+
+def jump(address)
+  var x
+  x x address address
+  free x
+end
+
+def fork(val, locifnz, locifzero)
+  var x
+  invcopy(val, x)
+  x x locifnz locifzero
+  free x
+end
+
+def output(src, dest)
+  var x
+  invcopy(src, x)
+  dest x
+  free x
+end
+
+loopStart:
+var a
+andnot(debugin, 'f, a)
+fork(a, ifzero, ifnotzero)
+free a
+ifzero:
+output('0, debugout)
+jump(loopStart)
+ifnotzero:
+output('1, debugout)
+jump(loopStart)
+</textarea>
+<br/>
+<input type=button name="btnExecute" onclick="execute();" value="Run" width=500px>
+<br/>
+<textarea name="Output" rows=15 cols=120></textarea>
+</body>
+</html>

@@ -1,0 +1,50 @@
+def debugout 3000
+def debugin 3001
+
+def clear(address)
+  address 'ff
+end
+
+def invcopy(src, dest)
+  clear(dest)
+  dest src
+end
+
+def not(address)
+  address address
+end
+
+def andnot(a, b, dest)    #dest = a & ~b
+  invcopy(a, dest)
+  dest b
+end
+
+def jump(address)
+  var x
+  x x address address
+  free x
+end
+
+def fork(val, locifnz, locifzero)
+  var x
+  invcopy(val, x)
+  x x locifnz locifzero
+  free x
+end
+
+def copy(src, dest)
+  invcopy(src, dest)
+  not(dest)
+end
+
+loopStart:
+var a
+andnot(debugin, 'f, a)
+fork(a, ifzero, ifnotzero)
+free a
+ifzero:
+copy('0, debugout)
+jump(loopStart)
+ifnotzero:
+copy('1, debugout)
+jump(loopStart)

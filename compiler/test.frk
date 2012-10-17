@@ -1,0 +1,23 @@
+def zero 3000
+def unused 3001
+
+def clear(addr)
+    addr addr
+end
+
+def not(addr)
+    addr zero
+end
+
+def set(dest, src)
+    unused src
+    dest unused
+end
+
+def jmp(address)
+    zero zero address
+end
+
+clear(zero)
+set(3002 zero)
+jmp(0)
