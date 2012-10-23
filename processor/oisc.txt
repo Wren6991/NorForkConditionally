@@ -1,0 +1,75 @@
+Steps:
+1.  fetch bytes (we should fetch first byte last, so its location is still in the latch for writing
+	-  A <- (PC & ~0x07 | 0x02)			// last byte first!
+	-  Y <- (A)
+	-  A <- (PC & ~0x07 | 0x00)
+	-  X <- (A)
+2.  NOR them, store in first location
+	-  (A) <- [ALU]
+3.  conditionally branch to 3rd or 4th address
+	- A <- PC
+	- ^PC <- (A & ~0b111 | 0b0Z0)
+	- _PC <- (A & ~0b111 | 0b0Z1)
+
+Note that the address register and PC must be inline-modified at read time; the suffix-select logic should be placed in line with the address latch and PC, upstream of the output buffer.
+Note also that A is set to the *contents* of PC; this means set A to PC, load (A) into scratch registers, and load scratch registers into A.
+The upper 2 bits of the address latch should go to the select input of a 2-4 demux; a general WE signal from microcode should be the demux's input. Microcode sends a write signal, and the demux routes the signal to the appropriate mapped device. The 11 (high mapping) output can serve as a highmem WE signal, feeding into decoding for IO devices.
+As each address assignment is a 16 bit load, it must be done 8 bits at a time. I.e., 2 micro cycles.
+
+
+Microcode:
+Format:
+ZAAAAA-> OoooWwww SsssNMmR (6 bit address -> 16 bit micro instruction)
+Z: zero detect bit (address msb - microcode forking)
+A: microcode address bits
+O: general output enable bit
+o: output enable select bits
+W: general write enable bit
+w: write enable select bits
+S: suffix selector (0 = address suffix, 1 = microcode suffix)
+s: suffix bits (least significant bits of address)
+N: NOR gate buffer OE
+M: mapped memory WE
+m: mapped memory OE
+R: reset microcode counter
+
+WE/OE register mapping:
+0 -> X
+1 -> Y
+2 -> HPC
+3 -> LPC
+4 -> HADDR
+5 -> LADDR
+6 -> scratch 1
+7 -> scratch 0
+
+/// if the suffix logic is only on the address latch:
+
+Microcode listing:
+ac00
+bd00		; load high and low bytes of PC into A
+0ea2		; write to scratch 1 from mapped memory, suffix 2 (a == 8 | 2)
+0fb2		; write to scratch 0 from mapped memory, suffix 3: s1, s0 now contain the second operand address.
+ec00
+fd00		; copy scratch bytes into address register
+0902		; read from mapped memory into Y operand
+ac00
+bd00		; copy PC into A
+0e82		; copy memory to scratch, suffix 0
+0f92		; copy memory to scratch, suffix 1
+ec00
+fd00		; copy scratch to A
+0802		; read from mapped memory into X operand
+000c		; copy NOR value back to memory
+ac00
+bd00		; copy PC into A
+0ac2		; copy memory to ^PC, suffix 4 (or 6 if Z detect)
+0bd2		; copy memory to _PC, suffix 5 (or 7 if Z detect)
+0001		; reset counter						total length, 20 microcycles.
+
+
+
+
+
+
+
