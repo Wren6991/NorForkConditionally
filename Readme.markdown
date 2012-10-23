@@ -20,21 +20,25 @@ The chosen instruction is Nor and Fork Conditionally, or NFC - it loads two byte
 The NOR operation is chosen as it is universal - with enough NORs, you can substitute for any other logical operation.
 As this is the only instruction, the instruction is implicit -- i.e., does not have to be specified to the processor -- and is made up entirely of 4 16 bit addresses: A, B, C, D. Broken down into steps:
 
-1. X = ~(A | B)		 NOR A and B
-2. A = X                 Store in first location
+1. `X = ~(A | B)		//NOR A and B`
+2. `A = X                 	//Store in first location`
 3. Fork conditionally
     - if result non-zero:
-        - Program Counter = C
+        - `Program Counter = C`
     - else
-        - Program Counter = D
+        - `Program Counter = D`
 
 This single instruction cycle is made up of several microcycles - see the processor directory for further details.
 Note that the instruction provides all of the necessary operations:
 
-- reading from memory; A and B are read in step 1
-- manipulating data; NOR can be used to carry out any logic operation
-- writing to memory; A is written to in step 2
-- branching, conditional and non-conditional (if both skip addresses are the same)
+- Reading from memory:
+   - Locations A and B are read in step 1
+- Manipulating data:
+    - NOR can be used to carry out any logic operation
+- Writing to memory:
+    - A is written to in step 2
+- Branching
+    - Conditional or non-conditional (if both skip addresses are the same)
 
 It is also possible to read/write to runtime-specified locations: although the addresses are given in absolute terms, self-modifying code can be written that will set the address fields of an instruction in RAM before executing it.
 
