@@ -1,5 +1,5 @@
-def debugout 3000
-def debugin 3001
+def debugout c000
+def debugin c001
 
 def clear(address)
   address 'ff

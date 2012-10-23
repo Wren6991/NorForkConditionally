@@ -1,20 +1,10 @@
 Language Description: Fork
 ==========================
 
-Fork is essentially an assembly language, with a nice macro system and facilities for variable declaration and management.
-A fork command consists of 2 or 4 literal hex integers:
+Contents
+--------
 
-`c000 c001 0008 0008`
-
-These correspond to the NFC address fields ABCD. Each field is a 16 bit integer; They are _always_ hex, never decimal. The above command NORs `c000` (the debug output port) with the value of the debug input port, and then skips to address `0008` irrespective of the result.
-If the command is only 2 fields long, the address of the next instruction is automatically "stitched in" so that instructions are executed sequentially. E.g.:
-
-`c000 c001`
-
-is equivalent to the above, assuming the code starts at `0000`.
-
-Sections Covered:
-
+- The Language
 - Macros
     - Value macros
     - Function macros
@@ -27,6 +17,23 @@ Sections Covered:
 - Dat Statements
 - Buffer Statements
 - Examples
+
+The Language
+------------
+
+Fork is essentially an assembly language, with a nice macro system and facilities for variable declaration and management.
+A Fork command consists of 2 or 4 literal hex integers:
+```
+c000 c001 0008 0008
+```
+These correspond to the NFC address fields ABCD. Each field is a 16 bit integer; They are _always_ hex, never decimal. The above command NORs `c000` (the debug output port) with the value of the debug input port, and then skips to address `0008` irrespective of the result.
+If the command is only 2 fields long, the address of the next instruction is automatically "stitched in" so that instructions are executed sequentially. E.g.:
+
+```
+c000 c001
+```
+
+is equivalent to the above, assuming the code starts at `0000`.
 
 Macros
 ------
@@ -172,3 +179,91 @@ If you try to buffer to a location that you are already past, you will be notifi
 
 Examples
 --------
+Increment a value from the debug input port:
+'''
+def debugout c000
+def debugin c001
+
+def clear(dest)
+  dest 'ff
+end
+
+def not(src, dest)
+  clear(dest)
+  dest src
+end
+
+def invert(dest)
+  dest dest
+end
+
+def goto(address)
+  var a
+  a a address address
+  free a
+end
+
+def copy(src, dest)
+  not(src, dest)
+  invert(dest)
+end
+
+def getBitAndFork(src, data, address)
+  var a
+  not(data, a)
+  a src address next                 
+  free a
+end
+
+def NFCPairAndJump(src1, src2, dest1, dest2, address)
+  dest1 src1
+  dest2 src2 address address
+end
+
+
+# Strategy: find the least-significant 0 bit, set that bit to 1, set all bits below it to 0.
+def increment(src, dest)
+  var a b
+  clear(a)
+  clear(b)
+  getBitAndFork(src, '1, carry1)
+  getBitAndFork(src, '2, carry2)
+  getBitAndFork(src, '4, carry3)
+  getBitAndFork(src, '8, carry4)
+  getBitAndFork(src, '16, carry5)
+  getBitAndFork(src, '32, carry6)
+  getBitAndFork(src, '64, carry7)
+  getBitAndFork(src, '128, carry8)
+  dest 'ff finish finish
+carry1:
+  NFCPairAndJump('fe, 'ff, a, b, skip)
+carry2:
+  NFCPairAndJump('fd, 'fe, a, b, skip)
+carry3:
+  NFCPairAndJump('fb, 'fc, a, b, skip)
+carry4:
+  NFCPairAndJump('f7, 'f8, a, b, skip)
+carry5:
+  NFCPairAndJump('ef, 'f0, a, b, skip)
+carry6:
+  NFCPairAndJump('df, 'e0, a, b, skip)
+carry7:
+  NFCPairAndJump('bf, 'c0, a, b, skip)
+carry8:
+  NFCPairAndJump('7f, '80, a, b, skip)
+skip:
+  clear(dest)
+  dest src
+  dest b
+  dest a
+  invert(dest)
+  free a b
+finish:
+end
+
+loopStart:
+var a
+  increment(debugin, debugout)
+  goto(loopStart)
+free a
+'''
