@@ -180,7 +180,8 @@ If you try to buffer to a location that you are already past, you will be notifi
 Examples
 --------
 Increment a value from the debug input port:
-'''
+
+```
 def debugout c000
 def debugin c001
 
@@ -266,4 +267,4 @@ var a
   increment(debugin, debugout)
   goto(loopStart)
 free a
-'''
+```
