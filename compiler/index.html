@@ -35,6 +35,9 @@ def brz(testloc, address)
 end
 */
 
+var isDebug = false;
+var outputAsBytes = false;
+
 function funcmacro(str)
 {
 	var strarglist, name, body;
@@ -145,9 +148,19 @@ function execute()
 	{
 		outbox.value += str + "\n";
 	}
+	function dbgprint(str)
+	{
+		if (isDebug)
+			print(str);
+	}
 	function write(str)
 	{
 		outbox.value += str;
+	}
+	function dbgwrite(str)
+	{
+		if (isDebug)
+			write(str);
 	}
 
 	var funcdefs = [];
@@ -167,31 +180,31 @@ function execute()
 	var constants = {};
 
 
-	print("Function defs:");
+	dbgprint("Function defs:");
 	for (var i = 0; i < funcdefs.length; i++)
 	{
 		var f = new funcmacro(funcdefs[i]);
 		functions[f.name] = f;
-		print("=============================");
-		print("Name: " + f.name);
-		print("Arguments: ");
+		dbgprint("=============================");
+		dbgprint("Name: " + f.name);
+		dbgprint("Arguments: ");
 		for (var j = 0; j < f.arglist.length; j++)
-			write(" " + f.arglist[j]);
-		print("");
-		print("Macro body:");
-		print(f.body);
+			dbgwrite(" " + f.arglist[j]);
+		dbgprint("");
+		dbgprint("Macro body:");
+		dbgprint(f.body);
 	}
-	print("=============================");
-	print("Constant defs:");
+	dbgprint("=============================");
+	dbgprint("Constant defs:");
 	for (var i = 0; i < constdefs.length; i++)
 	{
 		var c = new constmacro(constdefs[i]);
 		constants[c.name] = c;
-		print("=============================");
-		print("Name: " + c.name);
-		print("Value: " + c.value);
+		dbgprint("=============================");
+		dbgprint("Name: " + c.name);
+		dbgprint("Value: " + c.value);
 	}
-	print("=============================");
+	dbgprint("=============================");
 
 
 	while (/\(/.test(progstring))
@@ -340,7 +353,9 @@ function execute()
 	printAlignedAndPadded(conststring, put);
 
 
-	print("Output:");
+	dbgprint("Output:");
+	if (outputAsBytes)
+		compiledstring = compiledstring.replace(/([0-9a-fA-F]{2})(?!\b)/g, "$1 ");
 	print(compiledstring);
 	/*var tokens = progstring.split(/¬+/);
 	for (i in tokens)
@@ -405,7 +420,9 @@ output('1, debugout)
 jump(loopStart)
 </textarea>
 <br/>
-<input type=button name="btnExecute" onclick="execute();" value="Run" width=500px>
+<input type=button name="btnExecute" onclick="execute();" value="Compile" width=500px>
+<input type="checkbox" name="chkDebug" onclick="isDebug = this.checked;">Debug output</input>
+<input type="checkbox" name="chkAsBytes" onclick="outputAsBytes = this.checked;">Output as bytes</input>
 <br/>
 <textarea name="Output" rows=15 cols=70></textarea>
 </body>
