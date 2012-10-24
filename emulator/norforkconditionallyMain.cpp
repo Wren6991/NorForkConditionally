@@ -53,7 +53,9 @@ wxString wxbuildinfo(wxbuildinfoformat format)
 //(*IdInit(norforkconditionallyFrame)
 const long norforkconditionallyFrame::ID_TEXTCTRL1 = wxNewId();
 const long norforkconditionallyFrame::ID_BUTTON2 = wxNewId();
-const long norforkconditionallyFrame::ID_TEXTCTRL2 = wxNewId();
+const long norforkconditionallyFrame::ID_LISTCTRL1 = wxNewId();
+const long norforkconditionallyFrame::ID_TEXTCTRL3 = wxNewId();
+const long norforkconditionallyFrame::ID_BUTTON4 = wxNewId();
 const long norforkconditionallyFrame::ID_STATICTEXT1 = wxNewId();
 const long norforkconditionallyFrame::ID_SLIDER9 = wxNewId();
 const long norforkconditionallyFrame::ID_SLIDER8 = wxNewId();
@@ -70,7 +72,7 @@ const long norforkconditionallyFrame::ID_MENUITEM2 = wxNewId();
 const long norforkconditionallyFrame::idMenuQuit = wxNewId();
 const long norforkconditionallyFrame::idMenuAbout = wxNewId();
 const long norforkconditionallyFrame::ID_TIMER1 = wxNewId();
-const long norforkconditionallyFrame::ID_TOOLBAR1 = wxNewId();
+const long norforkconditionallyFrame::ID_TIMER2 = wxNewId();
 //*)
 
 BEGIN_EVENT_TABLE(norforkconditionallyFrame,wxFrame)
@@ -82,19 +84,18 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
 {
     //(*Initialize(norforkconditionallyFrame)
     wxBoxSizer* BoxSizer4;
+    wxBoxSizer* BoxSizer6;
     wxBoxSizer* BoxSizer5;
     wxMenuItem* MenuItem2;
     wxMenuItem* MenuItem1;
-    wxMenuItem* MenuItem4;
     wxBoxSizer* BoxSizer2;
     wxMenu* Menu1;
-    wxMenuItem* MenuItem3;
     wxBoxSizer* BoxSizer1;
     wxMenuBar* MenuBar1;
     wxBoxSizer* BoxSizer3;
     wxMenu* Menu2;
 
-    Create(parent, id, _("Nor and Fork Conditionally"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
+    Create(parent, wxID_ANY, _("Nor and Fork Conditionally"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("wxID_ANY"));
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
     BoxSizer1 = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer4 = new wxBoxSizer(wxVERTICAL);
@@ -105,12 +106,16 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     BoxSizer4->Add(txtProgram, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     btnLoad = new wxButton(this, ID_BUTTON2, _("Load"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON2"));
     BoxSizer4->Add(btnLoad, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    BoxSizer1->Add(BoxSizer4, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
+    BoxSizer1->Add(BoxSizer4, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
     BoxSizer2 = new wxBoxSizer(wxVERTICAL);
-    txtOutput = new wxTextCtrl(this, ID_TEXTCTRL2, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_AUTO_SCROLL|wxTE_MULTILINE, wxDefaultValidator, _T("ID_TEXTCTRL2"));
-    wxFont txtOutputFont(10,wxSWISS,wxFONTSTYLE_NORMAL,wxNORMAL,false,_T("Consolas"),wxFONTENCODING_DEFAULT);
-    txtOutput->SetFont(txtOutputFont);
-    BoxSizer2->Add(txtOutput, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    lstWatches = new wxListCtrl(this, ID_LISTCTRL1, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_EDIT_LABELS|wxLC_HRULES|wxLC_VRULES|wxLC_NO_SORT_HEADER|wxNO_FULL_REPAINT_ON_RESIZE, wxDefaultValidator, _T("ID_LISTCTRL1"));
+    BoxSizer2->Add(lstWatches, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    BoxSizer6 = new wxBoxSizer(wxHORIZONTAL);
+    txtWatchAddress = new wxTextCtrl(this, ID_TEXTCTRL3, _("0000"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL3"));
+    BoxSizer6->Add(txtWatchAddress, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    cmdWatchAddress = new wxButton(this, ID_BUTTON4, _("Watch Address"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON4"));
+    BoxSizer6->Add(cmdWatchAddress, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    BoxSizer2->Add(BoxSizer6, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
     BoxSizer5 = new wxBoxSizer(wxHORIZONTAL);
     StaticText1 = new wxStaticText(this, ID_STATICTEXT1, _("Debug Input:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
     BoxSizer5->Add(StaticText1, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
@@ -172,10 +177,14 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     tmrStep.SetOwner(this, ID_TIMER1);
     tmrStep.Start(1, false);
     tmrStep.Stop();
+    tmrUpdate.SetOwner(this, ID_TIMER2);
+    tmrUpdate.Start(53, false);
+    tmrUpdate.Stop();
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
     Connect(ID_BUTTON2,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&norforkconditionallyFrame::OnbtnLoadClick);
+    Connect(ID_BUTTON4,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&norforkconditionallyFrame::OncmdWatchAddressClick);
     Connect(ID_SLIDER9,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&norforkconditionallyFrame::OndbgCmdScrollThumbTrack);
     Connect(ID_SLIDER8,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&norforkconditionallyFrame::OndbgCmdScrollThumbTrack);
     Connect(ID_SLIDER7,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&norforkconditionallyFrame::OndbgCmdScrollThumbTrack);
@@ -189,7 +198,24 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     Connect(idMenuQuit,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&norforkconditionallyFrame::OnQuit);
     Connect(idMenuAbout,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&norforkconditionallyFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&norforkconditionallyFrame::OntmrStepTrigger);
+    Connect(ID_TIMER2,wxEVT_TIMER,(wxObjectEventFunction)&norforkconditionallyFrame::OntmrUpdateTrigger);
     //*)
+
+    lstWatches->InsertColumn(0, "Name");
+    lstWatches->InsertColumn(1, "Address");
+    lstWatches->InsertColumn(2, "Value");
+
+    long itemIndex = lstWatches->InsertItem(0, "");
+    lstWatches->SetItem(itemIndex, 0, "PC");
+    lstWatches->SetItem(itemIndex, 1, "-");
+
+    itemIndex = lstWatches->InsertItem(itemIndex + 1, "");
+    lstWatches->SetItem(itemIndex, 0, "debug in");
+    lstWatches->SetItem(itemIndex, 1, "c001");
+
+    itemIndex = lstWatches->InsertItem(itemIndex + 1, "");
+    lstWatches->SetItem(itemIndex, 0, "debug out");
+    lstWatches->SetItem(itemIndex, 1, "c000");
 }
 
 norforkconditionallyFrame::~norforkconditionallyFrame()
@@ -215,16 +241,14 @@ void norforkconditionallyFrame::step()
     if (machine.debugWritten)
     {
         machine.debugWritten = false;
-        (*txtOutput) << "Debug output: " << machine.memory[0x3000] << "\n";
     }
 }
 
 void norforkconditionallyFrame::OnbtnStepClick(wxCommandEvent& event)
 {
     step();
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0') << std::setw(4) << machine.PC;
-    (*txtOutput) << "PC: " << ss.str() << "\n";
+    wxTimerEvent evt;
+    OntmrUpdateTrigger(evt);
 }
 
 void norforkconditionallyFrame::OnbtnRunStopClick(wxCommandEvent& event)
@@ -233,11 +257,13 @@ void norforkconditionallyFrame::OnbtnRunStopClick(wxCommandEvent& event)
     {
         btnRunStop->SetLabel("Run");
         tmrStep.Stop();
+        tmrUpdate.Stop();
     }
     else
     {
         btnRunStop->SetLabel("Stop");
         tmrStep.Start(1, false);
+        tmrUpdate.Start(1, false);
     }
 }
 
@@ -246,7 +272,6 @@ void norforkconditionallyFrame::OnbtnLoadClick(wxCommandEvent& event)
     machine = vm();
     int memoffset = 0;
     const char *str = txtProgram->GetValue().ToStdString().c_str();
-    std::cout << str << "\n";
     char c, nibble;
     while ((c = *str++))
     {
@@ -271,11 +296,46 @@ void norforkconditionallyFrame::OndbgCmdScrollThumbTrack(wxScrollEvent& event)
 {
     int value = dbg7->GetValue() << 7 | dbg6->GetValue() << 6 | dbg5->GetValue() << 5 | dbg4->GetValue() << 4 | dbg3->GetValue() << 3 | dbg2->GetValue() << 2 | dbg1->GetValue() << 1 | dbg0->GetValue() << 0;
     std::cout << value;
-    machine.memory[0x3001] = value;
+    machine.memory[DEBUG_IN_POS] = value;
 }
 
 void norforkconditionallyFrame::OntmrStepTrigger(wxTimerEvent& event)
 {
     for (int i = 0; i < 1; i++)
         step();
+}
+
+
+void norforkconditionallyFrame::OntmrUpdateTrigger(wxTimerEvent& event)
+{
+    int count = lstWatches->GetItemCount();
+    wxListItem item;
+    std::stringstream outstr;
+    // Display PC in the first row before we do the others:
+    outstr << std::hex << std::setfill('0') << std::setw(4) << machine.PC;
+    lstWatches->SetItem(0, 2, outstr.str());
+    // Loop through each list item, read and fetch the address, put the result in the last column.
+    for (int i = 1; i < count; i++)
+    {
+        item.m_itemId = i;
+        item.m_col = 1;
+        item.m_mask = wxLIST_MASK_TEXT;
+        lstWatches->GetItem(item);
+        std::stringstream addressstream(item.m_text.ToStdString());
+        addressstream.seekg(0, std::ios::beg);
+        addressstream << std::hex;
+        uint16_t address;
+        addressstream >> address;
+        std::stringstream outstr;
+        outstr << std::hex << std::setfill('0') << std::setw(2) << (int)machine.memory[address];
+        std::cout << outstr.str() << "\n";
+        lstWatches->SetItem(i, 2, outstr.str());
+
+    }
+}
+
+void norforkconditionallyFrame::OncmdWatchAddressClick(wxCommandEvent& event)
+{
+    long itemIndex = lstWatches->InsertItem(lstWatches->GetItemCount(), "");
+    lstWatches->SetItem(itemIndex, 1, txtWatchAddress->GetValue());
 }

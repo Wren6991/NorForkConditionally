@@ -11,11 +11,11 @@
 #define NORFORKCONDITIONALLYMAIN_H
 
 //(*Headers(norforkconditionallyFrame)
+#include <wx/listctrl.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
-#include <wx/toolbar.h>
 #include <wx/slider.h>
 #include <wx/button.h>
 #include <wx/frame.h>
@@ -45,13 +45,19 @@ class norforkconditionallyFrame: public wxFrame
         void OnbtnStepClick(wxCommandEvent& event);
         void OnTimer1Trigger(wxTimerEvent& event);
         void OntmrStepTrigger(wxTimerEvent& event);
+        void OnTimer1Trigger1(wxTimerEvent& event);
+        void OntmrUpdateTrigger(wxTimerEvent& event);
+        void OnEraseBackground(wxEraseEvent& event);
+        void OncmdWatchAddressClick(wxCommandEvent& event);
         //*)
         void step();
 
         //(*Identifiers(norforkconditionallyFrame)
         static const long ID_TEXTCTRL1;
         static const long ID_BUTTON2;
-        static const long ID_TEXTCTRL2;
+        static const long ID_LISTCTRL1;
+        static const long ID_TEXTCTRL3;
+        static const long ID_BUTTON4;
         static const long ID_STATICTEXT1;
         static const long ID_SLIDER9;
         static const long ID_SLIDER8;
@@ -68,23 +74,27 @@ class norforkconditionallyFrame: public wxFrame
         static const long idMenuQuit;
         static const long idMenuAbout;
         static const long ID_TIMER1;
-        static const long ID_TOOLBAR1;
+        static const long ID_TIMER2;
         //*)
 
         //(*Declarations(norforkconditionallyFrame)
         wxSlider* dbg3;
-        wxToolBar* ToolBar1;
         wxTimer tmrStep;
         wxSlider* dbg4;
         wxSlider* dbg5;
-        wxTextCtrl* txtOutput;
+        wxButton* cmdWatchAddress;
         wxSlider* dbg7;
         wxButton* btnRunStop;
+        wxMenuItem* MenuItem4;
         wxButton* btnStep;
         wxSlider* dbg0;
         wxStaticText* StaticText1;
+        wxTextCtrl* txtWatchAddress;
+        wxTimer tmrUpdate;
         wxTextCtrl* txtProgram;
         wxSlider* dbg2;
+        wxMenuItem* MenuItem3;
+        wxListCtrl* lstWatches;
         wxButton* btnLoad;
         wxSlider* dbg6;
         wxSlider* dbg1;

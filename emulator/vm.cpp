@@ -1,7 +1,5 @@
 #include "vm.h"
 
-const uint16_t debugout = 0x3000;
-
 void vm::step()
 {
     CIR = *((instruction*)(memory + (PC & ~(0x07))));             // round to 8 byte boundaries.
@@ -11,13 +9,13 @@ void vm::step()
     CIR.D = (CIR.D >> 8) | (CIR.D << 8);
     memory[CIR.A] = ~(memory[CIR.A] | memory[CIR.B]);
     PC = memory[CIR.A] ? CIR.C : CIR.D;
-    if (CIR.A == debugout)
+    if (CIR.A == DEBUG_OUT_POS)
         debugWritten = true;
 }
 
 vm::vm()
 {
-    for (int i = 0; i < 0x4000; i++)
+    for (int i = 0; i < VM_MEM_SIZE; i++)
     {
         memory[i] = 0;
     }
