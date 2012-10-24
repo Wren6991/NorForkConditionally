@@ -95,5 +95,46 @@ New execution order:
 - X = (A)				// 1 ucycle
 - (A) = ~(X | Y)			// 1 ucycle
 - A = (PC & ~0x07 | 0b1Z0)		// 2 ucycles     (note use of zero bit - this is a branch, but we can do this by feeding the 0 detect bit into the MSB of the microcode address.)
-- PC = (A)				// 2 ucycles; 16 bit load, this will require more suffix logic.
+- PC = A				// 2 ucycles; 16 bit load, this will require more suffix logic.
 Total: 11 cycles. Nearly twice as fast!
+This means we need different mappings for OE and WE signals.
++----+--------+--------+------+
+|Bits|   OE   |   WE   |nibble|
++----+--------+--------+------+
+|0x00|        |   X    |  8   |
++----+--------+--------+------+
+|0x01|        |   Y    |  9   |
++----+--------+--------+------+
+|0x02|        |  ^PC   |  a   |
++----+--------+--------+------+
+|0x03|        |  _PC   |  b   |
++----+--------+--------+------+
+|0x04| ^ADDR  | ^ADDR  |  c   |
++----+--------+--------+------+
+|0x05| _ADDR  | _ADDR  |  d   |
++----+--------+--------+------+
+|0x06|   PC   |        |  e   |
++----+--------+--------+------+
+|0x07|  ADDR  |        |  f   |
++----+--------+--------+------+
+
+We could put the memory OE/WE signals in there as well, saving 2 bits of microcode space... however it also adds a 20ns delay to what is already the slowest part of the system, so keep it horizontal for now.
+Revised microcode listing:
+eca2    // write to HADDR from (PC), suffix = 0xa & 0x7 = 0x2
+edb2    // write to LADDR
+f902    // Y = (A)
+ec82    // HADDR = (PC), suffix 0
+ed92    // LADDR = (PC), suffix 1
+f802    // X = (A)
+f0c0    // (A) = ~(X | Y)
+ecc2    // or ece2 if Z;  HADDR = (PC), suffix 4/6
+edd2    // or edf2 if Z;  LADDR = (PC), suffix 5/7
+ca00    // HPC = HADDR
+db00    // LPC = LADDR
+0001    // reset
+11 + reset = 12 microcycles total - originally 20, so 40% reduction in cycle time.
+
+
+
+
+
