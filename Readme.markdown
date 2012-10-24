@@ -15,9 +15,9 @@ Thanks go to Jack for his excellent documentation.
 Instruction Set Description
 ---------------------------
 
-As noted, the machine is a One Instruction Set Computer, or an OISC - it is only capable of executing one type of instruction. With a careful choice of instruction the machine is made universal; note that this does not make it practical!
-The chosen instruction is Nor and Fork Conditionally, or NFC - it loads two bytes from memory, NORs them together, stores the result in memory, and skips (forks) to one of two addresses depending on the result.
-The NOR operation is chosen as it is universal - with enough NORs, you can substitute for any other logical operation.
+As noted, the machine is a One Instruction Set Computer, or an OISC - it is only capable of executing one type of instruction. With a careful choice of instruction the machine is made universal; note that this does not make it practical!  
+The chosen instruction is Nor and Fork Conditionally, or NFC - it loads two bytes from memory, NORs them together, stores the result in memory, and skips (forks) to one of two addresses depending on the result.  
+The NOR operation is chosen as it is universal - with enough NORs, you can substitute for any other logical operation.  
 As this is the only instruction, the instruction is implicit -- i.e., does not have to be specified to the processor -- and is made up entirely of 4 16 bit addresses: A, B, C, D. Broken down into steps:
 
 1. `X = ~(A | B)		//NOR A and B`

@@ -99,7 +99,7 @@ If you need a piece of memory so that you can store a temporary value, you can u
 
 `var a, b, c`
 
-This allocates 3 variables - `a`, `b`, and `c` now refer to their locations. The compiler links each variable name to a free byte at the end of RAM.
+This allocates 3 variables - the names `a`, `b`, and `c` now refer to their locations. The compiler links each variable name to a free byte at the end of RAM.
 Each variable is one byte in size - if you need a larger chunk of data then you should pick your own memory addresses in lower RAM, as the compiler does not guarantee the adjacency of the variables.
 
 **Free Statement**
