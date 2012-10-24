@@ -223,7 +223,7 @@ function execute()
 	var compiledstring = ""
 	var labels = {};
 	var proglength = 0;
-	var varoffset = parseInt("2002", 16);
+	var varoffset = 0xbfff;
 	var dictionary = new vardict();
 	var nextaddresslist = [];
 	function put(str)
@@ -307,7 +307,7 @@ function execute()
 			for (var argindex = 1; argindex < args.length; argindex++)
 			{
 				var pos = dictionary.insert(args[argindex]);
-				constants[args[argindex]] = {name: args[argindex], value: pad((varoffset + pos).toString(16))};
+				constants[args[argindex]] = {name: args[argindex], value: pad((varoffset - pos).toString(16))};		// subtract pos instead of add, as var region starts at end of RAM and grows back into memory.
 			}
 		}
 		else if (args[0] == "free")
@@ -355,8 +355,8 @@ function execute()
 
 <body>
 <p>Fork Compiler</p>
-<textarea name="Prog" rows=25 cols=70>def debugout 3000
-def debugin 3001
+<textarea name="Prog" rows=25 cols=70>def debugout c000
+def debugin c001
 
 def clear(address)
   address 'ff

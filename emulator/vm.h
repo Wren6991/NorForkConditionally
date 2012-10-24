@@ -19,6 +19,8 @@ struct vm
     bool debugWritten;      // so the user can check if there has been debug output.
     instruction CIR;
     void step();
+    bool isWriteable(uint16_t location);
+    uint8_t get(uint16_t location);
     vm();
 };
 

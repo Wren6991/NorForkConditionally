@@ -49,6 +49,8 @@ class norforkconditionallyFrame: public wxFrame
         void OntmrUpdateTrigger(wxTimerEvent& event);
         void OnEraseBackground(wxEraseEvent& event);
         void OncmdWatchAddressClick(wxCommandEvent& event);
+        void OnClose(wxCloseEvent& event);
+        void OnmnuOpenTextFileSelected(wxCommandEvent& event);
         //*)
         void step();
 
@@ -69,6 +71,7 @@ class norforkconditionallyFrame: public wxFrame
         static const long ID_SLIDER2;
         static const long ID_BUTTON1;
         static const long ID_BUTTON3;
+        static const long ID_MENUITEM0;
         static const long ID_MENUITEM1;
         static const long ID_MENUITEM2;
         static const long idMenuQuit;
@@ -93,11 +96,11 @@ class norforkconditionallyFrame: public wxFrame
         wxTimer tmrUpdate;
         wxTextCtrl* txtProgram;
         wxSlider* dbg2;
-        wxMenuItem* MenuItem3;
         wxListCtrl* lstWatches;
         wxButton* btnLoad;
         wxSlider* dbg6;
         wxSlider* dbg1;
+        wxMenuItem* mnuOpenTextFile;
         //*)
 
         DECLARE_EVENT_TABLE()

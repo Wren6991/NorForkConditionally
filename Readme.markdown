@@ -10,7 +10,7 @@ This repo contains files relating to the One Instruction Set Computer, NFC. It c
 - A logisim file containing a possible implementation of an NFC machine
 - Implementation notes for this physical machine
 
-Thanks go to Jack for his excellent documentation.
+Thanks go to Jack for the excellent documentation on his site.
 
 Instruction Set Description
 ---------------------------
@@ -40,7 +40,7 @@ Note that the instruction provides all of the necessary operations:
 - Branching
     - Conditional or non-conditional (if both skip addresses are the same)
 
-It is also possible to read/write to runtime-specified locations: although the addresses are given in absolute terms, self-modifying code can be written that will set the address fields of an instruction in RAM before executing it.
+It is also possible to read/write to runtime-specified locations (indirect addressing): although the addresses are given in absolute terms, self-modifying code can be written that will set the address fields of an instruction in RAM before executing it.
 
 Machine Description
 -------------------

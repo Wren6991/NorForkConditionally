@@ -67,6 +67,7 @@ const long norforkconditionallyFrame::ID_SLIDER3 = wxNewId();
 const long norforkconditionallyFrame::ID_SLIDER2 = wxNewId();
 const long norforkconditionallyFrame::ID_BUTTON1 = wxNewId();
 const long norforkconditionallyFrame::ID_BUTTON3 = wxNewId();
+const long norforkconditionallyFrame::ID_MENUITEM0 = wxNewId();
 const long norforkconditionallyFrame::ID_MENUITEM1 = wxNewId();
 const long norforkconditionallyFrame::ID_MENUITEM2 = wxNewId();
 const long norforkconditionallyFrame::idMenuQuit = wxNewId();
@@ -90,12 +91,13 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     wxMenuItem* MenuItem1;
     wxBoxSizer* BoxSizer2;
     wxMenu* Menu1;
+    wxMenuItem* mnuNew;
     wxBoxSizer* BoxSizer1;
     wxMenuBar* MenuBar1;
     wxBoxSizer* BoxSizer3;
     wxMenu* Menu2;
 
-    Create(parent, wxID_ANY, _("Nor and Fork Conditionally"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("wxID_ANY"));
+    Create(parent, id, _("Nor and Fork Conditionally"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
     BoxSizer1 = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer4 = new wxBoxSizer(wxVERTICAL);
@@ -162,8 +164,10 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     SetSizer(BoxSizer1);
     MenuBar1 = new wxMenuBar();
     Menu1 = new wxMenu();
-    MenuItem3 = new wxMenuItem(Menu1, ID_MENUITEM1, _("Open Text File"), wxEmptyString, wxITEM_NORMAL);
-    Menu1->Append(MenuItem3);
+    mnuNew = new wxMenuItem(Menu1, ID_MENUITEM0, _("&New\tCtrl-N"), wxEmptyString, wxITEM_NORMAL);
+    Menu1->Append(mnuNew);
+    mnuOpenTextFile = new wxMenuItem(Menu1, ID_MENUITEM1, _("Open Text File\tCtrl-N"), wxEmptyString, wxITEM_NORMAL);
+    Menu1->Append(mnuOpenTextFile);
     MenuItem4 = new wxMenuItem(Menu1, ID_MENUITEM2, _("Open Binary File"), wxEmptyString, wxITEM_NORMAL);
     Menu1->Append(MenuItem4);
     MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tAlt-F4"), _("Quit the application"), wxITEM_NORMAL);
@@ -179,7 +183,6 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     tmrStep.Stop();
     tmrUpdate.SetOwner(this, ID_TIMER2);
     tmrUpdate.Start(53, false);
-    tmrUpdate.Stop();
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
@@ -195,11 +198,14 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     Connect(ID_SLIDER2,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&norforkconditionallyFrame::OndbgCmdScrollThumbTrack);
     Connect(ID_BUTTON1,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&norforkconditionallyFrame::OnbtnRunStopClick);
     Connect(ID_BUTTON3,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&norforkconditionallyFrame::OnbtnStepClick);
+    Connect(ID_MENUITEM1,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&norforkconditionallyFrame::OnmnuOpenTextFileSelected);
     Connect(idMenuQuit,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&norforkconditionallyFrame::OnQuit);
     Connect(idMenuAbout,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&norforkconditionallyFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&norforkconditionallyFrame::OntmrStepTrigger);
     Connect(ID_TIMER2,wxEVT_TIMER,(wxObjectEventFunction)&norforkconditionallyFrame::OntmrUpdateTrigger);
     //*)
+    tmrStep.Stop();
+    tmrUpdate.Stop();
 
     lstWatches->InsertColumn(0, "Name");
     lstWatches->InsertColumn(1, "Address");
@@ -338,4 +344,13 @@ void norforkconditionallyFrame::OncmdWatchAddressClick(wxCommandEvent& event)
 {
     long itemIndex = lstWatches->InsertItem(lstWatches->GetItemCount(), "");
     lstWatches->SetItem(itemIndex, 1, txtWatchAddress->GetValue());
+}
+
+void norforkconditionallyFrame::OnClose(wxCloseEvent& event)
+{
+}
+
+void norforkconditionallyFrame::OnmnuOpenTextFileSelected(wxCommandEvent& event)
+{
+    txtProgram->SetValue("");
 }
