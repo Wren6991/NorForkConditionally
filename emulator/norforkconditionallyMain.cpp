@@ -295,6 +295,8 @@ void norforkconditionallyFrame::OnbtnLoadClick(wxCommandEvent& event)
     }
     /*for (int i = 0; i < 0x40; i++)
         std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)machine.memory[i];*/
+    wxTimerEvent evt;
+    OntmrUpdateTrigger(evt);        // update the watch list to show new values of program counter etc.
 }
 
 

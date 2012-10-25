@@ -1,0 +1,15 @@
+v2.0 raw
+bf ff 0 70 0 8 0 8
+bf ff c0 1 0 10 0 10
+bf ff 0 71 0 18 0 18
+bf fe 0 70 0 20 0 20
+bf fe bf ff 0 28 0 28
+bf fe bf fe 0 30 0 50
+bf ff 0 70 0 38 0 38
+bf ff 0 72 0 40 0 40
+c0 0 bf ff 0 48 0 48
+bf ff bf ff 4*0 bf ff 0
+70 0 58 0 58 bf ff 0
+73 0 60 0 60 c0 0 bf
+ff 0 68 0 68 bf ff bf
+ff 4*0 ff f 0 1

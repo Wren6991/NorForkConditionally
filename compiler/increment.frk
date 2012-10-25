@@ -1,0 +1,92 @@
+def debugout c000
+def debugin c001
+
+def clear(dest)
+  dest 'ff
+end
+
+def not(src, dest)
+  clear(dest)
+  dest src
+end
+
+def invert(dest)
+  dest dest
+end
+
+def goto(address)
+  var a
+  a a address address
+  free a
+end
+
+def copy(src, dest)
+  not(src, dest)
+  invert(dest)
+end
+
+def output(src, port)  # for writing to i/o ports; they always read 0
+  var a
+  not(src, a)
+  port a
+  free a
+end
+
+def getBitAndFork(src, data, address)
+  var a
+  not(data, a)
+  a src address next                 
+  free a
+end
+
+def NFCPairAndJump(src1, src2, dest1, dest2, address)
+  dest1 src1
+  dest2 src2 address address
+end
+
+def increment(src, dest)
+  var a b
+  clear(a)
+  clear(b)
+  getBitAndFork(src, '1, carry1)
+  getBitAndFork(src, '2, carry2)
+  getBitAndFork(src, '4, carry3)
+  getBitAndFork(src, '8, carry4)
+  getBitAndFork(src, '16, carry5)
+  getBitAndFork(src, '32, carry6)
+  getBitAndFork(src, '64, carry7)
+  getBitAndFork(src, '128, carry8)
+  dest 'ff finish finish
+carry1:
+  NFCPairAndJump('fe, 'ff, a, b, skip)
+carry2:
+  NFCPairAndJump('fd, 'fe, a, b, skip)
+carry3:
+  NFCPairAndJump('fb, 'fc, a, b, skip)
+carry4:
+  NFCPairAndJump('f7, 'f8, a, b, skip)
+carry5:
+  NFCPairAndJump('ef, 'f0, a, b, skip)
+carry6:
+  NFCPairAndJump('df, 'e0, a, b, skip)
+carry7:
+  NFCPairAndJump('bf, 'c0, a, b, skip)
+carry8:
+  NFCPairAndJump('7f, '80, a, b, skip)
+skip:
+  clear(dest)
+  dest src
+  dest b
+  dest a
+  invert(dest)
+  free a b
+finish:
+end
+
+loopStart:
+var a
+  #increment(debugin, debugout)
+  #goto(loopStart)
+  output('c5, debugout)
+  goto(loopStart)
+free a
