@@ -126,7 +126,7 @@ f902    // Y = (A)
 ec82    // HADDR = (PC), suffix 0
 ed92    // LADDR = (PC), suffix 1
 f802    // X = (A)
-f0c0    // (A) = ~(X | Y)
+f00c    // (A) = ~(X | Y)
 ecc2    // or ece2 if Z;  HADDR = (PC), suffix 4/6
 edd2    // or edf2 if Z;  LADDR = (PC), suffix 5/7
 ca00    // HPC = HADDR
@@ -134,7 +134,11 @@ db00    // LPC = LADDR
 0001    // reset
 11 + reset = 12 microcycles total - originally 20, so 40% reduction in cycle time.
 
+Further modification: transfer PC to ADDR through the _address_ bus, so we perform a 16 bit parallel load.
+PC is only written to from the address latches anyway, so this won't affect its functionality.
+Tie PC's inputs and outputs to the ADDR_DIRECT line, and have only a single WE signal for the entire 16 bit register - PC loads will then take 1 ucycle instead of 2.
 
-
+0xe is now the write PC signal, 0xa and 0xb are unmapped.
+This also means we no longer need individual OE signals for HADDR and LADDR... it's effectively a write only register now, which we can transfer to PC if we want to.
 
 
