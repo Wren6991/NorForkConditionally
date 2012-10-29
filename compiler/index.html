@@ -5,36 +5,6 @@
 <link rel="stylesheet" type="text/css" href="./style.css">
 <script type="text/javascript">
 
-/*
-example code:
-
-3000 3000 0000 0000 	#comment: this is pure machine code. we don't need to assemble this.
-						# This clears the debug output and then loops to instruction 0.
-1230 4560 				# If the address fields are left blank, we stitch in the next instruction's address.
-2312 2312 7412			# If only one address is given, that address is assembled into both fields. (i.e. non-conditional jump)
-
-
-def zero 2312			# macros are defined with the def keyword. They are replaced textually at compile time.
-def clear(a)			# if a macro is defined with arguments, it is ended with an end keyword.
-	a a 				# they are expanded textually before assembly.
-end
-
-def copy(dest, src)
-	unused src
-	dest unused
-end
-
-def goto(address)
-	clear(unused)
-	unused zero address
-end
-
-def brz(testloc, address)
-	unused testloc
-	zero zero $ address	# $ gets replaced with the current location at compile time.
-end
-*/
-
 var isDebug = false;
 var outputAsBytes = false;
 
@@ -314,7 +284,7 @@ function execute()
 	for (var i = 0; i < firstpasslist.length; i++)
 	{
 		constants["next"] = {name: "next", value: nextaddresslist[i]};
-		var args = firstpasslist[i].split(/[\t ]+/);
+		var args = firstpasslist[i].split(/,?[\t ]+/);
 		if (args[0] == "var")
 		{
 			for (var argindex = 1; argindex < args.length; argindex++)
@@ -357,7 +327,7 @@ function execute()
 	if (outputAsBytes)
 		compiledstring = compiledstring.replace(/([0-9a-fA-F]{2})(?!\b)/g, "$1 ");
 	print(compiledstring);
-	/*var tokens = progstring.split(/¬+/);
+	/*var tokens = progstring.split(/\AC+/);
 	for (i in tokens)
 	{
 		write("\"" + tokens[i] + (i < tokens.length - 1? "\", " : "\"\n"));

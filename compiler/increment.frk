@@ -25,27 +25,31 @@ def copy(src, dest)
   invert(dest)
 end
 
-def output(src, port)  # for writing to i/o ports; they always read 0
+def output(src, dest)     # for i/o ports, as they always read 0
   var a
   not(src, a)
-  port a
+  dest a
   free a
 end
 
+# fork to address if tested bit is false:
 def getBitAndFork(src, data, address)
   var a
-  not(data, a)
-  a src address next                 
-  free a
+  not(data, a)            # a = ~data
+  a src address next      # a = ~(~data | src) = data & ~src
+  free a                  # results in 0 if tested bit is true; if so then skip to next.
 end
 
+# dest1 = ~(dest1 | src1); dest2 = ~(dest2 | src2); jump(address);
 def NFCPairAndJump(src1, src2, dest1, dest2, address)
   dest1 src1
   dest2 src2 address address
 end
 
+
+# Strategy: find the least-significant 0 bit, set that bit to 1, set all bits below it to 0.
 def increment(src, dest)
-  var a b
+  var a, b
   clear(a)
   clear(b)
   getBitAndFork(src, '1, carry1)
@@ -85,8 +89,12 @@ end
 
 loopStart:
 var a
-  #increment(debugin, debugout)
-  #goto(loopStart)
-  output('c5, debugout)
+  increment(debugin, a)
+  output(a, debugout)
   goto(loopStart)
 free a
+
+# PROBLEM: when increment gets expanded, we sub a into the body. However, a new variable a is declared inside increment - as the values don't get subbed til _after_ expansion, we are writing to this location of a instead of the first one!
+# We need some way of subbing the final value in at expansion time - to do this, we also need to _know the value at expansion time.
+# The current compiler structure has to go out the window.
+# Time for a rewrite?
