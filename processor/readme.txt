@@ -161,3 +161,49 @@ fe00
 Note that only e and f are given for first nibble (besides 0): this is because we are only controlling output from the PC and ADDR, so it would make more sense to use 2 horizontal bits than 4 encoded ones!
 Same goes for write bits: c, d, 8, 9, e for ^ADDR, _ADDR, X, Y and PC. Better to use 5 horizontal bits (at the cost of an extra bit), and take a 12ns decoding delay out of the critical timing path of the CPU.
 So we go from 8 bits to 7, take 2 chips out, and gain 1 chip delay of cycle time.
+
+List of microcode signals:
+wX, wY, w^AD, w_AD, wPC, wMEM, oAD, oPC, oMEM, oALU, sSUF, SUF2, SUF1, SUF0, mRST
+
+15 bits, split between 2 8bit wide PROMs.
+Ideally:
+- write and output signals on different PROMs so we can stagger them
+- reset signal on the PROM that gets triggered first, so we can skip back straight away. (If necessary hardcode the reset signal from the counter and get rid of the soft reset signal)
+- the suffix must be applied no later than wMEM going high - else we will not be writing to the correct location!
+    - take a look at the timing diagrams to see how much headroom we have
+    - if necessary, buffer the 4 OE signals individually rather than at a PROM level, seeing as the suffix and OE bits are probably going to end up on the same PROM.
+    - actually this bit isn't that important because we only modify the suffix while we're reading from memory. (Still might be worth bringing the address latch straight past the encoder? eh.)
+
+Possible bit organisation:
++-----+-----------------+
+| Bit | PROM 1 | PROM 0 |
++-----+--------+--------+
+|  7  |  oAD   |   --   |
+|  6  |  oPC   |  wPC   |
+|  5  |  oMEM  |  wMEM  |
+|  4  |  oALU  |  w^AD  |
+|  3  |  SUFs  |  w_AD  |
+|  2  |  SUF2  |  wX    |
+|  1  |  SUF1  |  wY    |
+|  0  |  SUF0  |  RST   |
++-----+--------+--------+
+                                   __  
+Output bits need inverting anyway (OE, not just OE), so they'll be individually buffered as it is. No need to trigger the PROMs separately - timing allowing.
+
+New listing (binary): oooossss _wwwwwwr
+
+0110 1010 0001 0000		; HADDR <- (PC + 2)
+0110 1011 0000 1000		; LADDR <- (PC + 3)
+1010 0000 0000 0010		; Y <- (ADDR)
+0110 1000 0001 0000		; HADDR <- (PC + 0)
+0110 1001 0000 1000		; LADDR <- (PC + 1)
+1010 0000 0000 0100		; X <- (ADDR)
+1001 0000 0010 0000		; (ADDR) <- ALU
+0110 11Z0 0001 0000		; HADDR <- (PC + 4 + 2*Z)
+0110 11Z1 0000 1000 		; LADDR <- (PC + 5 + 2*Z)
+1000 0000 0100 0000		; PC <- ADDR
+0000 0000 0000 0001		; reset
+
+Same listing in hex:
+6a10, 6b08, a002, 6810, 6908, a004, 9020, 6c10, 6d08, 8040, 0001
+Or, if Z:             ''                  6e10, 6f10,     ''
