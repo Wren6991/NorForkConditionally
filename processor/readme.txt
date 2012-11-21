@@ -1,3 +1,6 @@
+///// This is a chronological document: new ideas are appended to the bottom as I make them up, so the top may not reflect the current design.
+
+
 Steps:
 1.  fetch bytes (we should fetch first byte last, so its location is still in the latch for writing
 	-  A <- (PC & ~0x07 | 0x02)			// last byte first!
@@ -141,4 +144,20 @@ Tie PC's inputs and outputs to the ADDR_DIRECT line, and have only a single WE s
 0xe is now the write PC signal, 0xa and 0xb are unmapped.
 This also means we no longer need individual OE signals for HADDR and LADDR... it's effectively a write only register now, which we can transfer to PC if we want to.
 
+So this would make the following listing:
 
+eca2
+edb2
+f902
+ec82
+ed92
+f802
+f00c
+ecc2	; ce if Z
+edd2	; df if Z
+fe00
+0001
+
+Note that only e and f are given for first nibble (besides 0): this is because we are only controlling output from the PC and ADDR, so it would make more sense to use 2 horizontal bits than 4 encoded ones!
+Same goes for write bits: c, d, 8, 9, e for ^ADDR, _ADDR, X, Y and PC. Better to use 5 horizontal bits (at the cost of an extra bit), and take a 12ns decoding delay out of the critical timing path of the CPU.
+So we go from 8 bits to 7, take 2 chips out, and gain 1 chip delay of cycle time.
