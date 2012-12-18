@@ -101,7 +101,7 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
     BoxSizer1 = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer4 = new wxBoxSizer(wxVERTICAL);
-    txtProgram = new wxTextCtrl(this, ID_TEXTCTRL1, _("2002 0070 0008 0008\n2002 3001 0010 0010\n2002 0071 0018 0018\n2003 0070 0020 0020\n2003 2002 0028 0028\n2003 2003 0030 0050\n2002 0070 0038 0038\n2002 0072 0040 0040\n3000 2002 0048 0048\n2002 2002 0000 0000\n2002 0070 0058 0058\n2002 0073 0060 0060\n3000 2002 0068 0068\n2002 2002 0000 0000\nff0f 0001 0000 0000"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE, wxDefaultValidator, _T("ID_TEXTCTRL1"));
+    txtProgram = new wxTextCtrl(this, ID_TEXTCTRL1, _("bfff 0070 0008 0008\nbfff c001 0010 0010\nbfff 0071 0018 0018\nbffe 0070 0020 0020\nbffe bfff 0028 0028\nbffe bffe 0030 0050\nbfff 0070 0038 0038\nbfff 0072 0040 0040\nc000 bfff 0048 0048\nbfff bfff 0000 0000\nbfff 0070 0058 0058\nbfff 0073 0060 0060\nc000 bfff 0068 0068\nbfff bfff 0000 0000\nff0f 0001 0000 0000"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE, wxDefaultValidator, _T("ID_TEXTCTRL1"));
     txtProgram->SetMinSize(wxSize(200,250));
     wxFont txtProgramFont(10,wxSWISS,wxFONTSTYLE_NORMAL,wxNORMAL,false,_T("Consolas"),wxFONTENCODING_DEFAULT);
     txtProgram->SetFont(txtProgramFont);
