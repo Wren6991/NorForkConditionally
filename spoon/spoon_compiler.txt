@@ -1,2 +1,30 @@
-    tokenizer ->  parser ->    compiler ->  linker
-text   ->   tokens  -> syntax tree -> object -> program
+    tokenizer ->  parser ->    compiler ->  linker ->  assembler
+text   ->   tokens  -> syntax tree -> object -> program -> machine code
+
+Tokenizer:
+----------
+Converts text into tokens. E.g. "function f()" -> "function" "f" "(" ")".
+Simple state-machine scanner. Nothing much to see here.
+
+Parser:
+-------
+
+Converts tokens into abstract syntax tree - checks and implements syntax. *That's it.* Don't be tempted to perform any compilation steps in the parser! 
+
+Compiler:
+---------
+
+Reads in the tree, produces an object.
+Includes:
+- assigning GUIDs to each variable instance
+- uses these to produce local links, resolved to machine address links by linker.
+- Produces an object for the file.
+- object contains a list of vars declared, a list of statements, a list of required symbols, a list of defined symbols.
+- object can contain more objects. ?
+- Perform any optimizations/contractions?
+
+Linker:
+-------
+
+- Reads in all the objects, checks that all linked objects have matching definitions.
+- 
