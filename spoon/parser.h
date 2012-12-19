@@ -1,3 +1,9 @@
+#ifndef _PARSER_H_INCLUDED_
+#define _PARSER_H_INCLUDED_
+
+#include "syntaxtree.h"
+#include "tokenizer.h"
+
 class parser
 {
     std::vector<token> tokens;
@@ -10,6 +16,6 @@ class parser
     public:
     parser(std::vector<token> tokens_);
     // parse methods follow
-}
+};
 
-
+#endif // _PARSER_H_INCLUDED_

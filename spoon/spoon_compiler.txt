@@ -22,9 +22,12 @@ Includes:
 - object contains a list of vars declared, a list of statements, a list of required symbols, a list of defined symbols.
 - object can contain more objects. ?
 - Perform any optimizations/contractions?
+- Objects are serializable and deserializable (JSON? ;) - can be saved/loaded to/from files.
 
 Linker:
 -------
 
 - Reads in all the objects, checks that all linked objects have matching definitions.
-- 
+- Expands macros, links functions in.
+- Converts location symbols (e.g. variable names) into actual allocated machine addresses.
+

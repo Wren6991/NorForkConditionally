@@ -1,10 +1,10 @@
 #include <iostream>
 #include "tokenizer.h"
+#include "parser.h"
 
 #define _s(str) #str
 #define _xs(str) _s(str)
 
-using namespace std;
 
 int main()
 {
