@@ -12,21 +12,15 @@ int main()
     {
         std::vector<token> tokens = tokenize(_s(
 ////////////////////////////////////////////////
-def debugout c000           \n
-def debugin c001            \n
+const debugout 0xc000;
+const debugin 0xc001;
+function main()
+{
+    nfc(0xbfff, 0x0018);
+    nfc(0xbfff, debugin);
+    nfc(debugout, 0xbfff);
+}
 
-def clear(address)          \n
-  address 'ff               \n
-end \n
-
-def invcopy(src, dest)      \n
-  clear(dest)               \n
-  dest src                  \n
-end                         \n
-
-def not(address)            \n
-  address address           \n
-end                         \n
 ////////////////////////////////////////////////
         ));
     }

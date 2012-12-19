@@ -1,0 +1,96 @@
+/*
+- strongly typed : char, pointer, ...
+- hex prefixed with "0x"
+- ' operator: looks up value from constant table
+- stream comments (you're reading one), or // inline comments
+- some way of defining infix operators? (map operator -> function/macro e.g. a + b -> add(a, b))       a la haskell
+- linking!
+	- give each function a global symbol, based on its name and the names and types of its arguments
+	- at compile time, we just replace function/macro calls with the symbol (one call object - no distinction until linking)
+	- we then look up the symbol, and link in the object code (or the precompiled IR) from stdlib.spn
+	- operators (including = and +) are defined as functions/macros, syntactically replaced at compile time and then linked at link time.
+	- some functions are built in (to the compiler, not the library) e.g. NFC.
+- while
+- if
+- expression evaluation for ifs:
+	- link in the location of the result, evaluate expression's code, perform fork based on result in location
+*/
+
+
+
+
+macro clear(dest)
+{
+    nfc(dest, '0xff);
+}
+
+macro not(src, dest)
+{
+    clear(dest);
+    nfc(dest, src);
+}
+
+macro invert(dest)
+{
+    nfc(dest, dest);
+}
+
+macro copy(src, dest)
+{
+    not(src, dest);
+    invert(dest);
+}
+
+macro output(src, port)		// for writing to io ports
+{
+    var x;
+    not(src, x);
+    nfc(port, x);		// x gets freed automatically at end of block.
+}
+    
+
+macro andNot(a, b, dest)
+{
+    not(a, dest);
+    nfc(dest, b);
+}
+
+macro nor(a, b, dest)
+{
+    copy(a, dest);
+    nfc(dest, b);
+}
+
+macro or(a, b, dest)
+{
+    nor(a, b, dest);
+    invert(dest);
+}
+
+macro and(a, b, dest)
+{
+    var notb;
+    not(b, notb);
+    andnot(a, notb, dest);
+}
+
+macro nand(a, b, dest)
+{
+    and(a, b, dest);
+    invert(dest);
+}
+
+macro xor(a, b, dest)
+{
+    var x, y;
+    andnot(a, b, x);
+    andnot(b, a, y);
+    or(x, y, dest);
+}
+
+macro add(a, b, dest)
+{
+  int sum, carry;
+}
+
+

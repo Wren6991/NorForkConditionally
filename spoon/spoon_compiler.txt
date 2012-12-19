@@ -1,0 +1,2 @@
+    tokenizer ->  parser ->    compiler ->  linker
+text   ->   tokens  -> syntax tree -> object -> program

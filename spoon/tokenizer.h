@@ -10,25 +10,22 @@
 
 typedef enum {
     t_eof = 0,  //end of file
-    t_value,
-    t_plus,
-    t_minus,
-    t_lparen,
-    t_rparen,
-    t_string,
     t_comma,
-    t_quote,
-    t_end,
-    t_def,
-    t_var,
-    t_dat,
-    t_statementsep
-    } token_type_enum;
-
-class arglist_member;
-class tagged_value;
-
-typedef tagged_value (*dfuncd)(arglist_member*);
+    t_const,
+    t_function,
+    t_if,
+    t_lbrace,
+    t_lparen,
+    t_macro,
+    t_name,
+    t_number,
+    t_rbrace,
+    t_rparen,
+    t_semicolon,
+    t_string,
+    t_type,
+    t_while
+} token_type_enum;
 
 class token
 {
@@ -40,6 +37,5 @@ class token
 };
 
 std::vector <token> tokenize(std::string);
-std::vector <token> tokenize(std::string, std::map <std::string, dfuncd>);
 
 #endif // TOKENIZER_H_INCLUDED
