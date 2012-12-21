@@ -15,7 +15,15 @@ class parser
     void expect(token t);
     public:
     parser(std::vector<token> tokens_);
-    // parse methods follow
+
+    program* getprogram();
+    definition *getdefinition();
+        constdef* getconstdef();
+        funcdef* getfuncdef();
+        macrodef* getmacrodef();
+    block* getblock();
+    statement* getstatement();
+    expression* getexpression();
 };
 
 #endif // _PARSER_H_INCLUDED_

@@ -18,7 +18,7 @@ function main()
 {
     nfc(0xbfff, 0x0018);
     nfc(0xbfff, debugin);
-    nfc(debugout, 0xbfff);
+    nfc(debugout, 0xbfff, 0x0000, 0x0000);
 }
 
 ////////////////////////////////////////////////
