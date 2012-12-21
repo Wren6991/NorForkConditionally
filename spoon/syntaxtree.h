@@ -1,6 +1,9 @@
 #ifndef SYNTAXTREE_H_INCLUDED
 #define SYNTAXTREE_H_INCLUDED
 
+#include <vector>
+#include <string>
+
 typedef enum {
     dt_constdef = 0,
     dt_funcdef,

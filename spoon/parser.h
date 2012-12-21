@@ -4,6 +4,8 @@
 #include "syntaxtree.h"
 #include "tokenizer.h"
 
+#include <vector>
+
 class parser
 {
     std::vector<token> tokens;
