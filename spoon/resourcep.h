@@ -10,7 +10,7 @@ template <typename T>
 struct resourcep
 {
     T *obj;
-    public:
+
     resourcep()
     {
         obj = new T();
@@ -23,7 +23,7 @@ struct resourcep
     T* release()
     {
         T *handle = obj;
-        object = 0;
+        obj = 0;
         return handle;
     }
 };

@@ -44,6 +44,7 @@ struct definition
 struct constdef: public definition
 {
     std::string type;
+    std::string name;
     int value;
 };
 
@@ -51,6 +52,11 @@ struct argument
 {
     type_enum type;
     std::string name;
+    argument(type_enum type_ = type_none, std::string name_ = "")
+    {
+        type = type_;
+        name = name_;
+    }
 };
 
 struct funcdef: public definition
@@ -63,6 +69,7 @@ struct funcdef: public definition
 
 struct macrodef: public definition
 {
+    std::string name;
     std::vector<std::string> args;
     block *body;
 };

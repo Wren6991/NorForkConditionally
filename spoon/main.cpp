@@ -12,8 +12,8 @@ int main()
     {
         std::vector<token> tokens = tokenize(_s(
 ////////////////////////////////////////////////
-const debugout 0xc000;
-const debugin 0xc001;
+const pointer debugout = 0xc000;
+const pointer debugin = 0xc001;
 function main()
 {
     nfc(0xbfff, 0x0018);
@@ -23,6 +23,8 @@ function main()
 
 ////////////////////////////////////////////////
         ));
+        parser p(tokens);
+        p.getprogram();
     }
     catch (error e)
     {

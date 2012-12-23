@@ -66,6 +66,7 @@ std::vector <token> tokenize(std::string str)
 
     std::map<char, token> symbols;
     symbols[','] = token(t_comma , ",");
+    symbols['='] = token(t_equals, "=");
     symbols['('] = token(t_lparen, "(");
     symbols[')'] = token(t_rparen, ")");
     symbols['{'] = token(t_lbrace, "{");

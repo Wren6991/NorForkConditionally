@@ -9,12 +9,13 @@
 class parser
 {
     std::vector<token> tokens;
+    std::map <std::string, type_enum> types;
     int index;
     token t;
     token lastt;
     void gettoken();
-    bool accept(token t);
-    void expect(token t);
+    bool accept(token_type_enum type);
+    void expect(token_type_enum type);
     public:
     parser(std::vector<token> tokens_);
 
