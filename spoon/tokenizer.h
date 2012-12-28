@@ -25,6 +25,7 @@ typedef enum {
     t_semicolon,
     t_string,
     t_type,
+    t_var,
     t_while
 } token_type_enum;
 

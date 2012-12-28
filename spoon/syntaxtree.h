@@ -43,9 +43,10 @@ struct definition
 
 struct constdef: public definition
 {
-    std::string type;
+    std::string valtype;
     std::string name;
-    int value;
+    int value;                          // ought really to be an expression
+    constdef() {type = dt_constdef;}
 };
 
 struct argument
@@ -65,6 +66,7 @@ struct funcdef: public definition
     std::string name;
     std::vector <argument> args;
     block *body;
+    funcdef() {type = dt_funcdef;}
 };
 
 struct macrodef: public definition
@@ -72,6 +74,7 @@ struct macrodef: public definition
     std::string name;
     std::vector<std::string> args;
     block *body;
+    macrodef() {type = dt_macrodef;}
 };
 
 struct vardeclaration
@@ -89,6 +92,7 @@ struct funccall: public statement
 {
     std::string name;
     std::vector <expression*> args;
+    funccall() {type = stat_call;}
 };
 
 struct block

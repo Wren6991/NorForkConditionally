@@ -25,6 +25,7 @@ class parser
         funcdef* getfuncdef();
         macrodef* getmacrodef();
     block* getblock();
+    vardeclaration* getvardeclaration();
     statement* getstatement();
     expression* getexpression();
 };

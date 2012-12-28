@@ -1,6 +1,7 @@
 #include <iostream>
 #include "tokenizer.h"
 #include "parser.h"
+#include "printtree.h"
 
 #define _s(str) #str
 #define _xs(str) _s(str)
@@ -24,7 +25,7 @@ function main()
 ////////////////////////////////////////////////
         ));
         parser p(tokens);
-        p.getprogram();
+        printtree(p.getprogram());
     }
     catch (error e)
     {

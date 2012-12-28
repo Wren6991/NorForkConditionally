@@ -84,7 +84,7 @@ constdef* parser::getconstdef()
 {
     resourcep <constdef> def;
     expect(t_type);
-    def.obj->type = lastt.value;
+    def.obj->valtype = lastt.value;
     expect(t_name);
     def.obj->name = lastt.value;
     expect(t_equals);
@@ -156,9 +156,24 @@ block* parser::getblock()
     {
         while(t.type != t_rbrace)
         {
-            //if var, vardeclaration, else
-
-            blk.obj->statements.push_back(getstatement());
+            if (accept(t_var))
+            {
+                resourcep <vardeclaration> vardec;
+                expect(t_type);
+                vardec.obj->type = types[lastt.value];
+                expect(t_name);
+                vardec.obj->names.push_back(lastt.value);
+                while (accept(t_comma))
+                {
+                    expect(t_name);
+                    vardec.obj->names.push_back(lastt.value);
+                }
+                expect(t_semicolon);
+            }
+            else
+            {
+                blk.obj->statements.push_back(getstatement());
+            }
         }
         accept(t_rbrace);
     }
@@ -173,8 +188,33 @@ statement* parser::getstatement()
     expect(t_name);
     fcall.obj->name = lastt.value;
     expect(t_lparen);
-    while(!accept(t_rparen) && t.type != t_eof);
+    if (t.type != t_rparen)
+    {
+        fcall.obj->args.push_back(getexpression());
+        while (accept(t_comma))
+        {
+            fcall.obj->args.push_back(getexpression());
+        }
+    }
+    expect(t_rparen);
     expect(t_semicolon);
     return fcall.release();
 }
 
+expression* parser::getexpression()
+{
+    resourcep <expression> expr;
+    if (accept(t_name))
+    {
+        expr.obj->type = exp_name;
+        expr.obj->name = lastt.value;
+    }
+    else
+    {
+        expect(t_number);
+        std::stringstream ss;
+        ss << lastt.value;
+        ss >> expr.obj->number;
+    }
+    return expr.release();
+}
