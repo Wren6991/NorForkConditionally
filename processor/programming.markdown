@@ -1,5 +1,8 @@
-less than 16:  length 116
-
+Less than 16
+-------------------------
+Tests if the input (c001) is less than 16; if so, it turns on the last bit of output.
+Length 116 bytes.
+```
 0xbf, 0xff, 0x00, 0x70, 0x00, 0x08, 0x00, 0x08,
 0xbf, 0xff, 0xc0, 0x01, 0x00, 0x10, 0x00, 0x10,
 0xbf, 0xff, 0x00, 0x71, 0x00, 0x18, 0x00, 0x18,
@@ -15,16 +18,24 @@ less than 16:  length 116
 0xc0, 0x00, 0xbf, 0xff, 0x00, 0x68, 0x00, 0x68,
 0xbf, 0xff, 0xbf, 0xff, 0x00, 0x00, 0x00, 0x00,
 0xff, 0x0f, 0x00, 0x01
+```
 
-copy to out if input != 0xff; else 0x00. (off if all switches are on) length 33
+Fork Test
+-------------------------------------------------------------------------------
 
+Copies debugin to debugout, unless all bits are true in debugin: if so, set debugout to 0.
+Length 33 bytes.
+```
 0xbf, 0xff, 0x00, 0x20, 0x00, 0x08, 0x00, 0x08,
 0xbf, 0xff, 0xc0, 0x01, 0x00, 0x18, 0x00, 0x10
 0xbf, 0xff, 0xbf, 0xff, 0x00, 0x18, 0x00, 0x18,
 0xc0, 0x00, 0xbf, 0xff, 0x00, 0x00, 0x00, 0x00,
 0xff
+```
 
 Programming procedure:
+----------------------
+
 - Hold clock line low
 - Hold pin 7 of u1 (address OE) high
 - attach arduino to data bus
@@ -33,6 +44,8 @@ Programming procedure:
 - fire away!
 
 To go back to running mode:
+---------------------------
+
 - disconnect power to avoid ROM contents loss from /WE noise
 - unplug pins e, f, g, h
 - plug in ROM /OE and /WE (make sure /WE is *high*!)
@@ -41,6 +54,7 @@ To go back to running mode:
 - power up
 
 To reset computer:
+------------------
 
 - hold clock line low
 - touch +V to LE on both address latches (loads them to 0)
