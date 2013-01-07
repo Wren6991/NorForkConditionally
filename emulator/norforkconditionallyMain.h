@@ -75,6 +75,7 @@ class norforkconditionallyFrame: public wxFrame
         static const long ID_MENUITEM1;
         static const long ID_MENUITEM2;
         static const long idMenuQuit;
+        static const long ID_MEMWINDOW;
         static const long idMenuAbout;
         static const long ID_TIMER1;
         static const long ID_TIMER2;
