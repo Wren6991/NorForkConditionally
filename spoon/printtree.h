@@ -9,6 +9,7 @@ void printtree(funcdef *def, int indentation);
 void printtree(macrodef *def, int indentation);
 void printtree(constdef *def, int indentation);
 void printtree(block *blk, int indentation);
+void printtree(vardeclaration *decl, int indentation);
 void printtree(statement *stat, int indentation);
 void printtree(expression *expr);
 

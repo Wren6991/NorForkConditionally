@@ -39,17 +39,48 @@ void printtree(program *prog, int indentation)
 void printtree(constdef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "const " << def->valtype << " " << def->name << " = " << def->value << ";\n";
+    std::cout << "constant " << def->valtype << " " << def->name << ": " << def->value << "\n";
 }
 
 void printtree(funcdef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "Definition of " << def->name << "\n";
+    std::cout << "Definition of function " << def->name << ":\n";
+    printtree(def->body, indentation);
 }
 
 void printtree(macrodef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "Definition of " << def->name << "\n";
+    std::cout << "Definition of macro " << def->name << ":\n";
+    printtree(def->body, indentation);
+}
+
+void printtree(block *blk, int indentation)
+{
+    indent(indentation);
+    std::cout << "STARTBLOCK\n";
+    for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
+    {
+        printtree(*iter, indentation + 1);
+    }
+    for (std::vector<statement*>::iterator iter = blk->statements.begin(); iter != blk->statements.end(); iter++)
+    {
+        printtree(*iter, indentation + 1);
+    }
+    indent(indentation);
+    std::cout << "ENDBLOCK\n";
+}
+
+void printtree(vardeclaration *decl, int indentation)
+{
+    indent(indentation);
+    std::cout << "declared " << decl->type << decl->names[0] << "\n";
+}
+
+void printtree(statement *stat, int indentation)
+{
+    indent(indentation);
+    if (stat->type == stat_call)
+        std::cout << "call to function " << ((funccall*)stat)->name << "\n";
 }

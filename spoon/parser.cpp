@@ -158,17 +158,7 @@ block* parser::getblock()
         {
             if (accept(t_var))
             {
-                resourcep <vardeclaration> vardec;
-                expect(t_type);
-                vardec.obj->type = types[lastt.value];
-                expect(t_name);
-                vardec.obj->names.push_back(lastt.value);
-                while (accept(t_comma))
-                {
-                    expect(t_name);
-                    vardec.obj->names.push_back(lastt.value);
-                }
-                expect(t_semicolon);
+                blk.obj->declarations.push_back(getvardeclaration());
             }
             else
             {
@@ -180,6 +170,22 @@ block* parser::getblock()
     else
         blk.obj->statements.push_back(getstatement());
     return blk.release();
+}
+
+vardeclaration* parser::getvardeclaration()
+{
+    resourcep <vardeclaration> vardec;
+    expect(t_type);
+    vardec.obj->type = types[lastt.value];
+    expect(t_name);
+    vardec.obj->names.push_back(lastt.value);
+    while (accept(t_comma))
+    {
+        expect(t_name);
+        vardec.obj->names.push_back(lastt.value);
+    }
+    expect(t_semicolon);
+    return vardec.release();
 }
 
 statement* parser::getstatement()
