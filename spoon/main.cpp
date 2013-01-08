@@ -2,6 +2,7 @@
 #include "tokenizer.h"
 #include "parser.h"
 #include "printtree.h"
+#include "compiler.h"
 
 #define _s(str) #str
 #define _xs(str) _s(str)
@@ -15,6 +16,7 @@ int main()
 ////////////////////////////////////////////////
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
+
 function main()
 {
     nfc(0xbfff, 0x0018);
@@ -25,7 +27,12 @@ function main()
 ////////////////////////////////////////////////
         ));
         parser p(tokens);
-        printtree(p.getprogram());
+        program *prog = p.getprogram();
+        printtree(prog);
+        compiler c;
+        c.compile(prog);
+        std::cout << "\nPost-compile tree:\n\n";
+        printtree(prog);
     }
     catch (error e)
     {

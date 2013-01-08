@@ -5,10 +5,13 @@
 
 #include <map>
 
-class variable
+struct variable
 {
     std::string name;
     type_enum type;
+    bool is_constant;
+    int value;
+    variable(){is_constant = false;}
 };
 
 class scope
@@ -16,9 +19,27 @@ class scope
   private:
     std::map <std::string, variable> variables;
   public:
+    scope(scope *_parent = 0);
     scope *parent;
     void insert(std::string name, variable var);
     variable& get(std::string name);
+    bool exists(std::string name);
+};
+
+
+// The scopes map a local name to a global symbol (name@ptr)
+// The global symbol table gets exported as part of the object.
+class compiler
+{
+    scope *globalscope;
+    scope *currentscope;
+    std::map<std::string, variable> globalsymboltable;
+    void pushscope();
+    void popscope();
+    public:
+    compiler();
+    void compile(program *prog);
+    void compile(block *blk);
 };
 
 

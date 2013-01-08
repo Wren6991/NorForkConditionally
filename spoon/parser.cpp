@@ -84,7 +84,7 @@ constdef* parser::getconstdef()
 {
     resourcep <constdef> def;
     expect(t_type);
-    def.obj->valtype = lastt.value;
+    def.obj->valtype = types[lastt.value];
     expect(t_name);
     def.obj->name = lastt.value;
     expect(t_equals);

@@ -43,7 +43,7 @@ struct definition
 
 struct constdef: public definition
 {
-    std::string valtype;
+    type_enum valtype;
     std::string name;
     int value;                          // ought really to be an expression
     constdef() {type = dt_constdef;}
