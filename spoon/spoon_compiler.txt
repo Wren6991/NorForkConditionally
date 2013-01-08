@@ -34,6 +34,11 @@ function f(a)
 We get the tree for this definition from the parser, but the parser will not tell us which a is referred to by the implementation.
 As it climbs the tree again, the compiler will give unique IDs (e.g. a@1234, a@5678) to the variables, and keep track of which variable the name refers to at a given time. It can then replace each name with the id it really refers to, and pass the whole lot off to the linker to resolve the unique symbols to machine addresses.
 
+So we scan through, keep a stack of maps for vars, and make sure all the names we reach are known and valid.
+We insert the guid names in this pass.
+Then we check types.
+Once we are happy that the program's valid, we stick all the definitions into an object and pass it to the linker.
+
 Linker:
 -------
 

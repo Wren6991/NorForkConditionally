@@ -1,10 +1,10 @@
 program ::= {constdef|funcdef|macrodef}
 
-constdef ::= `const` name number
+constdef ::= `const` type name `=` expression `;`
 
 funcdef ::= `function` [type] name `(` type name {`,` type name} `)` block
 
-type ::= `int`|`pointer`
+type ::= `int`|`pointer`|`void`
 
 macrodef ::= `macro` name `(` name {`,` name} `)`
 
@@ -16,4 +16,4 @@ vardecl ::= type name {`,` name} `;`
 statement ::=  name `(` expression {`,` expression} `)` `;`
              | name `=` expression `;`
 
-expression ::= name | number
+expression ::= name | number		// for now!
