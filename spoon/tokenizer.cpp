@@ -167,8 +167,8 @@ std::vector <token> tokenize(std::string str)
     } while (c);
     if (state == s_string)
         throw(error("Error: expected \" to close string near EOF"));
-    for (unsigned int i = 0; i < tokens.size(); i++)
-        std::cout << tokens[i].type << ":\t\"" << tokens[i].value << "\"\n";
+    /*for (unsigned int i = 0; i < tokens.size(); i++)
+        std::cout << tokens[i].type << ":\t\"" << tokens[i].value << "\"\n";*/
     return tokens;
 }
 

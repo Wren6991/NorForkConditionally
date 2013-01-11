@@ -217,6 +217,7 @@ expression* parser::getexpression()
     }
     else
     {
+        expr.obj->type = exp_number;
         expect(t_number);
         std::stringstream ss;
         ss << lastt.value;

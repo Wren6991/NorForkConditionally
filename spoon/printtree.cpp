@@ -45,14 +45,14 @@ void printtree(constdef *def, int indentation)
 void printtree(funcdef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "Definition of function " << def->name << ":\n";
+    std::cout << "\nDefinition of function " << def->name << ":\n";
     printtree(def->body, indentation);
 }
 
 void printtree(macrodef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "Definition of macro " << def->name << ":\n";
+    std::cout << "\nDefinition of macro " << def->name << ":\n";
     printtree(def->body, indentation);
 }
 
@@ -82,5 +82,18 @@ void printtree(statement *stat, int indentation)
 {
     indent(indentation);
     if (stat->type == stat_call)
-        std::cout << "call to function " << ((funccall*)stat)->name << "\n";
+    {
+        funccall *fcall = (funccall*)stat;
+        std::cout << "call to function " << fcall->name << "\n";
+        for (unsigned int i = 0; i < fcall->args.size(); i++)
+        {
+            indent(indentation + 1);
+            std::cout << "argument: ";
+            if (fcall->args[i]->type == exp_name)
+                std::cout << fcall->args[i]->name;
+            else
+                std::cout << fcall->args[i]->number;
+            std::cout << "\n";
+        }
+    }
 }

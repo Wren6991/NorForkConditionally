@@ -4,6 +4,9 @@
 #include "syntaxtree.h"
 
 #include <map>
+#include <vector>
+
+typedef std::vector<type_enum> func_signature;
 
 struct variable
 {
@@ -34,13 +37,14 @@ class compiler
     scope *globalscope;
     scope *currentscope;
     std::map<std::string, variable> globalsymboltable;
+    std::map<std::string, func_signature> functions;
     void pushscope();
     void popscope();
     public:
     compiler();
     void compile(program *prog);
     void compile(block *blk);
-    std::string addvar(std::string name, type_enum type, bool isConstant = false, int constvalue = 0);
+    void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };
 
 

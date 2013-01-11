@@ -4,10 +4,12 @@
 #include <sstream>
 #include <iomanip>
 
+#include <iostream>
+
 std::string makeguid(std::string name, int ptr)
 {
     std::stringstream ss;
-    ss << name << "@" << ptr;
+    ss << name << "@" << std::hex << ptr;
     return ss.str();
 }
 
@@ -46,6 +48,13 @@ compiler::compiler()
 {
     globalscope = new scope();
     currentscope = globalscope;
+    func_signature sig;
+    sig.push_back(type_pointer);
+    sig.push_back(type_pointer);
+    functions["nfc"] = sig;
+    sig.push_back(type_pointer);
+    sig.push_back(type_pointer);
+    functions["nfc4"] = sig;
 }
 
 void compiler::pushscope()
@@ -60,7 +69,7 @@ void compiler::popscope()
     delete oldscope;
 }
 
-std::string compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
+void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
 {
     variable var;
     var.name = makeguid(name, ptr);
@@ -80,7 +89,7 @@ void compiler::compile(program *prog)
         if (def->type == dt_constdef)
         {
             constdef *cdef = (constdef*)def;
-            addvar(cdef->name, cdef->type, (int)cdef, true, cdef->value);
+            addvar(cdef->name, cdef->valtype, (int)cdef, true, cdef->value);
         }
         else if (def->type == dt_macrodef)
         {
@@ -96,9 +105,15 @@ void compiler::compile(program *prog)
                 argument *arg = &(fdef->args[i]);
                 addvar(arg->name, arg->type, (int)arg);
             }
-            compile(fdef->body));
+            compile(fdef->body);
             popscope();
         }
+    }
+    std::cout << "\nGlobal symbol table:\n";
+    std::map<std::string, variable>::iterator iter = globalsymboltable.begin();
+    for(; iter != globalsymboltable.end(); iter++)
+    {
+        std::cout << iter->first << "\n";
     }
 }
 
@@ -111,6 +126,36 @@ void compiler::compile(block *blk)
         for (unsigned int j = 0; j < dec->names.size(); j++)
         {
             addvar(dec->names[j], dec->type, (int)dec);
+        }
+    }
+    for (unsigned int i = 0; i < blk->statements.size(); i++)
+    {
+        statement *stat = blk->statements[i];
+
+        if (stat->type == stat_call)
+        {
+            funccall *fcall = (funccall*)stat;
+
+            expression *expr;
+            for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
+            {
+                expr = fcall->args[argnum];
+                if (expr->type == exp_name)
+                {
+                    if (!currentscope->exists(expr->name))
+                    {
+                        std::stringstream ss;
+                        ss << "Error: undeclared name \"" << expr->name << "\" in expression.";
+                        throw(error(ss.str()));
+                    }
+                    expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
+                    if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
+                    {
+                        expr->type = exp_number;
+                        expr->number = globalsymboltable[expr->name].value;
+                    }
+                }
+            }
         }
     }
     popscope();

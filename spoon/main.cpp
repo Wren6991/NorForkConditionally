@@ -28,7 +28,7 @@ function main()
         ));
         parser p(tokens);
         program *prog = p.getprogram();
-        printtree(prog);
+        //printtree(prog);
         compiler c;
         c.compile(prog);
         std::cout << "\nPost-compile tree:\n\n";
