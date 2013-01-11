@@ -28,7 +28,7 @@ class scope
 
 
 // The scopes map a local name to a global symbol (name@ptr)
-// The global symbol table gets exported as part of the object.
+// The global symbol table gets exported as part of the object, also makes it easy to look up types in type checking.
 class compiler
 {
     scope *globalscope;
@@ -40,6 +40,7 @@ class compiler
     compiler();
     void compile(program *prog);
     void compile(block *blk);
+    std::string addvar(std::string name, type_enum type, bool isConstant = false, int constvalue = 0);
 };
 
 

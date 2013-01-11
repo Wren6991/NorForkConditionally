@@ -60,6 +60,18 @@ void compiler::popscope()
     delete oldscope;
 }
 
+std::string compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
+{
+    variable var;
+    var.name = makeguid(name, ptr);
+    var.type = type;
+    var.is_constant = isConstant;
+    if (isConstant)
+        var.value = constvalue;
+    globalsymboltable[var.name] = var;
+    currentscope->insert(name, var);
+}
+
 void compiler::compile(program *prog)
 {
     for (unsigned int i = 0; i < prog->defs.size(); i++)
@@ -68,12 +80,7 @@ void compiler::compile(program *prog)
         if (def->type == dt_constdef)
         {
             constdef *cdef = (constdef*)def;
-            variable var;
-            var.is_constant = true;
-            var.type = cdef->valtype;
-            var.name = makeguid(cdef->name, (int)cdef);
-            globalsymboltable[var.name] = var;
-            currentscope->insert(cdef->name, var);
+            addvar(cdef->name, cdef->type, (int)cdef, true, cdef->value);
         }
         else if (def->type == dt_macrodef)
         {
@@ -87,11 +94,7 @@ void compiler::compile(program *prog)
             for (unsigned int i = 0; i < fdef->args.size(); i++)
             {
                 argument *arg = &(fdef->args[i]);
-                variable var;
-                var.type = arg->type;
-                var.name = makeguid(arg->name, (int)arg);
-                globalsymboltable[var.name] = var;
-                currentscope->insert(arg->name, var);
+                addvar(arg->name, arg->type, (int)arg);
             }
             compile(fdef->body));
             popscope();
@@ -107,16 +110,7 @@ void compiler::compile(block *blk)
         vardeclaration *dec = blk->declarations[i];
         for (unsigned int j = 0; j < dec->names.size(); j++)
         {
-            variable var;                                   // this block is repeated a few times, should factor it out
-            var.type = dec->type;
-            var.name = makeguid(dec->names[j], (int)dec);
-            globalsymboltable[var.name] = var;
-            currentscope->insert(dec->names[j], var);
-
-
-
-            //////////////////////////////////////////////HERE!
-
+            addvar(dec->names[j], dec->type, (int)dec);
         }
     }
     popscope();
