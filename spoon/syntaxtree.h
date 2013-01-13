@@ -13,7 +13,8 @@ typedef enum {
 typedef enum {
     type_none = 0,
     type_int,
-    type_pointer
+    type_pointer,
+    n_types
 } type_enum;
 
 typedef enum {

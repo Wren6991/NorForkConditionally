@@ -44,6 +44,8 @@ class compiler
     compiler();
     void compile(program *prog);
     void compile(block *blk);
+    void compile(funccall *fcall);
+    void compile(expression *expr);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };
 

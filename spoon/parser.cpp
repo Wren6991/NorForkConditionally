@@ -3,6 +3,8 @@
 
 #include <sstream>
 
+// Throw a preformatted error that we've received an unexpected token.
+// TODO: make it show the expected token type;
 void throw_unexpected(std::string value)
 {
     std::stringstream ss;
@@ -10,6 +12,8 @@ void throw_unexpected(std::string value)
     throw(error(ss.str()));
 }
 
+
+// Set up the type dicts and the state vars
 parser::parser(std::vector<token> tokens_)
 {
     types["int"] = type_int;
@@ -20,6 +24,7 @@ parser::parser(std::vector<token> tokens_)
         t = tokens[0];
 }
 
+// read the next token, put it in t; make t a blank token if no more tokens.
 void parser::gettoken()
 {
     lastt = t;
@@ -34,6 +39,7 @@ void parser::gettoken()
     }
 }
 
+// optionally gobble up a token, and return whether or not we have gobbled.
 bool parser::accept(token_type_enum type)
 {
     if (t.type == type)
@@ -47,6 +53,7 @@ bool parser::accept(token_type_enum type)
     }
 }
 
+// gobble up a token, or raise an error if it doesn't match
 void parser::expect(token_type_enum type)
 {
     if (!accept(type))
@@ -55,6 +62,8 @@ void parser::expect(token_type_enum type)
     }
 }
 
+// top level function: delegates to the function, macro and const
+// definition functions.
 program* parser::getprogram()
 {
     resourcep <program> prog;
@@ -80,6 +89,8 @@ program* parser::getprogram()
     return prog.release();
 }
 
+// sort out all the syntax stuff, return the type, name and
+// value of the constant.
 constdef* parser::getconstdef()
 {
     resourcep <constdef> def;
@@ -96,6 +107,7 @@ constdef* parser::getconstdef()
     return def.release();
 }
 
+// read in the list of args and parse the macro body
 macrodef* parser::getmacrodef()
 {
     resourcep <macrodef> def;
@@ -149,6 +161,8 @@ funcdef* parser::getfuncdef()
     return def.release();
 }
 
+// block is either a single statement, or a bunch of statements
+// and definitions between two braces.
 block* parser::getblock()
 {
     resourcep <block> blk;
@@ -172,6 +186,7 @@ block* parser::getblock()
     return blk.release();
 }
 
+// returns the type and a list of names
 vardeclaration* parser::getvardeclaration()
 {
     resourcep <vardeclaration> vardec;
@@ -187,6 +202,7 @@ vardeclaration* parser::getvardeclaration()
     expect(t_semicolon);
     return vardec.release();
 }
+
 
 statement* parser::getstatement()
 {

@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+// take a local symbol and a globally unique pointer value,
+// concatenate into a guid string
 std::string makeguid(std::string name, int ptr)
 {
     std::stringstream ss;
@@ -13,6 +15,8 @@ std::string makeguid(std::string name, int ptr)
     return ss.str();
 }
 
+
+// Scope definitions: //
 scope::scope(scope *_parent)
 {
     parent = _parent;
@@ -23,6 +27,7 @@ void scope::insert(std::string name, variable var)
     variables[name] = var;
 }
 
+// If this scope has a copy then return that, else refer upwards.
 variable& scope::get(std::string name)
 {
     if (variables.find(name) != variables.end())
@@ -33,6 +38,7 @@ variable& scope::get(std::string name)
         throw(error("Error: undefined name _!"));
 }
 
+// If the current scope has a match then return true, else refer upwards
 bool scope::exists(std::string name)
 {
     if (variables.find(name) != variables.end())
@@ -43,7 +49,9 @@ bool scope::exists(std::string name)
         return false;
 }
 
+// Compiler definitions //
 
+// set up scopes and signatures:
 compiler::compiler()
 {
     globalscope = new scope();
@@ -69,6 +77,9 @@ void compiler::popscope()
     delete oldscope;
 }
 
+// add a new variable to the current scope: it is saved in the current scope
+// with its local name, and in the global symbol table with its global name,
+// so we can do type checking and stuff in the second pass.
 void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
 {
     variable var;
@@ -81,6 +92,8 @@ void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant
     currentscope->insert(name, var);
 }
 
+// Run through all the definitions that make up the program - delegate to the proper
+// functions depending on the definition type.
 void compiler::compile(program *prog)
 {
     for (unsigned int i = 0; i < prog->defs.size(); i++)
@@ -117,6 +130,9 @@ void compiler::compile(program *prog)
     }
 }
 
+// Push all the variable declarations into a new scope.
+// run through all the statements and delegate compilation based
+// on statement type
 void compiler::compile(block *blk)
 {
     pushscope();
@@ -134,29 +150,43 @@ void compiler::compile(block *blk)
 
         if (stat->type == stat_call)
         {
-            funccall *fcall = (funccall*)stat;
-
-            expression *expr;
-            for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
-            {
-                expr = fcall->args[argnum];
-                if (expr->type == exp_name)
-                {
-                    if (!currentscope->exists(expr->name))
-                    {
-                        std::stringstream ss;
-                        ss << "Error: undeclared name \"" << expr->name << "\" in expression.";
-                        throw(error(ss.str()));
-                    }
-                    expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
-                    if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
-                    {
-                        expr->type = exp_number;
-                        expr->number = globalsymboltable[expr->name].value;
-                    }
-                }
-            }
+            compile((funccall*)stat);
         }
     }
     popscope();
+}
+
+
+// compile ALL the arguments!
+void compiler::compile(funccall *fcall)
+{
+    expression *expr;
+    for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
+    {
+        compile(fcall->args[argnum]);
+    }
+}
+
+// To compile an expression:
+// - if it's a name, check that it exists in the current scope
+//     - if so, replace the local name with the global one.
+//     - if it refers to a constant, swap the constant value in for the name.
+// - otherwise, leave it
+void compiler::compile(expression *expr)
+{
+    if (expr->type == exp_name)
+    {
+        if (!currentscope->exists(expr->name))
+        {
+            std::stringstream ss;
+            ss << "Error: undeclared name \"" << expr->name << "\" in expression.";
+            throw(error(ss.str()));
+        }
+        expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
+        if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
+        {
+            expr->type = exp_number;
+            expr->number = globalsymboltable[expr->name].value;
+        }
+    }
 }
