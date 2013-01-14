@@ -160,6 +160,12 @@ void compiler::compile(block *blk)
 // compile ALL the arguments!
 void compiler::compile(funccall *fcall)
 {
+    if (functions.find(fcall->name) == functions.end())
+    {
+        std::stringstream ss;
+        ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
+        throw(error(ss.str()));
+    }
     expression *expr;
     for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
     {
