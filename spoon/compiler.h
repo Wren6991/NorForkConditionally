@@ -5,7 +5,9 @@
 
 #include <map>
 #include <vector>
+#include <set>
 
+// TODO: turn this into a struct that includes return type etc.
 typedef std::vector<type_enum> func_signature;
 
 struct variable
@@ -37,6 +39,7 @@ class compiler
     scope *globalscope;
     scope *currentscope;
     std::map<std::string, variable> globalsymboltable;
+    std::set<std::string> defined_funcs;
     std::map<std::string, func_signature> functions;
     void pushscope();
     void popscope();

@@ -157,7 +157,15 @@ funcdef* parser::getfuncdef()
         }
     }
     expect(t_rparen);
-    def.obj->body = getblock();
+    if (accept(t_semicolon))
+    {
+        def.obj->defined = false;
+    }
+    else
+    {
+        def.obj->defined = true;        // there is a function definition body, so it's not just a declaration.
+        def.obj->body = getblock();
+    }
     return def.release();
 }
 

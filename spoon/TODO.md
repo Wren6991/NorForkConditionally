@@ -10,3 +10,4 @@ Todo:
 - add labels (loopStart:)
 - more control structures (goto, if, while - these should all translate into NFCs.)
 - bulk out the standard library
+- add comments to tokenizer!

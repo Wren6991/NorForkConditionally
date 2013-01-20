@@ -46,7 +46,15 @@ void printtree(funcdef *def, int indentation)
 {
     indent(indentation);
     std::cout << "\nDefinition of function " << def->name << ":\n";
-    printtree(def->body, indentation);
+    if (def->defined)
+    {
+        printtree(def->body, indentation);
+    }
+    else
+    {
+        indent(indentation + 1);
+        std::cout << "(declaration only)\n";
+    }
 }
 
 void printtree(macrodef *def, int indentation)

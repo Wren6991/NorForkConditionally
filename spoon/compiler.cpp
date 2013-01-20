@@ -111,14 +111,46 @@ void compiler::compile(program *prog)
         }
         else if (def->type == dt_funcdef)
         {
+            func_signature sig;
             funcdef *fdef = (funcdef*)def;
             pushscope();
             for (unsigned int i = 0; i < fdef->args.size(); i++)
             {
                 argument *arg = &(fdef->args[i]);
                 addvar(arg->name, arg->type, (int)arg);
+                sig.push_back(arg->type);
             }
-            compile(fdef->body);
+            if (functions.find(fdef->name) != functions.end())
+            {
+                if (sig != functions[fdef->name])
+                {
+                    std::stringstream ss;
+                    ss << "Error: conflicting type declarations for function \"" << fdef->name << "\"";
+                    throw(error(ss.str()));
+                }
+            }
+            else
+            {
+                functions[fdef->name] = sig;
+            }
+            if (defined_funcs.find(fdef->name) == defined_funcs.end()) // i.e. function is currently undefined
+            {
+                if (fdef->defined)
+                {
+                    compile(fdef->body);
+                    defined_funcs.insert(fdef->name);
+                }
+            }
+            else    // (if function has already been defined)
+            {
+                if (fdef->defined)  // and we have another definition in this func def...
+                {
+                    std::stringstream ss;
+                    ss << "Error: conflicting definitions of function \"" << fdef->name << "\"";
+                    throw(error(ss.str()));
+                }
+            }
+
             popscope();
         }
     }
@@ -166,7 +198,6 @@ void compiler::compile(funccall *fcall)
         ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
         throw(error(ss.str()));
     }
-    expression *expr;
     for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
     {
         compile(fcall->args[argnum]);

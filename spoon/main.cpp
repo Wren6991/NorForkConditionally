@@ -17,12 +17,21 @@ int main()
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
 
+function test();
+
 function main()
 {
     nfc(0xbfff, 0x0018);
     nfc(0xbfff, debugin);
     nfc4(debugout, 0xbfff, 0x0000, 0x0000);
+    test();
 }
+
+function test()
+{
+}
+
+
 
 ////////////////////////////////////////////////
         ));

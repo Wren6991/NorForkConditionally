@@ -67,7 +67,8 @@ struct funcdef: public definition
     std::string name;
     std::vector <argument> args;
     block *body;
-    funcdef() {type = dt_funcdef;}
+    bool defined;       // vs. merely declared
+    funcdef() {type = dt_funcdef; defined = false;}
 };
 
 struct macrodef: public definition
