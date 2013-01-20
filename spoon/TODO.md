@@ -1,7 +1,7 @@
 Todo:
 -----
 
-- Add function declarations (forward declaration etc.)
+- Add function declarations (forward declaration etc.)#
 - Add type checking
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?

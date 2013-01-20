@@ -94,7 +94,7 @@ void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant
 
 // Run through all the definitions that make up the program - delegate to the proper
 // functions depending on the definition type.
-void compiler::compile(program *prog)
+object* compiler::compile(program *prog)
 {
     for (unsigned int i = 0; i < prog->defs.size(); i++)
     {
@@ -111,47 +111,7 @@ void compiler::compile(program *prog)
         }
         else if (def->type == dt_funcdef)
         {
-            func_signature sig;
-            funcdef *fdef = (funcdef*)def;
-            pushscope();
-            for (unsigned int i = 0; i < fdef->args.size(); i++)
-            {
-                argument *arg = &(fdef->args[i]);
-                addvar(arg->name, arg->type, (int)arg);
-                sig.push_back(arg->type);
-            }
-            if (functions.find(fdef->name) != functions.end())
-            {
-                if (sig != functions[fdef->name])
-                {
-                    std::stringstream ss;
-                    ss << "Error: conflicting type declarations for function \"" << fdef->name << "\"";
-                    throw(error(ss.str()));
-                }
-            }
-            else
-            {
-                functions[fdef->name] = sig;
-            }
-            if (defined_funcs.find(fdef->name) == defined_funcs.end()) // i.e. function is currently undefined
-            {
-                if (fdef->defined)
-                {
-                    compile(fdef->body);
-                    defined_funcs.insert(fdef->name);
-                }
-            }
-            else    // (if function has already been defined)
-            {
-                if (fdef->defined)  // and we have another definition in this func def...
-                {
-                    std::stringstream ss;
-                    ss << "Error: conflicting definitions of function \"" << fdef->name << "\"";
-                    throw(error(ss.str()));
-                }
-            }
-
-            popscope();
+            compile((funcdef*)def);
         }
     }
     std::cout << "\nGlobal symbol table:\n";
@@ -160,6 +120,65 @@ void compiler::compile(program *prog)
     {
         std::cout << iter->first << "\n";
     }
+
+    object *obj = new object;
+    obj->defined_funcs = defined_funcs;
+    obj->tree = prog;
+    std::vector<definition*>::iterator idef;
+    for (idef = obj->tree->defs.begin(); idef != obj->tree->defs.end(); idef++)
+    {
+        if ((*idef)->type == dt_funcdef && !((funcdef*)*idef)->defined)
+        {
+            idef = obj->tree->defs.erase(idef);     // strip out all the function declarations, just leave the definitions.
+        }
+    }
+    return obj;
+}
+
+
+// check for signature conflicts, check for definition conficts,
+// and then compile the function body if there is one.
+void compiler::compile(funcdef *fdef)
+{
+    func_signature sig;
+    pushscope();
+    for (unsigned int i = 0; i < fdef->args.size(); i++)
+    {
+        argument *arg = &(fdef->args[i]);
+        addvar(arg->name, arg->type, (int)arg);
+        sig.push_back(arg->type);
+    }
+    if (functions.find(fdef->name) != functions.end())
+    {
+        if (sig != functions[fdef->name])
+        {
+            std::stringstream ss;
+            ss << "Error: conflicting type declarations for function \"" << fdef->name << "\"";
+            throw(error(ss.str()));
+        }
+    }
+    else
+    {
+        functions[fdef->name] = sig;
+    }
+    if (defined_funcs.find(fdef->name) == defined_funcs.end()) // i.e. function is currently undefined
+    {
+        if (fdef->defined)
+        {
+            compile(fdef->body);
+            defined_funcs.insert(fdef->name);
+        }
+    }
+    else    // (if function has already been defined)
+    {
+        if (fdef->defined)  // and we have another definition in this func def...
+        {
+            std::stringstream ss;
+            ss << "Error: conflicting definitions of function \"" << fdef->name << "\"";
+            throw(error(ss.str()));
+        }
+    }
+    popscope();
 }
 
 // Push all the variable declarations into a new scope.

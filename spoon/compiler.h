@@ -2,6 +2,7 @@
 #define COMPILER_H_INCLUDED
 
 #include "syntaxtree.h"
+#include "object.h"
 
 #include <map>
 #include <vector>
@@ -45,7 +46,8 @@ class compiler
     void popscope();
     public:
     compiler();
-    void compile(program *prog);
+    object* compile(program *prog);
+    void compile(funcdef *fdef);
     void compile(block *blk);
     void compile(funccall *fcall);
     void compile(expression *expr);
