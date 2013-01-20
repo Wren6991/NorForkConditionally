@@ -1,6 +1,8 @@
 Language Description: Fork
 ==========================
 
+Note: this language is outdated, and generally pretty unreliable for larger programs. See Spoon for a more complete language and compiler.
+
 Contents
 --------
 
