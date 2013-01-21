@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "printtree.h"
 #include "compiler.h"
+#include "linker.h"
 
 #define _s(str) #str
 #define _xs(str) _s(str)
@@ -31,6 +32,10 @@ function test()
 {
 }
 
+function nfc(pointer a, pointer b)
+{
+}
+
 
 
 ////////////////////////////////////////////////
@@ -39,9 +44,13 @@ function test()
         program *prog = p.getprogram();
         //printtree(prog);
         compiler c;
-        c.compile(prog);
+        object *obj = c.compile(prog);
         std::cout << "\nPost-compile tree:\n\n";
         printtree(prog);
+        std::cout << "Linking...\n\n";
+        linker l;
+        l.add_object(obj);
+        l.link();
     }
     catch (error e)
     {

@@ -3,17 +3,18 @@
 
 #include "object.h"
 
-#include <set>
+#include <map>
 #include <vector>
 
 
 class linker
 {
-    std::set<std::string> defined_funcs;
+    std::map<std::string, definition*> defined_funcs;       // possibly: replace definition* with funcdef* ? as nothing else should be exported by compiler.
     std::vector<definition*> definitions;
 public:
+    linker();
     void add_object(object* obj);
-    vector<char> link();
+    std::vector<char> link();
 };
 
 #endif // LINKER_H_INCLUDED

@@ -124,12 +124,16 @@ object* compiler::compile(program *prog)
     object *obj = new object;
     obj->defined_funcs = defined_funcs;
     obj->tree = prog;
-    std::vector<definition*>::iterator idef;
-    for (idef = obj->tree->defs.begin(); idef != obj->tree->defs.end(); idef++)
+    std::vector<definition*>::iterator idef = obj->tree->defs.begin();
+    while (idef != obj->tree->defs.end())
     {
-        if ((*idef)->type == dt_funcdef && !((funcdef*)*idef)->defined)
+        if ((*idef)->type != dt_funcdef || !((funcdef*)*idef)->defined)
         {
-            idef = obj->tree->defs.erase(idef);     // strip out all the function declarations, just leave the definitions.
+            idef = obj->tree->defs.erase(idef);     // strip out everything apart from function definitions. (macros have already been subbed by this point)
+        }
+        else
+        {
+            idef++;
         }
     }
     return obj;
