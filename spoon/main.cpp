@@ -50,7 +50,8 @@ function nfc(pointer a, pointer b)
         std::cout << "Linking...\n\n";
         linker l;
         l.add_object(obj);
-        l.link();
+        std::vector<char> machinecode = l.link();
+
     }
     catch (error e)
     {
