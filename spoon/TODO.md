@@ -14,5 +14,14 @@ Todo:
 	- then look them up... may require multi-pass! (unless labels must be above jump)
 	- or keep a map of machine addresses to symbols that should have been subbed in, and retroactively sub the label vectors in after passing through the tree.
 - more control structures (goto, if, while - these should all translate into NFCs.)
+	- start with goto, then if.
+	- if: we have a pointer, and this maps to the value we're switching on. (use a variable)
+	- expressions/functions can write to this pointer location if they're evaluated inside the if
+	- the if instruction reads this location and skip to either block
+	- the true block has an instr. at the end to skip past the else.
+	- use variables for all the addresses, sub retroactively once addresses are known.
+	- have a single loop structure that adds a jump at the end.
+	- have a break: specialized goto that jumps past end of loop.
+	- while is a loop with an if (){break;}...
 - bulk out the standard library
 - add comments to tokenizer!
