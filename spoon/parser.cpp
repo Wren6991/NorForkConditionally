@@ -3,12 +3,16 @@
 
 #include <sstream>
 
+extern std::string friendly_type_names[];
+
 // Throw a preformatted error that we've received an unexpected token.
 // TODO: make it show the expected token type;
-void throw_unexpected(std::string value)
+void throw_unexpected(std::string value, token_type_enum expected = t_eof, token_type_enum got = t_eof)
 {
     std::stringstream ss;
     ss << "Error: unexpected token near \"" << value << "\"";
+    if (expected)
+        ss << ": expected " << friendly_type_names[expected] << ", got " << friendly_type_names[got];
     throw(error(ss.str()));
 }
 
@@ -58,7 +62,7 @@ void parser::expect(token_type_enum type)
 {
     if (!accept(type))
     {
-        throw_unexpected(t.value);
+        throw_unexpected(t.value, type, t.type);
     }
 }
 

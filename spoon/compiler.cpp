@@ -197,6 +197,7 @@ void compiler::compile(block *blk)
         for (unsigned int j = 0; j < dec->names.size(); j++)
         {
             addvar(dec->names[j], dec->type, (int)dec);
+            dec->names[j] = currentscope->get(dec->names[j]).name;      // replace the declaration with the global name of the var; makes linking easier.
         }
     }
     for (unsigned int i = 0; i < blk->statements.size(); i++)

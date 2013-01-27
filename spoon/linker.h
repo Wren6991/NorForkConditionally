@@ -36,6 +36,7 @@ public:
     int addvar(std::string name, type_enum type);
     void remove(std::string name);
     variable* getvar(std::string name);
+    bool exists(std::string name);
     vardict();
 };
 
@@ -51,7 +52,7 @@ class linker
     void link(block*);
     void link(statement*);
     void link(funccall*);
-
+    uint16_t evaluate(expression*);
 public:
     linker();
     void add_object(object* obj);

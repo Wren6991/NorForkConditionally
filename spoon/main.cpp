@@ -33,9 +33,10 @@ const pointer debugin = 0xc001;
 
 function main()
 {
-    nfc(0xbfff, 0x0018);
-    nfc(0xbfff, debugin);
-    nfc4(debugout, 0xbfff, 0x0000, 0x0000);
+    var int x;
+    nfc(x, 0x0018);
+    nfc(x, debugin);
+    nfc4(debugout, x, 0x0000, 0x0000);
 }
 
 

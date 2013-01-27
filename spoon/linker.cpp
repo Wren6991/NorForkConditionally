@@ -4,6 +4,8 @@
 #include <set>
 #include <sstream>
 
+#include <iostream>
+
 
 
 void vardict::find_first_available_space(int searchstart)
@@ -52,6 +54,7 @@ int vardict::getspace(int size)
 // the heap bottom to this value to get a machine address.
 int vardict::addvar(std::string name, type_enum type)
 {
+    std::cout << "Adding var " << name << "\n";
     variable *var = new variable;
     var->type = type;
     var->offset = getspace(typesizes[type]);
@@ -94,6 +97,10 @@ variable* vardict::getvar(std::string name)
         return iter->second;
 }
 
+bool vardict::exists(std::string name)
+{
+    return vars.find(name) != vars.end();
+}
 
 
 vardict::vardict()
@@ -215,21 +222,45 @@ void linker::link(funccall *call)
     {
         if (call->name == "nfc")
         {
-            write16(call->args[0]->number);
-            write16(call->args[1]->number);
+            write16(evaluate(call->args[0]));
+            write16(evaluate(call->args[1]));
             uint16_t next = index + 4;
             write16(next);
             write16(next);
         }
         else if (call->name == "nfc4")
         {
-            write16(call->args[0]->number);
-            write16(call->args[1]->number);
-            write16(call->args[2]->number);
-            write16(call->args[3]->number);
+            write16(evaluate(call->args[0]));
+            write16(evaluate(call->args[1]));
+            write16(evaluate(call->args[2]));
+            write16(evaluate(call->args[3]));
         }
     }
 }
 
+uint16_t linker::evaluate(expression *expr)
+{
+    if (expr->type == exp_number)
+    {
+        return expr->number;
+    }
+    else if (expr->type == exp_name)
+    {
+        if (vars.exists(expr->name))
+        {
+            return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
+        }
+        else
+        {
+            std::stringstream ss;
+            ss << "Error: unknown linker symbol \"" << expr->name << "\"";
+            throw(error(ss.str()));
+        }
+    }
+    else
+    {
+        throw(error("Error: linking unknown expression type"));
+    }
+}
 
 

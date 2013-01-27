@@ -5,6 +5,27 @@
 
 #include "tokenizer.h"
 
+std::string friendly_type_names[] = {
+    "EOF",
+    "comma",
+    "\"const\"",
+    "\"=\"",
+    "\"function\"",
+    "\"if\"",
+    "\"{\"",
+    "\")\"",
+    "\"macro\"",
+    "name",
+    "number",
+    "\"}\"",
+    "\")\"",
+    "semicolon",
+    "string",
+    "type",
+    "\"var\"",
+    "\"while\""
+};
+
 enum state_enum
 {
     s_start = 0,
@@ -63,6 +84,7 @@ std::vector <token> tokenize(std::string str)
     keywords["macro"] = t_macro;
     keywords["int"] = t_type;
     keywords["pointer"] = t_type;
+    keywords["var"] = t_var;
 
     std::map<char, token> symbols;
     symbols[','] = token(t_comma , ",");
