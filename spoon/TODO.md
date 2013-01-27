@@ -1,12 +1,9 @@
 Todo:
 -----
 
-- Add function declarations (forward declaration etc.)#
 - Add type checking
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?
-- Create linker program
-- have NFC etc. hardcoded and get some simple code generation going!
 - add labels (loopStart:)
 	- type of statement
 	- also have local scope - local link @ compile time
@@ -26,3 +23,7 @@ Todo:
 - bulk out the standard library
 - add comments to tokenizer!
 - constant values
+- functions in expressions (with results)
+	- have a proper return mechanism for user-defined etc.
+	- have hardcoded ones like const(8), second(16), first(16) etc.
+	- means we need a proper function signature class for return types
