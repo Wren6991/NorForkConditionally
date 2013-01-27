@@ -25,3 +25,4 @@ Todo:
 	- while is a loop with an if (){break;}...
 - bulk out the standard library
 - add comments to tokenizer!
+- constant values

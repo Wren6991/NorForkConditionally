@@ -22,13 +22,13 @@ scope::scope(scope *_parent)
     parent = _parent;
 }
 
-void scope::insert(std::string name, variable var)
+void scope::insert(std::string name, symbol var)
 {
     variables[name] = var;
 }
 
 // If this scope has a copy then return that, else refer upwards.
-variable& scope::get(std::string name)
+symbol& scope::get(std::string name)
 {
     if (variables.find(name) != variables.end())
         return variables[name];
@@ -82,7 +82,7 @@ void compiler::popscope()
 // so we can do type checking and stuff in the second pass.
 void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
 {
-    variable var;
+    symbol var;
     var.name = makeguid(name, ptr);
     var.type = type;
     var.is_constant = isConstant;
@@ -115,7 +115,7 @@ object* compiler::compile(program *prog)
         }
     }
     std::cout << "\nGlobal symbol table:\n";
-    std::map<std::string, variable>::iterator iter = globalsymboltable.begin();
+    std::map<std::string, symbol>::iterator iter = globalsymboltable.begin();
     for(; iter != globalsymboltable.end(); iter++)
     {
         std::cout << iter->first << "\n";

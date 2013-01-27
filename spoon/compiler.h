@@ -11,24 +11,24 @@
 // TODO: turn this into a struct that includes return type etc.
 typedef std::vector<type_enum> func_signature;
 
-struct variable
+struct symbol
 {
     std::string name;
     type_enum type;
     bool is_constant;
     int value;
-    variable(){is_constant = false;}
+    symbol(){is_constant = false;}
 };
 
 class scope
 {
   private:
-    std::map <std::string, variable> variables;
+    std::map <std::string, symbol> variables;
   public:
     scope(scope *_parent = 0);
     scope *parent;
-    void insert(std::string name, variable var);
-    variable& get(std::string name);
+    void insert(std::string name, symbol var);
+    symbol& get(std::string name);
     bool exists(std::string name);
 };
 
@@ -39,7 +39,7 @@ class compiler
 {
     scope *globalscope;
     scope *currentscope;
-    std::map<std::string, variable> globalsymboltable;
+    std::map<std::string, symbol> globalsymboltable;
     std::set<std::string> defined_funcs;
     std::map<std::string, func_signature> functions;
     void pushscope();

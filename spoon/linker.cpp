@@ -4,8 +4,106 @@
 #include <set>
 #include <sstream>
 
-const int MAX_MEM_SIZE = 32 * 1024;
 
+
+void vardict::find_first_available_space(int searchstart)
+{
+    for (int i = searchstart; i < HEAP_SIZE; i++)
+    {
+        if (!memory[i])
+        {
+            first_available_space = i;
+            return;
+        }
+    }
+    // If it fell through:
+    throw(error("Error: no more free space in heap!"));
+}
+
+// Search through memory for a block large enough
+// If we find it, block it out and return the start.
+int vardict::getspace(int size)
+{
+    int start = first_available_space;
+    while (start < HEAP_SIZE)
+    {
+        bool enoughSpace = true;
+        for (int i = start; i < start + size; i++)
+        {
+            if (memory[i])
+            {
+                enoughSpace = false;
+                start = i + 1;          // start checking again at the next unchecked location
+                break;
+            }
+        }
+        if (enoughSpace)
+        {
+            for (int i = start; i < start + size; i++)
+                memory[i] = true;
+            if (start == first_available_space)
+                find_first_available_space(first_available_space);       // if we've covered the first known free space, find a new one.
+            return start;
+        }
+    }
+}
+
+// Note: returns an offset from the heap start, you'll have to add
+// the heap bottom to this value to get a machine address.
+int vardict::addvar(std::string name, type_enum type)
+{
+    variable *var = new variable;
+    var->type = type;
+    var->offset = getspace(typesizes[type]);
+    if (vars.find(name) != vars.end())
+        var->next = vars[name];  // push the stack down one...
+    vars[name] = var;
+}
+
+void vardict::remove(std::string name)
+{
+    // sanity check:
+    std::map<std::string, variable*>::iterator iter = vars.find(name);
+    if (iter == vars.end())
+        throw(error("Error: tried to free non-existent variable! (Link-time)"));
+    // release the memory:
+    for (int i = iter->second->offset; i < iter->second->offset + typesizes[iter->second->type]; i++)
+        memory[i] = 0;
+    if (iter->second->offset < first_available_space)
+        first_available_space = iter->second->offset;
+    // update the dictionary: pop or remove
+    if (iter->second->next)
+    {
+        variable *old = iter->second;
+        iter->second = iter->second->next;
+        delete old;
+    }
+    else
+    {
+        delete iter->second;
+        vars.erase(iter);
+    }
+}
+
+variable* vardict::getvar(std::string name)
+{
+    std::map<std::string, variable*>::iterator iter = vars.find(name);
+    if (iter == vars.end())
+        return 0;
+    else
+        return iter->second;
+}
+
+
+
+vardict::vardict()
+{
+    typesizes[type_int] = 1;
+    typesizes[type_pointer] = 2;
+    first_available_space = 0;
+    for (int i = 0; i < (HEAP_TOP - HEAP_BOTTOM); i++)
+        memory.push_back(0);
+}
 
 linker::linker()
 {
@@ -13,15 +111,17 @@ linker::linker()
     defined_funcs["nfc4"] = 0;  // hardcoded funcs
 
     index = 0;
-    buffer.reserve(MAX_MEM_SIZE);
+    buffer.reserve(ROM_SIZE);
 }
 
+
+// NB: index refers to the location _about_ to be written. (I.e. next location)
 void linker::write8(uint8_t val)
 {
-    ++index;
-    if (index >= MAX_MEM_SIZE)
+    if (index >= ROM_SIZE)
         throw(error("Error: program too big!"));
     buffer.push_back(val);
+    index++;
 }
 
 void linker::write16(uint16_t val)
@@ -48,7 +148,7 @@ void linker::add_object(object *obj)
         definition *def = obj->tree->defs[i];
         if (def->type != dt_funcdef || !((funcdef*)def)->defined)
         {
-            throw(error("Error: linker only accepts defined functions as symbols, wtf."));
+            throw(error("Error: linker only accepts defined functions as symbols, wtf are you doing."));
         }
         funcdef *fdef = (funcdef*)def;
         defined_funcs[fdef->name] = fdef;
@@ -65,13 +165,31 @@ std::vector<char> linker::link()
     {
         throw(error("Error: no definition of function main."));
     }
-    block *dmain = defined_funcs["main"]->body;
-    std::vector<statement*>::iterator iter = dmain->statements.begin();
-    for(; iter != dmain->statements.end(); iter++)
+    link(defined_funcs["main"]->body);
+    return buffer;
+}
+
+void linker::link(block *blk)
+{
+    for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
+    {
+        for (unsigned int i = 0; i < (*iter)->names.size(); i++)
+        {
+            vars.addvar((*iter)->names[i], (*iter)->type);
+        }
+    }
+    for (std::vector<statement*>::iterator iter = blk->statements.begin(); iter != blk->statements.end(); iter++)
     {
         link(*iter);
     }
-    return buffer;
+    // TODO: make this a simple scope pop operation.
+    for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
+    {
+        for (unsigned int i = 0; i < (*iter)->names.size(); i++)
+        {
+            vars.remove((*iter)->names[i]);
+        }
+    }
 }
 
 void linker::link(statement *stat)
