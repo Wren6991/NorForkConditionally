@@ -208,6 +208,10 @@ void compiler::compile(block *blk)
         {
             compile((funccall*)stat);
         }
+        else if (stat->type == stat_goto)
+        {
+            compile((goto_stat*)stat);
+        }
     }
     popscope();
 }
@@ -226,6 +230,12 @@ void compiler::compile(funccall *fcall)
     {
         compile(fcall->args[argnum]);
     }
+}
+
+// just compile the target expression...
+void compiler::compile(goto_stat *sgoto)
+{
+    compile(sgoto->target);
 }
 
 // To compile an expression:

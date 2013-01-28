@@ -52,6 +52,7 @@ class linker
     void link(block*);
     void link(statement*);
     void link(funccall*);
+    void link(goto_stat*);
     uint16_t evaluate(expression*);
 public:
     linker();

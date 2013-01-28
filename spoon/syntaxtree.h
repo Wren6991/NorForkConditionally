@@ -18,7 +18,8 @@ typedef enum {
 } type_enum;
 
 typedef enum {
-    stat_call
+    stat_call,
+    stat_goto
 } stat_type;
 
 typedef enum {
@@ -95,6 +96,12 @@ struct funccall: public statement
     std::string name;
     std::vector <expression*> args;
     funccall() {type = stat_call;}
+};
+
+struct goto_stat: public statement
+{
+    expression *target;
+    goto_stat() {type = stat_goto;}
 };
 
 struct block

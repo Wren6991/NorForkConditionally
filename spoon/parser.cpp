@@ -218,21 +218,31 @@ vardeclaration* parser::getvardeclaration()
 
 statement* parser::getstatement()
 {
-    resourcep <funccall> fcall;
-    expect(t_name);
-    fcall.obj->name = lastt.value;
-    expect(t_lparen);
-    if (t.type != t_rparen)
+    if (accept(t_goto))
     {
-        fcall.obj->args.push_back(getexpression());
-        while (accept(t_comma))
+        resourcep <goto_stat> sgoto;
+        sgoto.obj->target = getexpression();
+        expect(t_semicolon);
+        return sgoto.release();
+    }
+    else
+    {
+        resourcep <funccall> fcall;
+        expect(t_name);
+        fcall.obj->name = lastt.value;
+        expect(t_lparen);
+        if (t.type != t_rparen)
         {
             fcall.obj->args.push_back(getexpression());
+            while (accept(t_comma))
+            {
+                fcall.obj->args.push_back(getexpression());
+            }
         }
+        expect(t_rparen);
+        expect(t_semicolon);
+        return fcall.release();
     }
-    expect(t_rparen);
-    expect(t_semicolon);
-    return fcall.release();
 }
 
 expression* parser::getexpression()

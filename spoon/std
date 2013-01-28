@@ -1,0 +1,6 @@
+const pointer debugout = 0xc000;
+const pointer debugin = 0xc001;
+
+function int first(pointer p);
+function int second(pointer p);
+function pointer val(int x);

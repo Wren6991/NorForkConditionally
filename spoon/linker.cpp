@@ -48,6 +48,7 @@ int vardict::getspace(int size)
             return start;
         }
     }
+    throw(error("Error: no more free space in heap!"));
 }
 
 // Note: returns an offset from the heap start, you'll have to add
@@ -61,6 +62,7 @@ int vardict::addvar(std::string name, type_enum type)
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
+    return var->offset;
 }
 
 void vardict::remove(std::string name)
@@ -206,6 +208,9 @@ void linker::link(statement *stat)
     case stat_call:
         link((funccall*)stat);
         break;
+    case stat_goto:
+        link((goto_stat*)stat);
+        break;
     }
 }
 
@@ -238,6 +243,19 @@ void linker::link(funccall *call)
     }
 }
 
+void linker::link(goto_stat *sgoto)
+{
+    uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
+    write16(temploc);
+    write16(temploc);
+    uint16_t target = evaluate(sgoto->target);
+    write16(target);
+    write16(target);
+    vars.remove("temp");
+}
+
+// if we don't know the value yet, this function returns 0s
+// and makes a note to substitute the real value in later.
 uint16_t linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)

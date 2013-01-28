@@ -11,6 +11,7 @@ std::string friendly_type_names[] = {
     "\"const\"",
     "\"=\"",
     "\"function\"",
+    "\"goto\"",
     "\"if\"",
     "\"{\"",
     "\")\"",
@@ -78,13 +79,14 @@ std::vector <token> tokenize(std::string str)
 {
     std::map<std::string, token_type_enum> keywords;
     keywords["const"] = t_const;
+    keywords["goto" ] = t_goto;
     keywords["if" ] = t_if;
-    keywords["while"] = t_while;
+    keywords["int"] = t_type;
     keywords["function"] = t_function;
     keywords["macro"] = t_macro;
-    keywords["int"] = t_type;
     keywords["pointer"] = t_type;
     keywords["var"] = t_var;
+    keywords["while"] = t_while;
 
     std::map<char, token> symbols;
     symbols[','] = token(t_comma , ",");

@@ -36,9 +36,9 @@ function main()
     var int x;
     nfc(x, 0x0018);
     nfc(x, debugin);
-    nfc4(debugout, x, 0x0000, 0x0000);
+    nfc(debugout, x);
+    goto 0;
 }
-
 
 ////////////////////////////////////////////////
         ));

@@ -97,11 +97,23 @@ void printtree(statement *stat, int indentation)
         {
             indent(indentation + 1);
             std::cout << "argument: ";
-            if (fcall->args[i]->type == exp_name)
-                std::cout << fcall->args[i]->name;
-            else
-                std::cout << fcall->args[i]->number;
+            printtree(fcall->args[i]);
             std::cout << "\n";
         }
     }
+    else if (stat->type == stat_goto)
+    {
+        goto_stat *sgoto = (goto_stat*)stat;
+        std::cout << "goto ";
+        printtree(sgoto->target);
+        std::cout << "\n";
+    }
+}
+
+void printtree(expression *expr)
+{
+    if (expr->type == exp_name)
+        std::cout << expr->name;
+    else
+        std::cout << expr->number;
 }

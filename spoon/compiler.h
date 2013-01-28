@@ -50,6 +50,7 @@ class compiler
     void compile(funcdef *fdef);
     void compile(block *blk);
     void compile(funccall *fcall);
+    void compile(goto_stat *sgoto);
     void compile(expression *expr);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };
