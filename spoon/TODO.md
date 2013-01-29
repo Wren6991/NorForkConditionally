@@ -10,6 +10,9 @@ Todo:
 	- during link, we push the addresses of labels we pass
 	- then look them up... may require multi-pass! (unless labels must be above jump)
 	- or keep a map of machine addresses to symbols that should have been subbed in, and retroactively sub the label vectors in after passing through the tree.
+	- so at parse time, label name's pushed to declarations _and_ statements:
+		- declarations to tell the compiler it's in scope
+		- statements to tell the linker when it's at the correct address
 - more control structures (goto, if, while - these should all translate into NFCs.)
 	- start with goto, then if.
 	- if: we have a pointer, and this maps to the value we're switching on. (use a variable)

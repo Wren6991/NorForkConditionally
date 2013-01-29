@@ -55,7 +55,6 @@ int vardict::getspace(int size)
 // the heap bottom to this value to get a machine address.
 int vardict::addvar(std::string name, type_enum type)
 {
-    std::cout << "Adding var " << name << "\n";
     variable *var = new variable;
     var->type = type;
     var->offset = getspace(typesizes[type]);
