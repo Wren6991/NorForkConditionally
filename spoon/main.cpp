@@ -34,17 +34,18 @@ const pointer debugin = 0xc001;
 function main()
 {
     var int x;
+    top:
     nfc(x, 0x0018);
     nfc(x, debugin);
     nfc(debugout, x);
-    goto 0;
+    goto top;
 }
 
 ////////////////////////////////////////////////
         ));
         parser p(tokens);
         program *prog = p.getprogram();
-        //printtree(prog);
+        printtree(prog);
         compiler c;
         object *obj = c.compile(prog);
         std::cout << "\nPost-compile tree:\n\n";

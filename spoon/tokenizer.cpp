@@ -89,6 +89,7 @@ std::vector <token> tokenize(std::string str)
     keywords["while"] = t_while;
 
     std::map<char, token> symbols;
+    symbols[':'] = token(t_colon , ":");
     symbols[','] = token(t_comma , ",");
     symbols['='] = token(t_equals, "=");
     symbols['('] = token(t_lparen, "(");

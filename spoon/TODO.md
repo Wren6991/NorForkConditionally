@@ -1,6 +1,8 @@
 Todo:
 -----
 
+- assignments
+- macros
 - Add type checking
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?

@@ -19,7 +19,9 @@ typedef enum {
 
 typedef enum {
     stat_call,
-    stat_goto
+    stat_goto,
+    stat_assignment,
+    stat_label
 } stat_type;
 
 typedef enum {
@@ -102,6 +104,19 @@ struct goto_stat: public statement
 {
     expression *target;
     goto_stat() {type = stat_goto;}
+};
+
+struct assignment: public statement
+{
+    std::string name;
+    expression *expr;
+    assignment() {type = stat_assignment;}
+};
+
+struct label: public statement
+{
+    std::string name;
+    label() {type = stat_label;}
 };
 
 struct block

@@ -227,21 +227,35 @@ statement* parser::getstatement()
     }
     else
     {
-        resourcep <funccall> fcall;
         expect(t_name);
-        fcall.obj->name = lastt.value;
-        expect(t_lparen);
-        if (t.type != t_rparen)
+        if (t.type == t_lparen)
         {
-            fcall.obj->args.push_back(getexpression());
-            while (accept(t_comma))
+            resourcep <funccall> fcall;
+            fcall.obj->name = lastt.value;
+            expect(t_lparen);
+            if (t.type != t_rparen)
             {
                 fcall.obj->args.push_back(getexpression());
+                while (accept(t_comma))
+                {
+                    fcall.obj->args.push_back(getexpression());
+                }
             }
+            expect(t_rparen);
+            expect(t_semicolon);
+            return fcall.release();
         }
-        expect(t_rparen);
-        expect(t_semicolon);
-        return fcall.release();
+        else if (t.type == t_colon)
+        {
+            resourcep <label> lbl;
+            lbl.obj->name = lastt.value;
+            accept(t_colon);
+            return lbl.release();
+        }
+        else
+        {
+            expect(t_lparen);
+        }
     }
 }
 
