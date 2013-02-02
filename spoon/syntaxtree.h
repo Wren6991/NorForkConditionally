@@ -14,6 +14,7 @@ typedef enum {
     type_none = 0,
     type_int,
     type_pointer,
+    type_label,
     n_types
 } type_enum;
 

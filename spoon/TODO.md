@@ -1,7 +1,18 @@
 Todo:
 -----
 
+- Fix this "substitution" thing
+	- it works, until the values get copied.
+	- we need some way of keeping track of the _symbols_
+	- this implies a compilation step after what we're currently calling "linking".
 - assignments
+	- each assignment reads from a location.
+	- if expression is a constant, link it in from the constant table.
+	- if not:
+		- declare a new temporary variable (i.e. allocate some space)
+		- evaluate the expression into this space
+		- use this address in the assignment
+	- use the same strategy for control expressions in ifs, whiles etc.
 - macros
 - Add type checking
 - Create "object" class containing the file's definitions

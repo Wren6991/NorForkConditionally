@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include "tokenizer.h"
@@ -26,23 +27,15 @@ int main()
 {
     try
     {
-        std::vector<token> tokens = tokenize(_s(
-////////////////////////////////////////////////
-const pointer debugout = 0xc000;
-const pointer debugin = 0xc001;
-
-function main()
-{
-    var int x;
-    top:
-    nfc(x, 0x0018);
-    nfc(x, debugin);
-    nfc(debugout, x);
-    goto top;
-}
-
-////////////////////////////////////////////////
-        ));
+        std::fstream sourcefile("./test.spn", std::ios::in);
+        sourcefile.seekg(0, std::ios::end);
+        int sourcelength = sourcefile.tellg();
+        sourcefile.seekg(0, std::ios::beg);
+        char *source = new char[sourcelength + 1];
+        source[sourcelength] = 0;
+        sourcefile.read(source, sourcelength);
+        std::cout << "Read:\n" << source;
+        std::vector<token> tokens = tokenize(source);
         parser p(tokens);
         program *prog = p.getprogram();
         printtree(prog);

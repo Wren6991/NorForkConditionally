@@ -6,7 +6,6 @@
 extern std::string friendly_type_names[];
 
 // Throw a preformatted error that we've received an unexpected token.
-// TODO: make it show the expected token type;
 void throw_unexpected(std::string value, token_type_enum expected = t_eof, token_type_enum got = t_eof)
 {
     std::stringstream ss;
@@ -255,6 +254,7 @@ statement* parser::getstatement()
         else
         {
             expect(t_lparen);
+            return new statement;
         }
     }
 }

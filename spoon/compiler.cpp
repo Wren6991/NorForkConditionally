@@ -200,22 +200,42 @@ void compiler::compile(block *blk)
             dec->names[j] = currentscope->get(dec->names[j]).name;      // replace the declaration with the global name of the var; makes linking easier.
         }
     }
+    // scan through for labels: (because they break the forward-view scoping rule)
+    for (unsigned int i = 0; i < blk->statements.size(); i++)
+    {
+        // NOTE: we put a label in the declarations, but put a pointer variable in the current scope. Compiler thinks pointer, linker knows label.
+        if (blk->statements[i]->type == stat_label)
+        {
+            addvar(((label*)blk->statements[i])->name, type_pointer, (int)(blk->statements[i]));
+            vardeclaration *dec = new vardeclaration;
+            dec->type = type_label;
+            dec->names.push_back(currentscope->get(((label*)blk->statements[i])->name).name);
+            blk->declarations.push_back(dec);
+        }
+    }
+
+    // compile the remaining statements:
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
         statement *stat = blk->statements[i];
 
-        if (stat->type == stat_call)
+        switch (stat->type)
         {
+        case stat_call:
             compile((funccall*)stat);
-        }
-        else if (stat->type == stat_goto)
-        {
+            break;
+        case stat_goto:
             compile((goto_stat*)stat);
+            break;
+        case stat_label:
+            ((label*)stat)->name = currentscope->get(((label*)stat)->name).name;        // replace local label with globally unique one
+            break;
+        default:
+            throw(error("Error: unrecognised statement type"));
         }
     }
     popscope();
 }
-
 
 // compile ALL the arguments!
 void compiler::compile(funccall *fcall)
@@ -236,6 +256,11 @@ void compiler::compile(funccall *fcall)
 void compiler::compile(goto_stat *sgoto)
 {
     compile(sgoto->target);
+}
+
+void compiler::compile(label *lbl)
+{
+
 }
 
 // To compile an expression:

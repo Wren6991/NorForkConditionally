@@ -40,6 +40,13 @@ public:
     vardict();
 };
 
+struct substitution
+{
+    std::string name;
+    int nbytes;
+    substitution(std::string _name = "", int _nbytes = 0) {name = _name; nbytes = _nbytes;}
+};
+
 class linker
 {
     vardict vars;
@@ -47,6 +54,8 @@ class linker
     std::vector<definition*> definitions;
     int index;
     std::vector<char> buffer;
+    std::map<int, substitution> subtable;       // maps location to name and size
+    std::map<std::string, int> valtable;        // contains values for substitution
     void write8(uint8_t);
     void write16(uint16_t);
     void link(block*);

@@ -7,6 +7,7 @@
 #include <iostream>
 
 
+//////////////////////// Vardict defs /////////////////////////////
 
 void vardict::find_first_available_space(int searchstart)
 {
@@ -113,6 +114,10 @@ vardict::vardict()
         memory.push_back(0);
 }
 
+
+//////////////////////// Linker defs /////////////////////////////
+
+
 linker::linker()
 {
     defined_funcs["nfc"] = 0;
@@ -173,7 +178,23 @@ std::vector<char> linker::link()
     {
         throw(error("Error: no definition of function main."));
     }
+    subtable.clear();
+    valtable.clear();
     link(defined_funcs["main"]->body);
+    std::map<int, substitution>::iterator iter = subtable.begin();
+    for (; iter != subtable.end(); iter++)
+    {
+        std::cout << iter->first << " " << iter->second.name << " " << iter->second.nbytes << "\n";
+        int pos = iter->first;
+        substitution &sub = iter->second;
+        int value = valtable[sub.name];
+        std::cout << "value: " << value << "\n";
+        for (int i = 0; i < sub.nbytes; i++)
+        {
+            buffer[pos + i] = (value  >> ((sub.nbytes - i - 1) * 8)) & 0xff;
+            std::cout << ((value  >> ((sub.nbytes - i - 1) * 8)) & 0xff) << "\n";
+        }
+    }
     return buffer;
 }
 
@@ -210,6 +231,11 @@ void linker::link(statement *stat)
     case stat_goto:
         link((goto_stat*)stat);
         break;
+    case stat_label:
+        valtable[((label*)stat)->name] = index;
+        break;
+    default:
+        throw(error("Error: linking unrecognized statement type"));
     }
 }
 
@@ -247,9 +273,8 @@ void linker::link(goto_stat *sgoto)
     uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
     write16(temploc);
     write16(temploc);
-    uint16_t target = evaluate(sgoto->target);
-    write16(target);
-    write16(target);
+    write16(evaluate(sgoto->target));
+    write16(evaluate(sgoto->target));
     vars.remove("temp");
 }
 
@@ -265,7 +290,16 @@ uint16_t linker::evaluate(expression *expr)
     {
         if (vars.exists(expr->name))
         {
-            return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
+            variable *var = vars.getvar(expr->name);
+            if (var->type == type_label)
+            {
+                subtable[index] = substitution(expr->name, 2);
+                return 0;
+            }
+            else
+            {
+                return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
+            }
         }
         else
         {

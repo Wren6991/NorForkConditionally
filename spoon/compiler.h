@@ -46,12 +46,13 @@ class compiler
     void popscope();
     public:
     compiler();
-    object* compile(program *prog);
-    void compile(funcdef *fdef);
-    void compile(block *blk);
-    void compile(funccall *fcall);
-    void compile(goto_stat *sgoto);
-    void compile(expression *expr);
+    object* compile(program*);
+    void compile(funcdef*);
+    void compile(block*);
+    void compile(funccall*);
+    void compile(goto_stat*);
+    void compile(label*);
+    void compile(expression*);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };
 

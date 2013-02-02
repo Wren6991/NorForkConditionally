@@ -1,12 +1,14 @@
-#include <stddefs>
-
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
 
 function main()
 {
-    var int x;
+    var int x, y;
+    nfc(y, y);
+    nfc(y, y);
+    loopStart:
     nfc(x, 0x0018);
     nfc(x, debugin);
-    nfc4(debugout, x, 0x0000, 0x0000);
+    nfc(debugout, x);
+    goto loopStart;
 }
