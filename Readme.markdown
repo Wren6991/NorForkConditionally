@@ -10,6 +10,7 @@ This repo contains files relating to the One Instruction Set Computer, NFC. It c
 - A logisim file containing a possible implementation of an NFC machine
 - Implementation notes for this physical machine
 - A C++ compiler for a higher level language
+- An Arduino serial-console-interface program for programming the computer
 
 Thanks go to Jack for the excellent documentation on his site.
 
