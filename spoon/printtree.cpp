@@ -117,7 +117,7 @@ void printtree(statement *stat, int indentation)
         std::cout << "If ";
         printtree(((if_stat*)stat)->expr);
         std::cout << " Then\n";
-        printtree(((if_stat*)stat)->ifblk, indentation + 1);
+        printtree(((if_stat*)stat)->ifblock, indentation + 1);
     }
 
 }

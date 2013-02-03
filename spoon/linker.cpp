@@ -7,6 +7,19 @@
 #include <iostream>
 
 
+std::string getlabel()
+{
+    static int lcount = 0;
+    std::stringstream ss;
+    ss << "__L" << std::hex << lcount++;
+    return ss.str();
+}
+
+uint16_t getconstaddress(uint8_t val)
+{
+    return DECREMENT_START + ((val + 1) % 256);
+}
+
 //////////////////////// Vardict defs /////////////////////////////
 
 void vardict::find_first_available_space(int searchstart)
@@ -127,6 +140,11 @@ linker::linker()
     buffer.reserve(ROM_SIZE);
 }
 
+void linker::savelabel(std::string name, uint16_t address)
+{
+    valtable[name + "_HI"] = address >> 8;
+    valtable[name + "_LO"] = address & 0xff;
+}
 
 // NB: index refers to the location _about_ to be written. (I.e. next location)
 void linker::write8(linkval val)
@@ -149,6 +167,12 @@ void linker::write16(linkval val)
         write8(linkval(val.sym + "_HI"));
         write8(linkval(val.sym + "_LO"));
     }
+}
+
+void linker::padto8bytes()
+{
+    while ((buffer.size() % 8) != 0)
+        write8(0);
 }
 
 void linker::add_object(object *obj)
@@ -226,8 +250,10 @@ void linker::link(statement *stat)
         link((goto_stat*)stat);
         break;
     case stat_label:
-        valtable[((label*)stat)->name + "_HI"] = index >> 8;
-        valtable[((label*)stat)->name + "_LO"] = index & 0xff;
+        savelabel(((label*)stat)->name, index);
+        break;
+    case stat_if:
+        link((if_stat*)stat);
         break;
     default:
         throw(error("Error: linking unrecognized statement type"));
@@ -247,6 +273,7 @@ void linker::link(funccall *call)
     {
         if (call->name == "nfc")
         {
+            padto8bytes();
             write16(evaluate(call->args[0]));
             write16(evaluate(call->args[1]));
             uint16_t next = index + 4;
@@ -255,6 +282,7 @@ void linker::link(funccall *call)
         }
         else if (call->name == "nfc4")
         {
+            padto8bytes();
             write16(evaluate(call->args[0]));
             write16(evaluate(call->args[1]));
             write16(evaluate(call->args[2]));
@@ -274,8 +302,49 @@ void linker::link(goto_stat *sgoto)
     vars.remove("temp");
 }
 
-// if we don't know the value yet, this function returns 0s
-// and makes a note to substitute the real value in later.
+
+//  BRNZ L1
+//  <if block>
+//  BRA L2
+//L1:
+//  <else block
+//L2:
+void linker::link(if_stat* ifs)
+{
+    std::string elselabel = getlabel();
+    std::string endlabel = getlabel();
+    linkval testloc = linker::evaluate(ifs->expr);
+    padto8bytes();
+    // not the test location:
+    write16(testloc);
+    write16(testloc);
+    uint16_t next = index + 4;
+    write16(next);
+    write16(next);
+    // not it again: (involution: it's now same as original, whether or not it's read only.)
+    write16(testloc);
+    write16(testloc);
+    next = index + 4;
+    write16(next);
+    write16(linkval(elselabel));
+    link(ifs->ifblock);
+    savelabel(elselabel, index);
+    if (ifs->elseblock)
+    {
+        // finished the if clause: nonconditional jump past else clause.
+        uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
+        write16(temploc);
+        write16(temploc);
+        write16(linkval(endlabel));
+        write16(linkval(endlabel));
+        vars.remove("temp");
+        link(ifs->elseblock);
+    }
+    savelabel(endlabel, index);
+}
+
+// can return a literal value or a symbol: this is transparent to using functions.
+// (think of a symbol as an "IOU" for an actual address: e.g. labels we don't know the address til we reach them.)
 linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
@@ -321,7 +390,7 @@ std::vector<char> linker::assemble()
         }
     }
     // put constant tables into last kilobyte.
-    while (image.size() < INCREMENT_START)
+    while (image.size() < (unsigned)INCREMENT_START)
         image.push_back(0);
     for (unsigned int i = 0; i <= 255; i++)
         image.push_back((i + 1) & 0xff);

@@ -74,12 +74,15 @@ class linker
     int index;
     std::vector<linkval> buffer;
     std::map<std::string, int> valtable;        // contains values for substitution
+    void savelabel(std::string, uint16_t);
     void write8(linkval);
     void write16(linkval);
+    void padto8bytes();
     void link(block*);
     void link(statement*);
     void link(funccall*);
     void link(goto_stat*);
+    void link(if_stat*);
     linkval evaluate(expression*);
     std::vector<char> assemble();
 public:

@@ -125,8 +125,9 @@ struct label: public statement
 struct if_stat: public statement
 {
     expression *expr;
-    block *ifblk;
-    if_stat() {type = stat_if;}
+    block *ifblock;
+    block *elseblock;
+    if_stat() {type = stat_if; elseblock = 0;}
 };
 
 struct block

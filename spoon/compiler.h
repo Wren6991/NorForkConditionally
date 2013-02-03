@@ -52,6 +52,7 @@ class compiler
     void compile(funccall*);
     void compile(goto_stat*);
     void compile(label*);
+    void compile(if_stat*);
     void compile(expression*);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };

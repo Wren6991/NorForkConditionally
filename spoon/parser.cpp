@@ -284,7 +284,9 @@ if_stat* parser::getif()
     expect(t_lparen);
     ifs.obj->expr = getexpression();
     expect(t_rparen);
-    ifs.obj->ifblk = getblock();
+    ifs.obj->ifblock = getblock();
+    if (accept(t_else))
+        ifs.obj->elseblock = getblock();
     return ifs.release();
 }
 

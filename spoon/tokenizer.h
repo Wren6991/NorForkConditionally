@@ -13,6 +13,7 @@ typedef enum {
     t_colon,
     t_comma,
     t_const,
+    t_else,
     t_equals,
     t_function,
     t_goto,
