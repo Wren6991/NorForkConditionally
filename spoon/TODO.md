@@ -1,10 +1,6 @@
 Todo:
 -----
 
-- Fix this "substitution" thing
-	- it works, until the values get copied.
-	- we need some way of keeping track of the _symbols_
-	- this implies a compilation step after what we're currently calling "linking".
 - assignments
 	- each assignment reads from a location.
 	- if expression is a constant, link it in from the constant table.

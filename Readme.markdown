@@ -5,10 +5,11 @@ Inspired by Jack Eisenman's DUO Compact CPU - ostracodfiles.com
 
 This repo contains files relating to the One Instruction Set Computer, NFC. It contains:
 
-- A javascript-based compiler for a low-level language, targeted at an NFC machine
+- A javascript-based compiler for a low-level language, targeted at an NFC machine _(deprecated)_
 - A C++ application for emulating such a machine
 - A logisim file containing a possible implementation of an NFC machine
 - Implementation notes for this physical machine
+- A C++ compiler for a higher level language
 
 Thanks go to Jack for the excellent documentation on his site.
 
@@ -45,4 +46,19 @@ It is also possible to read/write to runtime-specified locations (indirect addre
 Machine Description
 -------------------
 
-The proposed implementation is an 8 bit machine with a 16 bit memory-mapped address space. Details are given in the processor directory, as well as the emulator source code.
+The machine is implemented as an 8-bit machine, with a 16 bit address space. Addresses are big-endian. The address space is arranged as such:
+
+- 0x0000 -> 0x7fff: ROM
+	- 32KiB, immutable to machine.
+- 0x8000 -> 0xbfff: RAM
+	- 16KiB, writable by machine programs
+	- may expand to 24KiB by changing address decode logic
+- 0xc000 -> 0xffff: I/O
+	- 0xc000: debug out
+		- write-only, always reads as 0. Connected to 8 LEDs.
+	- 0xc001: debug in
+		- read only, connected to 8 DIP switches.
+	- really a waste of addresses, might shrink this to make more room for RAM.
+
+8 LEDs (memory mapped) provide output, and a bank of 8 DIP switches allows a 1-byte value to be input.
+The architecture makes it easy to add more I/O - eventually there'll be a character LCD (which will need software to drive) and possibly a large flash device (~1MiB) for files and programs.
