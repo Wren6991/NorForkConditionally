@@ -47,22 +47,37 @@ struct substitution
     substitution(std::string _name = "", int _nbytes = 0) {name = _name; nbytes = _nbytes;}
 };
 
+typedef enum
+{
+    lv_literal = 0,
+    lv_symbol
+} lv_type;
+
+struct linkval
+{
+    lv_type type;
+    uint16_t literal;
+    std::string sym;
+    linkval(uint16_t lit) {type = lv_literal; literal = lit;}
+    linkval(std::string s) {type = lv_symbol; sym = s;}
+};
+
 class linker
 {
     vardict vars;
     std::map<std::string, funcdef*> defined_funcs;
     std::vector<definition*> definitions;
     int index;
-    std::vector<char> buffer;
-    std::map<int, substitution> subtable;       // maps location to name and size
+    std::vector<linkval> buffer;
     std::map<std::string, int> valtable;        // contains values for substitution
-    void write8(uint8_t);
-    void write16(uint16_t);
+    void write8(linkval);
+    void write16(linkval);
     void link(block*);
     void link(statement*);
     void link(funccall*);
     void link(goto_stat*);
-    uint16_t evaluate(expression*);
+    linkval evaluate(expression*);
+    std::vector<char> assemble();
 public:
     linker();
     void add_object(object* obj);

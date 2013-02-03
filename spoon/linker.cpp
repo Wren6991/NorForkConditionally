@@ -129,7 +129,7 @@ linker::linker()
 
 
 // NB: index refers to the location _about_ to be written. (I.e. next location)
-void linker::write8(uint8_t val)
+void linker::write8(linkval val)
 {
     if (index >= ROM_SIZE)
         throw(error("Error: program too big!"));
@@ -137,10 +137,18 @@ void linker::write8(uint8_t val)
     index++;
 }
 
-void linker::write16(uint16_t val)
+void linker::write16(linkval val)
 {
-    write8(val >> 8);           // big endian!
-    write8(val & 0xff);
+    if (val.type == lv_literal)
+    {
+        write8(val.literal >> 8);           // big endian!
+        write8(val.literal & 0xff);
+    }
+    else
+    {
+        write8(linkval(val.sym + "_HI"));
+        write8(linkval(val.sym + "_LO"));
+    }
 }
 
 void linker::add_object(object *obj)
@@ -178,24 +186,10 @@ std::vector<char> linker::link()
     {
         throw(error("Error: no definition of function main."));
     }
-    subtable.clear();
     valtable.clear();
     link(defined_funcs["main"]->body);
-    std::map<int, substitution>::iterator iter = subtable.begin();
-    for (; iter != subtable.end(); iter++)
-    {
-        std::cout << iter->first << " " << iter->second.name << " " << iter->second.nbytes << "\n";
-        int pos = iter->first;
-        substitution &sub = iter->second;
-        int value = valtable[sub.name];
-        std::cout << "value: " << value << "\n";
-        for (int i = 0; i < sub.nbytes; i++)
-        {
-            buffer[pos + i] = (value  >> ((sub.nbytes - i - 1) * 8)) & 0xff;
-            std::cout << ((value  >> ((sub.nbytes - i - 1) * 8)) & 0xff) << "\n";
-        }
-    }
-    return buffer;
+
+    return assemble();
 }
 
 void linker::link(block *blk)
@@ -232,7 +226,8 @@ void linker::link(statement *stat)
         link((goto_stat*)stat);
         break;
     case stat_label:
-        valtable[((label*)stat)->name] = index;
+        valtable[((label*)stat)->name + "_HI"] = index >> 8;
+        valtable[((label*)stat)->name + "_LO"] = index & 0xff;
         break;
     default:
         throw(error("Error: linking unrecognized statement type"));
@@ -273,14 +268,15 @@ void linker::link(goto_stat *sgoto)
     uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
     write16(temploc);
     write16(temploc);
-    write16(evaluate(sgoto->target));
-    write16(evaluate(sgoto->target));
+    linkval target = evaluate(sgoto->target);
+    write16(target);
+    write16(target);
     vars.remove("temp");
 }
 
 // if we don't know the value yet, this function returns 0s
 // and makes a note to substitute the real value in later.
-uint16_t linker::evaluate(expression *expr)
+linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
     {
@@ -292,14 +288,9 @@ uint16_t linker::evaluate(expression *expr)
         {
             variable *var = vars.getvar(expr->name);
             if (var->type == type_label)
-            {
-                subtable[index] = substitution(expr->name, 2);
-                return 0;
-            }
+                return expr->name;
             else
-            {
                 return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
-            }
         }
         else
         {
@@ -314,4 +305,21 @@ uint16_t linker::evaluate(expression *expr)
     }
 }
 
+
+std::vector<char> linker::assemble()
+{
+    std::vector<char> image;
+    for (std::vector<linkval>::iterator iter = buffer.begin(); iter != buffer.end(); iter++)
+    {
+        if (iter->type == lv_literal)
+        {
+            image.push_back(iter->literal);
+        }
+        else
+        {
+            image.push_back(valtable[iter->sym]);
+        }
+    }
+    return image;
+}
 
