@@ -13,20 +13,17 @@ Todo:
 - Add type checking
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?
-- more control structures (goto, if, while - these should all translate into NFCs.)
-	- start with goto, then if.
-	- if: we have a pointer, and this maps to the value we're switching on. (use a variable)
-	- expressions/functions can write to this pointer location if they're evaluated inside the if
-	- the if instruction reads this location and skip to either block
-	- the true block has an instr. at the end to skip past the else.
-	- use variables for all the addresses, sub retroactively once addresses are known.
-	- have a single loop structure that adds a jump at the end.
-	- have a break: specialized goto that jumps past end of loop.
-	- while is a loop with an if (){break;}...
 - bulk out the standard library
 - add comments to tokenizer!
-- constant values
 - functions in expressions (with results)
 	- have a proper return mechanism for user-defined etc.
 	- have hardcoded ones like const(8), second(16), first(16) etc.
 	- means we need a proper function signature class for return types
+- if we assign from a function result, pass the assignment target into the function link routine.
+	- this way we can write straight to the assignment target
+	- perhaps save this for after everything's working?
+	- still probably better for function return location to be decided for caller, more convenient that way
+- Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
+	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
+- Clear up distinctions between what's a value and what's a pointer to a value.
+- make linker valtable contain linkvals, so we can have chains of symbols (sym1->sym2->constant)

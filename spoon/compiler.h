@@ -8,8 +8,13 @@
 #include <vector>
 #include <set>
 
-// TODO: turn this into a struct that includes return type etc.
-typedef std::vector<type_enum> func_signature;
+struct func_signature
+{
+    type_enum return_type;
+    std::vector<type_enum> arg_types;
+    bool operator==(func_signature &rhs) const {return rhs.return_type == return_type && rhs.arg_types == arg_types;}
+    bool operator!=(func_signature &rhs) const {return !operator==(rhs);}
+};
 
 struct symbol
 {
@@ -47,6 +52,7 @@ class compiler
     public:
     compiler();
     object* compile(program*);
+    void compile(macrodef*);
     void compile(funcdef*);
     void compile(block*);
     void compile(funccall*);

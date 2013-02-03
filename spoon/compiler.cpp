@@ -57,11 +57,11 @@ compiler::compiler()
     globalscope = new scope();
     currentscope = globalscope;
     func_signature sig;
-    sig.push_back(type_pointer);
-    sig.push_back(type_pointer);
+    sig.arg_types.push_back(type_pointer);
+    sig.arg_types.push_back(type_pointer);
     functions["nfc"] = sig;
-    sig.push_back(type_pointer);
-    sig.push_back(type_pointer);
+    sig.arg_types.push_back(type_pointer);
+    sig.arg_types.push_back(type_pointer);
     functions["nfc4"] = sig;
 }
 
@@ -106,8 +106,7 @@ object* compiler::compile(program *prog)
         }
         else if (def->type == dt_macrodef)
         {
-            //eh, don't really know what to do here yet
-            // guess I push a new scope with the arg names in it and scan the body?
+            compile((macrodef*)def);
         }
         else if (def->type == dt_funcdef)
         {
@@ -127,7 +126,7 @@ object* compiler::compile(program *prog)
     std::vector<definition*>::iterator idef = obj->tree->defs.begin();
     while (idef != obj->tree->defs.end())
     {
-        if ((*idef)->type != dt_funcdef || !((funcdef*)*idef)->defined)
+        if (((*idef)->type != dt_funcdef || !((funcdef*)*idef)->defined) && (*idef)->type != dt_macrodef)
         {
             idef = obj->tree->defs.erase(idef);     // strip out everything apart from function definitions. (macros have already been subbed by this point)
         }
@@ -139,18 +138,40 @@ object* compiler::compile(program *prog)
     return obj;
 }
 
+void compiler::compile(macrodef *mdef)
+{
+    //std::string guid = makeguid(mdef->name, (int)mdef);
+    pushscope();
+    for (unsigned int i = 0; i < mdef->args.size(); i++)
+    {
+        addvar(mdef->args[i], type_label, (int)&(mdef->args[i]));
+        mdef->args[i] = currentscope->get(mdef->args[i]).name;
+    }
+    if (defined_funcs.find(mdef->name) != defined_funcs.end())
+    {
+        std::stringstream ss;
+        ss << "Error: conflicting definitions of macro \"" << mdef->name << "\"";
+        throw(error(ss.str()));
+    }
+    compile(mdef->body);
+    popscope();
+    defined_funcs.insert(mdef->name);
+}
+
 
 // check for signature conflicts, check for definition conficts,
 // and then compile the function body if there is one.
 void compiler::compile(funcdef *fdef)
 {
     func_signature sig;
+    sig.return_type = fdef->return_type;
     pushscope();
     for (unsigned int i = 0; i < fdef->args.size(); i++)
     {
         argument *arg = &(fdef->args[i]);
         addvar(arg->name, arg->type, (int)arg);
-        sig.push_back(arg->type);
+        arg->name = currentscope->get(arg->name).name;
+        sig.arg_types.push_back(arg->type);
     }
     if (functions.find(fdef->name) != functions.end())
     {
@@ -246,7 +267,8 @@ void compiler::compile(block *blk)
 // compile ALL the arguments!
 void compiler::compile(funccall *fcall)
 {
-    if (functions.find(fcall->name) == functions.end())
+    if (functions.find(fcall->name) == functions.end() &&
+        defined_funcs.find(fcall->name) == defined_funcs.end())
     {
         std::stringstream ss;
         ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
@@ -306,5 +328,14 @@ void compiler::compile(expression *expr)
             expr->type = exp_number;
             expr->number = globalsymboltable[expr->name].value;
         }
+    }
+    else if (expr->type == exp_funccall)
+    {
+        for (unsigned int i = 0; i < expr->args.size(); i++)
+            compile(expr->args[i]);
+    }
+    else if (expr->type != exp_number)
+    {
+        throw(error("Error: attempted to compile unknown expression type"));
     }
 }

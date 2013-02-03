@@ -29,7 +29,8 @@ typedef enum {
 
 typedef enum {
     exp_name,
-    exp_number
+    exp_number,
+    exp_funccall
 } exp_type;
 
 
@@ -148,6 +149,7 @@ struct expression
     exp_type type;
     std::string name;
     int number;
+    std::vector<expression*> args;
 };
 
 

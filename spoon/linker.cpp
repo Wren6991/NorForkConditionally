@@ -225,12 +225,20 @@ void linker::add_object(object *obj)
     for (unsigned int i = 0; i < obj->tree->defs.size(); i++)
     {
         definition *def = obj->tree->defs[i];
-        if (def->type != dt_funcdef || !((funcdef*)def)->defined)
+        if ((def->type != dt_funcdef || !((funcdef*)def)->defined) && (def->type != dt_macrodef))
         {
             throw(error("Error: linker only accepts defined functions as symbols, wtf are you doing."));
         }
-        funcdef *fdef = (funcdef*)def;
-        defined_funcs[fdef->name] = fdef;
+        if (def->type == dt_funcdef)
+        {
+            funcdef *fdef = (funcdef*)def;
+            defined_funcs[fdef->name] = fdef;
+        }
+        else
+        {
+            macrodef *mdef = (macrodef*)def;
+            defined_funcs[mdef->name] = mdef;
+        }
         definitions.push_back(def);
     }
 }
@@ -245,7 +253,7 @@ std::vector<char> linker::link()
         throw(error("Error: no definition of function main."));
     }
     valtable.clear();
-    link(defined_funcs["main"]->body);
+    link(((funcdef*)defined_funcs["main"])->body);
 
     return assemble();
 }
@@ -305,7 +313,7 @@ void linker::link(funccall *call)
         ss << "Error: no definition for function \"" << call->name << "\"";
         throw(error(ss.str()));
     }
-    funcdef *def = defined_funcs[call->name];
+    definition *def = defined_funcs[call->name];
     if (!def)   // it's a hardcoded function...
     {
         if (call->name == "nfc")
@@ -324,6 +332,22 @@ void linker::link(funccall *call)
             write16(evaluate(call->args[1]));
             write16(evaluate(call->args[2]));
             write16(evaluate(call->args[3]));
+        }
+    }
+    else
+    {
+        if (def->type == dt_macrodef)
+        {
+            macrodef *mdef = (macrodef*)def;
+            // WHAT HAPPENS IF THE SAME MACRO IS CALLED IN DIFFERENT LOCATIONS?
+            for (unsigned int i = 0; i < mdef->args.size(); i++)
+            {
+                savelabel(mdef->args[i], evaluate(call->args[i]).literal);
+                vars.addvar(mdef->args[i], type_label);
+            }
+            link(mdef->body);
+            for (unsigned int i = 0; i < mdef->args.size(); i++)
+                vars.remove(mdef->args[i]);
         }
     }
 }
@@ -384,8 +408,10 @@ void linker::link(while_stat *whiles)
 }
 
 
-// can return a literal value or a symbol: this is transparent to using functions.
-// (think of a symbol as an "IOU" for an actual address: e.g. labels we don't know the address til we reach them.)
+// Can return a literal value or a symbol: this is transparent to using functions.
+// (think of a symbol as an "IOU" for an actual address: e.g. for labels we don't know the address til we reach them.)
+// Always returns an address: if we need code to calculate the value (e.g. a function call) then this function emits that code
+// and then returns the location where the value will be found.
 linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
@@ -407,6 +433,34 @@ linkval linker::evaluate(expression *expr)
             std::stringstream ss;
             ss << "Error: unknown linker symbol \"" << expr->name << "\"";
             throw(error(ss.str()));
+        }
+    }
+    else if (expr->type == exp_funccall)
+    {
+        if (expr->name == "val")
+        {
+            return getconstaddress(evaluate(expr->args[0]).literal);
+        }
+        //TODO: make these return the value of this address.
+        else if (expr->name == "first")
+        {
+            linkval ptr = evaluate(expr->args[0]);
+            if (ptr.type == lv_literal)
+                return ptr.literal >> 8;
+            else
+                return ptr.sym + "_HI";
+        }
+        else if (expr->name == "second")
+        {
+            linkval ptr = evaluate(expr->args[0]);
+            if (ptr.type == lv_literal)
+                return ptr.literal & 0xff;
+            else
+                return ptr.sym + "_LO";
+        }
+        else
+        {
+
         }
     }
     else

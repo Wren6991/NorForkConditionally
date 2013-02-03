@@ -309,8 +309,20 @@ expression* parser::getexpression()
     resourcep <expression> expr;
     if (accept(t_name))
     {
-        expr.obj->type = exp_name;
         expr.obj->name = lastt.value;
+        if (accept(t_lparen))
+        {
+            expr.obj->type = exp_funccall;
+            if (t.type != t_rparen)
+                expr.obj->args.push_back(getexpression());
+            while (accept(t_comma))
+                expr.obj->args.push_back(getexpression());
+            expect(t_rparen);
+        }
+        else
+        {
+            expr.obj->type = exp_name;
+        }
     }
     else
     {

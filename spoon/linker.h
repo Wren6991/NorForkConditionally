@@ -69,7 +69,7 @@ struct linkval
 class linker
 {
     vardict vars;
-    std::map<std::string, funcdef*> defined_funcs;
+    std::map<std::string, definition*> defined_funcs;
     std::vector<definition*> definitions;
     int index;
     std::vector<linkval> buffer;
