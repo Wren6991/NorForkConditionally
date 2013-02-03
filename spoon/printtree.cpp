@@ -67,7 +67,7 @@ void printtree(macrodef *def, int indentation)
 void printtree(block *blk, int indentation)
 {
     indent(indentation);
-    std::cout << "STARTBLOCK\n";
+    std::cout << "{\n";
     for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
     {
         printtree(*iter, indentation + 1);
@@ -77,7 +77,7 @@ void printtree(block *blk, int indentation)
         printtree(*iter, indentation + 1);
     }
     indent(indentation);
-    std::cout << "ENDBLOCK\n";
+    std::cout << "}\n";
 }
 
 void printtree(vardeclaration *decl, int indentation)
@@ -117,8 +117,22 @@ void printtree(statement *stat, int indentation)
         std::cout << "If ";
         printtree(((if_stat*)stat)->expr);
         std::cout << " Then\n";
-        printtree(((if_stat*)stat)->ifblock, indentation + 1);
+        printtree(((if_stat*)stat)->ifblock, indentation);
+        if (((if_stat*)stat)->elseblock)
+        {
+            indent(indentation);
+            std::cout << "Else\n";
+            printtree(((if_stat*)stat)->elseblock, indentation);
+        }
     }
+    else if (stat->type == stat_while)
+    {
+        std::cout << "While ";
+        printtree(((while_stat*)stat)->expr);
+        std::cout << " Do\n";
+        printtree(((while_stat*)stat)->blk, indentation);
+    }
+
 
 }
 

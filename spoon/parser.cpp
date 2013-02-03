@@ -225,6 +225,10 @@ statement* parser::getstatement()
     {
         return getif();
     }
+    else if (accept(t_while))
+    {
+        return getwhile();
+    }
     else
     {
         expect(t_name);
@@ -288,6 +292,16 @@ if_stat* parser::getif()
     if (accept(t_else))
         ifs.obj->elseblock = getblock();
     return ifs.release();
+}
+
+while_stat* parser::getwhile()
+{
+    resourcep <while_stat> whiles;
+    expect(t_lparen);
+    whiles.obj->expr = getexpression();
+    expect(t_rparen);
+    whiles.obj->blk = getblock();
+    return whiles.release();
 }
 
 expression* parser::getexpression()

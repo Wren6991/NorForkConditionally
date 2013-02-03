@@ -78,11 +78,15 @@ class linker
     void write8(linkval);
     void write16(linkval);
     void padto8bytes();
+    void generate_nfc2(linkval x, linkval y);
+    void generatebranchifzero(linkval testloc, linkval dest);
+    void generatebranchalways(linkval dest);
     void link(block*);
     void link(statement*);
     void link(funccall*);
     void link(goto_stat*);
     void link(if_stat*);
+    void link(while_stat*);
     linkval evaluate(expression*);
     std::vector<char> assemble();
 public:

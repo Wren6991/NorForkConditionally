@@ -175,6 +175,40 @@ void linker::padto8bytes()
         write8(0);
 }
 
+void linker::generate_nfc2(linkval x, linkval y)
+{
+    padto8bytes();
+    uint16_t next = index + 8;
+    write16(x);
+    write16(y);
+    write16(next);
+    write16(next);
+}
+
+// clear temp; set temp to not(x);  invert temp and branch on result.
+void linker::generatebranchifzero(linkval testloc, linkval dest)
+{
+    uint16_t temploc = vars.addvar("__iftemp", type_int) + HEAP_BOTTOM;
+    generate_nfc2(temploc, getconstaddress(0xff));
+    generate_nfc2(temploc, testloc);
+    uint16_t next = index + 8;
+    write16(temploc);
+    write16(temploc);
+    write16(next);
+    write16(dest);
+    vars.remove("__iftemp");
+}
+
+void linker::generatebranchalways(linkval dest)
+{
+    uint16_t temploc = vars.addvar("__temp", type_int) + HEAP_BOTTOM;
+    padto8bytes();
+    write16(temploc);
+    write16(temploc);
+    write16(dest);
+    write16(dest);
+}
+
 void linker::add_object(object *obj)
 {
     // check for collisions:
@@ -255,6 +289,9 @@ void linker::link(statement *stat)
     case stat_if:
         link((if_stat*)stat);
         break;
+    case stat_while:
+        link((while_stat*)stat);
+        break;
     default:
         throw(error("Error: linking unrecognized statement type"));
     }
@@ -314,34 +351,38 @@ void linker::link(if_stat* ifs)
     std::string elselabel = getlabel();
     std::string endlabel = getlabel();
     linkval testloc = linker::evaluate(ifs->expr);
-    padto8bytes();
-    // not the test location:
-    write16(testloc);
-    write16(testloc);
-    uint16_t next = index + 4;
-    write16(next);
-    write16(next);
-    // not it again: (involution: it's now same as original, whether or not it's read only.)
-    write16(testloc);
-    write16(testloc);
-    next = index + 4;
-    write16(next);
-    write16(linkval(elselabel));
+    generatebranchifzero(testloc, linkval(elselabel));
     link(ifs->ifblock);
-    savelabel(elselabel, index);
     if (ifs->elseblock)
     {
         // finished the if clause: nonconditional jump past else clause.
-        uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
-        write16(temploc);
-        write16(temploc);
-        write16(linkval(endlabel));
-        write16(linkval(endlabel));
-        vars.remove("temp");
+        generatebranchalways(linkval(endlabel));
+        savelabel(elselabel, index);
         link(ifs->elseblock);
     }
+    else
+        savelabel(elselabel, index);
     savelabel(endlabel, index);
 }
+
+//L1:
+//  <test>
+//  BRZ L2
+//  <body>
+//  BRA L1
+//L2:
+void linker::link(while_stat *whiles)
+{
+    std::string toplabel = getlabel();
+    std::string exitlabel = getlabel();
+    savelabel(toplabel, index);
+    generatebranchifzero(evaluate(whiles->expr), exitlabel);
+    link(whiles->blk);
+    // jump unconditionally to top:
+    generatebranchalways(linkval(toplabel));
+    savelabel(exitlabel, index);
+}
+
 
 // can return a literal value or a symbol: this is transparent to using functions.
 // (think of a symbol as an "IOU" for an actual address: e.g. labels we don't know the address til we reach them.)
@@ -377,6 +418,9 @@ linkval linker::evaluate(expression *expr)
 
 std::vector<char> linker::assemble()
 {
+    // generate halt instruction:
+    generatebranchalways(index);
+    // assemble literals and symbols into program:
     std::vector<char> image;
     for (std::vector<linkval>::iterator iter = buffer.begin(); iter != buffer.end(); iter++)
     {

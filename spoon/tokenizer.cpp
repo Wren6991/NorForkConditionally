@@ -7,6 +7,7 @@
 
 std::string friendly_type_names[] = {
     "EOF",
+    "colon",
     "comma",
     "\"const\"",
     "\"else\"",
@@ -15,7 +16,7 @@ std::string friendly_type_names[] = {
     "\"goto\"",
     "\"if\"",
     "\"{\"",
-    "\")\"",
+    "\"(\"",
     "\"macro\"",
     "name",
     "number",

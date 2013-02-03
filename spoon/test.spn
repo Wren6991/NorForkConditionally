@@ -1,23 +1,24 @@
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
+const pointer true = 0x7d00;        // constant ff
+const pointer false = 0x7d01;       // constant 0
+
 
 function main()
 {
     var int x, y;
-    nfc(y, y);
-    nfc(y, y);
     if (y)
-    {
         nfc(y, x);
-    }
     else
     {
         var int z;
         nfc(z, y);
     }
-    loopStart:
-    nfc(x, 0x0018);
-    nfc(x, debugin);
-    nfc(debugout, x);
-    goto loopStart;
+
+    while (true)
+    {
+        nfc(x, 0x7d00);
+        nfc(x, debugin);
+        nfc(debugout, x);
+    }
 }

@@ -31,6 +31,7 @@ class parser
         funccall* getfunccall();
         label* getlabel();
         if_stat* getif();
+        while_stat* getwhile();
     expression* getexpression();
 };
 

@@ -233,6 +233,9 @@ void compiler::compile(block *blk)
         case stat_if:
             compile((if_stat*)stat);
             break;
+        case stat_while:
+            compile((while_stat*)stat);
+            break;
         default:
             throw(error("Error: unrecognised statement type"));
         }
@@ -268,12 +271,18 @@ void compiler::compile(label *lbl)
 
 // we only need to compile the expression and if bodies:
 // the actual code generation and labelling happens at link time.
-void compiler::compile(if_stat* ifs)
+void compiler::compile(if_stat *ifs)
 {
     compile(ifs->expr);
     compile(ifs->ifblock);
     if (ifs->elseblock)
         compile(ifs->elseblock);
+}
+
+void compiler::compile(while_stat *whiles)
+{
+    compile(whiles->expr);
+    compile(whiles->blk);
 }
 
 // To compile an expression:

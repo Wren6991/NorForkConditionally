@@ -130,6 +130,13 @@ struct if_stat: public statement
     if_stat() {type = stat_if; elseblock = 0;}
 };
 
+struct while_stat: public statement
+{
+    expression *expr;
+    block *blk;
+    while_stat() {type = stat_while;}
+};
+
 struct block
 {
     std::vector <vardeclaration*> declarations;

@@ -44,3 +44,10 @@ class token
 std::vector <token> tokenize(std::string);
 
 #endif // TOKENIZER_H_INCLUDED
+
+
+
+
+
+
+
