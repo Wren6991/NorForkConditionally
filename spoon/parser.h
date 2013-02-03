@@ -27,6 +27,10 @@ class parser
     block* getblock();
     vardeclaration* getvardeclaration();
     statement* getstatement();
+        goto_stat* getgoto();
+        funccall* getfunccall();
+        label* getlabel();
+        if_stat* getif();
     expression* getexpression();
 };
 

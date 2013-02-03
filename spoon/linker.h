@@ -8,6 +8,10 @@
 #include <vector>
 
 const int ROM_SIZE = 32 * 1024;
+const int INCREMENT_START = ROM_SIZE - 1024;
+const int DECREMENT_START = INCREMENT_START + 256;
+const int LEFTSHIFT_START = DECREMENT_START + 256;
+const int RIGHTSHIFT_START = LEFTSHIFT_START + 256;
 const int RAM_SIZE = 16 * 1024;
 const int HEAP_TOP = 0xbfff;
 const int HEAP_BOTTOM = 0x8000;

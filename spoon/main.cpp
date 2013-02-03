@@ -12,6 +12,7 @@
 
 void printout(std::vector<char> buffer)
 {
+    int nconsecutivezeroes = 0;
     for (unsigned int i = 0; i < buffer.size(); i++)
     {
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
@@ -19,6 +20,13 @@ void printout(std::vector<char> buffer)
             std::cout << "\n";
         else if (i % 2 == 1)
             std::cout << " ";
+
+        if (buffer[i] == 0)
+            nconsecutivezeroes++;
+        else
+            nconsecutivezeroes = 0;
+        if (nconsecutivezeroes >= 8)
+            break;
     }
 }
 
@@ -27,15 +35,19 @@ int main()
 {
     try
     {
-        std::fstream sourcefile("./test.spn", std::ios::in);
+        std::ifstream sourcefile("./test.spn");
+        if (!sourcefile.is_open())
+        {
+            throw(error("Error: could not open file!"));
+        }
         sourcefile.seekg(0, std::ios::end);
         int sourcelength = sourcefile.tellg();
         sourcefile.seekg(0, std::ios::beg);
-        char *source = new char[sourcelength + 1];
-        source[sourcelength] = 0;
-        sourcefile.read(source, sourcelength);
-        std::cout << "Read:\n" << source;
-        std::vector<token> tokens = tokenize(source);
+        std::vector<char> source(sourcelength);
+        sourcefile.read(&source[0], sourcelength);
+        source.push_back(0);
+        std::cout << "Read:\n" << &source[0];
+        std::vector<token> tokens = tokenize(&source[0]);
         parser p(tokens);
         program *prog = p.getprogram();
         printtree(prog);

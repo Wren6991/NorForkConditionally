@@ -320,6 +320,17 @@ std::vector<char> linker::assemble()
             image.push_back(valtable[iter->sym]);
         }
     }
+    // put constant tables into last kilobyte.
+    while (image.size() < INCREMENT_START)
+        image.push_back(0);
+    for (unsigned int i = 0; i <= 255; i++)
+        image.push_back((i + 1) & 0xff);
+    for (unsigned int i = 0; i <= 255; i++)
+        image.push_back((i - 1) & 0xff);
+    for (unsigned int i = 0; i <= 255; i++)
+        image.push_back((i << 1) & 0xff);
+    for (unsigned int i = 0; i <= 255; i++)
+        image.push_back((i >> 1) & 0xff);
     return image;
 }
 

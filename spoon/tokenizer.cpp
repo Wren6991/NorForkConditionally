@@ -34,7 +34,10 @@ enum state_enum
     s_number_hex,
     s_name,
     s_string,
-    s_comment
+    s_slashaccepted,
+    s_linecomment,
+    s_streamcomment,
+    s_staraccepted
 };
 
 
@@ -80,9 +83,9 @@ std::vector <token> tokenize(std::string str)
     std::map<std::string, token_type_enum> keywords;
     keywords["const"] = t_const;
     keywords["goto" ] = t_goto;
+    keywords["function"] = t_function;
     keywords["if" ] = t_if;
     keywords["int"] = t_type;
-    keywords["function"] = t_function;
     keywords["macro"] = t_macro;
     keywords["pointer"] = t_type;
     keywords["var"] = t_var;
@@ -121,10 +124,10 @@ std::vector <token> tokenize(std::string str)
                     while (is_whitespace(buffer[++index]));
                     index--;        // we've now encountered a character that isn't whitespace; unget it so the next loop can pick it up.
                 }
+                else if (c == '/')
+                    state = s_slashaccepted;
                 else if (symbols.find(c) != symbols.end())  //if we find a matching symbol, push a matching token onto the list.
                     tokens.push_back(symbols.find(c)->second);
-                else if (c == '#')
-                    state = s_comment;
                 else if (c == '"')
                     state = s_string;
                 else if (c)
@@ -142,7 +145,13 @@ std::vector <token> tokenize(std::string str)
                     state = s_start;
                 }
                 break;
-            case s_comment:
+            case s_slashaccepted:
+                if (c == '/')
+                    state = s_linecomment;
+                else
+                    tokens.push_back(symbols['/']);
+                break;
+            case s_linecomment:
                 if (c == '\n' || c == '\r')
                     state = s_start;
                 break;

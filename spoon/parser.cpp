@@ -219,37 +219,22 @@ statement* parser::getstatement()
 {
     if (accept(t_goto))
     {
-        resourcep <goto_stat> sgoto;
-        sgoto.obj->target = getexpression();
-        expect(t_semicolon);
-        return sgoto.release();
+        return getgoto();
+    }
+    else if (accept(t_if))
+    {
+        return getif();
     }
     else
     {
         expect(t_name);
         if (t.type == t_lparen)
         {
-            resourcep <funccall> fcall;
-            fcall.obj->name = lastt.value;
-            expect(t_lparen);
-            if (t.type != t_rparen)
-            {
-                fcall.obj->args.push_back(getexpression());
-                while (accept(t_comma))
-                {
-                    fcall.obj->args.push_back(getexpression());
-                }
-            }
-            expect(t_rparen);
-            expect(t_semicolon);
-            return fcall.release();
+            return getfunccall();
         }
         else if (t.type == t_colon)
         {
-            resourcep <label> lbl;
-            lbl.obj->name = lastt.value;
-            accept(t_colon);
-            return lbl.release();
+            return getlabel();
         }
         else
         {
@@ -257,6 +242,50 @@ statement* parser::getstatement()
             return new statement;
         }
     }
+}
+
+goto_stat* parser::getgoto()
+{
+    resourcep <goto_stat> sgoto;
+    sgoto.obj->target = getexpression();
+    expect(t_semicolon);
+    return sgoto.release();
+}
+
+funccall* parser::getfunccall()
+{
+    resourcep <funccall> fcall;
+    fcall.obj->name = lastt.value;
+    expect(t_lparen);
+    if (t.type != t_rparen)
+    {
+        fcall.obj->args.push_back(getexpression());
+        while (accept(t_comma))
+        {
+            fcall.obj->args.push_back(getexpression());
+        }
+    }
+    expect(t_rparen);
+    expect(t_semicolon);
+    return fcall.release();
+}
+
+label* parser::getlabel()
+{
+    resourcep <label> lbl;
+    lbl.obj->name = lastt.value;
+    expect(t_colon);
+    return lbl.release();
+}
+
+if_stat* parser::getif()
+{
+    resourcep <if_stat> ifs;
+    expect(t_lparen);
+    ifs.obj->expr = getexpression();
+    expect(t_rparen);
+    ifs.obj->ifblk = getblock();
+    return ifs.release();
 }
 
 expression* parser::getexpression()

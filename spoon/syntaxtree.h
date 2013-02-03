@@ -22,7 +22,9 @@ typedef enum {
     stat_call,
     stat_goto,
     stat_assignment,
-    stat_label
+    stat_label,
+    stat_if,
+    stat_while
 } stat_type;
 
 typedef enum {
@@ -118,6 +120,13 @@ struct label: public statement
 {
     std::string name;
     label() {type = stat_label;}
+};
+
+struct if_stat: public statement
+{
+    expression *expr;
+    block *ifblk;
+    if_stat() {type = stat_if;}
 };
 
 struct block

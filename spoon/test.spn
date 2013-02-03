@@ -6,6 +6,10 @@ function main()
     var int x, y;
     nfc(y, y);
     nfc(y, y);
+    //if (y)
+    //{
+        nfc(y, x);
+    //}
     loopStart:
     nfc(x, 0x0018);
     nfc(x, debugin);

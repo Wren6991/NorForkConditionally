@@ -1,19 +1,27 @@
-program ::= {constdef|funcdef|macrodef}
+<program> ::= {<constdef>|<funcdef>|<macrodef>}
 
-constdef ::= `const` type name `=` expression `;`
+<constdef> ::= `const` <type> <name> `=` expression `;`
 
-funcdef ::= `function` [type] name `(` type name {`,` type name} `)` block
+<funcdef> ::= `function` [<type>] <name> `(` <type> <name> {`,` <type> <name>} `)` <block>
 
-type ::= `int`|`pointer`|`void`
+<type> ::= `int`|`pointer`|`void`
 
-macrodef ::= `macro` name `(` name {`,` name} `)`
+<macrodef> ::= `macro` <name> `(` <name> {`,` <name>} `)`
 
-block ::=  statement
-         | `{` {vardecl} {statement} `}`
+<block> ::=  <statement>
+         |   `{` {<vardecl>} {<statement>} `}`
 
-vardecl ::= type name {`,` name} `;`
+<vardecl> ::= <type> <name> {`,` <name>} `;`
 
-statement ::=  name `(` expression {`,` expression} `)` `;`
-             | name `=` expression `;`
+<statement> ::=  <name> `(` <expression> {`,` <expression>} `)` `;`
+             |   <name> `=` <expression> `;`
+             |   `if` `(` <expression> `)` <block> [`else` <block>]
+             |   `while` `(` <expression> `)` <block>
+           
 
-expression ::= name | number		// for now!
+
+<expression> ::= <name> | <number>		// for now!
+
+
+<name> ::= [a-zA-Z_][a-zA-Z0-9_]*		// this isn't strictly BNF but...
+<number> ::= [0-9]+
