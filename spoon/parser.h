@@ -27,6 +27,7 @@ class parser
     block* getblock();
     vardeclaration* getvardeclaration();
     statement* getstatement();
+        assignment* getassignment();
         goto_stat* getgoto();
         funccall* getfunccall();
         label* getlabel();

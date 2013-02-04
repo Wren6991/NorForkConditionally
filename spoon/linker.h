@@ -30,7 +30,6 @@ struct variable
 
 class vardict
 {
-    std::map<type_enum, int> typesizes;
     std::map<std::string, variable*> vars;
     std::vector<bool> memory;
     int first_available_space;
@@ -78,15 +77,18 @@ class linker
     void write8(linkval);
     void write16(linkval);
     void padto8bytes();
-    void generate_nfc2(linkval x, linkval y);
-    void generatebranchifzero(linkval testloc, linkval dest);
-    void generatebranchalways(linkval dest);
+    void emit_nfc2(linkval x, linkval y);
+    void emit_branchifzero(linkval testloc, linkval dest);
+    void emit_branchalways(linkval dest);
+    void emit_copy(linkval src, linkval dest);
+    void emit_writeconst(uint8_t val, linkval dest);
     void link(block*);
     void link(statement*);
     void link(funccall*);
     void link(goto_stat*);
     void link(if_stat*);
     void link(while_stat*);
+    void link(assignment*);
     linkval evaluate(expression*);
     std::vector<char> assemble();
 public:

@@ -20,7 +20,7 @@ void printout(std::vector<char> buffer)
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
         if (i % 8 == 7)
             std::cout << "\n";
-        else if (i % 2 == 1)
+        else if (true || i % 2 == 1)
             std::cout << " ";
 
         if (buffer[i] == 0)

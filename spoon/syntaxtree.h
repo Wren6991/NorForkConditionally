@@ -18,6 +18,14 @@ typedef enum {
     n_types
 } type_enum;
 
+const int typesizes[n_types] =
+{
+    0,
+    1,
+    2,
+    0
+};
+
 typedef enum {
     stat_call,
     stat_goto,

@@ -232,7 +232,11 @@ statement* parser::getstatement()
     else
     {
         expect(t_name);
-        if (t.type == t_lparen)
+        if (t.type == t_equals)
+        {
+            return getassignment();
+        }
+        else if (t.type == t_lparen)
         {
             return getfunccall();
         }
@@ -246,6 +250,16 @@ statement* parser::getstatement()
             return new statement;
         }
     }
+}
+
+assignment* parser::getassignment()
+{
+    resourcep <assignment> assg;
+    assg.obj->name = lastt.value;
+    expect(t_equals);
+    assg.obj->expr = getexpression();
+    expect(t_semicolon);
+    return assg.release();
 }
 
 goto_stat* parser::getgoto()

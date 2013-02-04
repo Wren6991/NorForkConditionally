@@ -11,10 +11,23 @@ macro write(src, dest)
     nfc(dest, x);
 }
 
+macro logical_not(src, dest)
+{
+    nfc(dest, val(0xff));
+    nfc(dest, src);
+}
+
+macro read_pointer(pointer)
+{
+
+}
+
 function main()
 {
+    var int x;
     while (true)
     {
+        x = val(5);                 // this line is bad.
         write(debugin, debugout);
     }
 }

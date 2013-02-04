@@ -61,6 +61,7 @@ class compiler
     void compile(if_stat*);
     void compile(while_stat*);
     void compile(expression*);
+    void compile(assignment*);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };
 

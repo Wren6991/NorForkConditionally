@@ -257,6 +257,9 @@ void compiler::compile(block *blk)
         case stat_while:
             compile((while_stat*)stat);
             break;
+        case stat_assignment:
+            compile((assignment*)stat);
+            break;
         default:
             throw(error("Error: unrecognised statement type"));
         }
@@ -305,6 +308,16 @@ void compiler::compile(while_stat *whiles)
 {
     compile(whiles->expr);
     compile(whiles->blk);
+}
+
+void compiler::compile(assignment *assg)
+{
+    if (!currentscope->exists(assg->name))
+    {
+        throw(error("Error: undeclared variable " + assg->name));
+    }
+    assg->name = currentscope->get(assg->name).name;
+    compile(assg->expr);
 }
 
 // To compile an expression:

@@ -9,8 +9,19 @@ Todo:
 		- evaluate the expression into this space
 		- use this address in the assignment
 	- use the same strategy for control expressions in ifs, whiles etc.
+	- A multi-byte assignment must have as many linkvals as there are bytes.
+		- e.g. when assigning from a pointer that is actually a label:
+		- we need a const location for each byte of the const pointer value.
+	- Everything is a pointer! unless otherwise specified.
+		- ints are actually managed internally as pointers to ints (we do this already)
+		- int literals are actually pointers to int constants: x = 5; should set x to 5 dammit!
 - macros
 - Add type checking
+	- every expression has a type field - the parser doesn't touch it, the compiler sets it and the compiler and linker use it.
+	- to find the type of an expression:
+		- find the types of sub-expressions (recursive)
+		- apply rules to find the type of this expression
+	- this lets linker know how many write instructions to emit, etc. (see implementation of link(assignment*);)
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?
 - bulk out the standard library

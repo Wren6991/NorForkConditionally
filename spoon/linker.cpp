@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+extern const int typesizes[n_types];
+
 
 std::string getlabel()
 {
@@ -120,8 +122,6 @@ bool vardict::exists(std::string name)
 
 vardict::vardict()
 {
-    typesizes[type_int] = 1;
-    typesizes[type_pointer] = 2;
     first_available_space = 0;
     for (int i = 0; i < (HEAP_TOP - HEAP_BOTTOM); i++)
         memory.push_back(0);
@@ -175,7 +175,7 @@ void linker::padto8bytes()
         write8(0);
 }
 
-void linker::generate_nfc2(linkval x, linkval y)
+void linker::emit_nfc2(linkval x, linkval y)
 {
     padto8bytes();
     uint16_t next = index + 8;
@@ -186,11 +186,11 @@ void linker::generate_nfc2(linkval x, linkval y)
 }
 
 // clear temp; set temp to not(x);  invert temp and branch on result.
-void linker::generatebranchifzero(linkval testloc, linkval dest)
+void linker::emit_branchifzero(linkval testloc, linkval dest)
 {
     uint16_t temploc = vars.addvar("__iftemp", type_int) + HEAP_BOTTOM;
-    generate_nfc2(temploc, getconstaddress(0xff));
-    generate_nfc2(temploc, testloc);
+    emit_nfc2(temploc, getconstaddress(0xff));
+    emit_nfc2(temploc, testloc);
     uint16_t next = index + 8;
     write16(temploc);
     write16(temploc);
@@ -199,7 +199,7 @@ void linker::generatebranchifzero(linkval testloc, linkval dest)
     vars.remove("__iftemp");
 }
 
-void linker::generatebranchalways(linkval dest)
+void linker::emit_branchalways(linkval dest)
 {
     uint16_t temploc = vars.addvar("__temp", type_int) + HEAP_BOTTOM;
     padto8bytes();
@@ -207,6 +207,19 @@ void linker::generatebranchalways(linkval dest)
     write16(temploc);
     write16(dest);
     write16(dest);
+}
+
+void linker::emit_copy(linkval src, linkval dest)
+{
+    emit_nfc2(dest, getconstaddress(0xff));
+    emit_nfc2(dest, src);
+    emit_nfc2(dest, dest);
+}
+
+void linker::emit_writeconst(uint8_t val, linkval dest)
+{
+    emit_nfc2(dest, getconstaddress(0xff));
+    emit_nfc2(dest, getconstaddress(~val));
 }
 
 void linker::add_object(object *obj)
@@ -253,7 +266,37 @@ std::vector<char> linker::link()
         throw(error("Error: no definition of function main."));
     }
     valtable.clear();
+
+    // set up pointer read instructions:
+    // bfd0:    bff0 'ff  bfd8 bfd8
+    // bfd8:    bff0 pppp bfe0 bfe0
+    // bfe0:    bff1 'ff  xxxx rrrr
+    // we write to bfda (rrrr) to set the pointer read location
+    // when we jump to bfd0, it clears bff0 and then reads ~*ptr into it.
+    // bff1 is cleared - as the result is always 0, the machine jumps to the return (rrrr) which was written beforehand.
+    emit_writeconst(0xbf, 0xbfd0);
+    emit_writeconst(0xf0, 0xbfd1);
+    emit_writeconst(0x7d, 0xbfd2);
+    emit_writeconst(0x00, 0xbfd3);
+    emit_writeconst(0xbf, 0xbfd4);
+    emit_writeconst(0xd8, 0xbfd5);
+    emit_writeconst(0xbf, 0xbfd6);
+    emit_writeconst(0xd8, 0xbfd7);
+    emit_writeconst(0xbf, 0xbfd8);
+    emit_writeconst(0xf0, 0xbfd9);
+    emit_writeconst(0xbf, 0xbfdc);
+    emit_writeconst(0xe0, 0xbfdd);
+    emit_writeconst(0xbf, 0xbfde);
+    emit_writeconst(0xe0, 0xbfdf);
+    emit_writeconst(0xbf, 0xbfe0);
+    emit_writeconst(0xf1, 0xbfe1);
+    emit_writeconst(0x7d, 0xbfe2);
+    emit_writeconst(0x00, 0xbfe3);
+
     link(((funcdef*)defined_funcs["main"])->body);
+
+    // generate halt instruction:
+    emit_branchalways(index);
 
     return assemble();
 }
@@ -299,6 +342,9 @@ void linker::link(statement *stat)
         break;
     case stat_while:
         link((while_stat*)stat);
+        break;
+    case stat_assignment:
+        link((assignment*)stat);
         break;
     default:
         throw(error("Error: linking unrecognized statement type"));
@@ -375,12 +421,12 @@ void linker::link(if_stat* ifs)
     std::string elselabel = getlabel();
     std::string endlabel = getlabel();
     linkval testloc = linker::evaluate(ifs->expr);
-    generatebranchifzero(testloc, linkval(elselabel));
+    emit_branchifzero(testloc, linkval(elselabel));
     link(ifs->ifblock);
     if (ifs->elseblock)
     {
         // finished the if clause: nonconditional jump past else clause.
-        generatebranchalways(linkval(endlabel));
+        emit_branchalways(linkval(endlabel));
         savelabel(elselabel, index);
         link(ifs->elseblock);
     }
@@ -400,11 +446,22 @@ void linker::link(while_stat *whiles)
     std::string toplabel = getlabel();
     std::string exitlabel = getlabel();
     savelabel(toplabel, index);
-    generatebranchifzero(evaluate(whiles->expr), exitlabel);
+    emit_branchifzero(evaluate(whiles->expr), exitlabel);
     link(whiles->blk);
     // jump unconditionally to top:
-    generatebranchalways(linkval(toplabel));
+    emit_branchalways(linkval(toplabel));
     savelabel(exitlabel, index);
+}
+
+void linker::link(assignment *assg)
+{
+    expression targetexp;
+    targetexp.type = exp_name;
+    targetexp.name = assg->name;
+    for (int i = 0; i < 1; i++) // TODO: typesizes[assg->exp->type];
+    {
+        emit_copy(evaluate(assg->expr), evaluate(&targetexp));
+    }
 }
 
 
@@ -472,9 +529,7 @@ linkval linker::evaluate(expression *expr)
 
 std::vector<char> linker::assemble()
 {
-    // generate halt instruction:
-    generatebranchalways(index);
-    // assemble literals and symbols into program:
+    // assemble literals and symbols into ROM image:
     std::vector<char> image;
     for (std::vector<linkval>::iterator iter = buffer.begin(); iter != buffer.end(); iter++)
     {
