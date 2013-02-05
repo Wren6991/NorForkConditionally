@@ -533,14 +533,7 @@ std::vector<char> linker::assemble()
     std::vector<char> image;
     for (std::vector<linkval>::iterator iter = buffer.begin(); iter != buffer.end(); iter++)
     {
-        if (iter->type == lv_literal)
-        {
-            image.push_back(iter->literal);
-        }
-        else
-        {
-            image.push_back(valtable[iter->sym]);
-        }
+        image.push_back(evaluate(*iter));
     }
     // put constant tables into last kilobyte.
     while (image.size() < (unsigned)INCREMENT_START)
@@ -555,4 +548,50 @@ std::vector<char> linker::assemble()
         image.push_back((i >> 1) & 0xff);
     return image;
 }
+
+linkval& linkval::operator+(uint16_t rhs)
+{
+    switch (type)
+    {
+    case lv_literal:
+        literal += rhs;
+        break;
+    case lv_symbol:
+    case lv_expression:
+        next = new linkval(0);
+        *next = *this;
+        type = lv_expression;
+        operation = op_add;
+        literal = rhs;
+        break;
+    }
+    return *this;
+}
+
+uint16_t linker::evaluate(linkval lv)
+{
+    switch (lv.type)
+    {
+    case lv_literal:
+        return lv.literal;
+    case lv_symbol:
+        return valtable[lv.sym];
+    case lv_expression:
+        {
+            uint16_t first_operand = evaluate(*lv.next);
+            switch (lv.operation)
+            {
+            case linkval::op_add:
+                return first_operand + lv.literal;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
 

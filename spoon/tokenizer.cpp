@@ -5,7 +5,7 @@
 
 #include "tokenizer.h"
 
-std::string friendly_type_names[] = {
+std::string friendly_tokentype_names[] = {
     "EOF",
     "colon",
     "comma",

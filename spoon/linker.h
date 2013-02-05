@@ -53,16 +53,24 @@ struct substitution
 typedef enum
 {
     lv_literal = 0,
-    lv_symbol
+    lv_symbol,
+    lv_expression
 } lv_type;
 
+// linkvals are our "Assembly language" - they let us pass symbols and expressions for machine code
+// instead of just the literal addresses, e.g. with labels where we don't know the location til we reach it.
+// They get evaluated in the final "assemble" step.
 struct linkval
 {
+    enum op_type {op_add};
     lv_type type;
     uint16_t literal;
     std::string sym;
+    linkval *next;
+    op_type operation;
     linkval(uint16_t lit) {type = lv_literal; literal = lit;}
-    linkval(std::string s) {type = lv_symbol; sym = s;}
+    linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
+    linkval& operator+(uint16_t rhs);
 };
 
 class linker
@@ -90,6 +98,7 @@ class linker
     void link(while_stat*);
     void link(assignment*);
     linkval evaluate(expression*);
+    uint16_t evaluate(linkval);
     std::vector<char> assemble();
 public:
     linker();

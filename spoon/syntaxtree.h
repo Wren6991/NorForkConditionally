@@ -15,6 +15,7 @@ typedef enum {
     type_int,
     type_pointer,
     type_label,
+    type_number,        // generic number type, for compiler use only.
     n_types
 } type_enum;
 
@@ -23,7 +24,17 @@ const int typesizes[n_types] =
     0,
     1,
     2,
-    0
+    0,
+    1
+};
+
+const std::string friendly_type_names[] =
+{
+    "void",
+    "int",
+    "pointer",
+    "label",
+    "number"
 };
 
 typedef enum {
@@ -157,6 +168,7 @@ struct expression
     exp_type type;
     std::string name;
     int number;
+    type_enum val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
     std::vector<expression*> args;
 };
 

@@ -1,6 +1,6 @@
 <program> ::= {<constdef>|<funcdef>|<macrodef>}
 
-<constdef> ::= `const` <type> <name> `=` expression `;`
+<constdef> ::= `const` <type> <name> `=` <expression> `;`
 
 <funcdef> ::= `function` [<type>] <name> `(` <type> <name> {`,` <type> <name>} `)` <block>
 

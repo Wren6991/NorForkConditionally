@@ -15,6 +15,11 @@ std::string makeguid(std::string name, int ptr)
     return ss.str();
 }
 
+void throw_type_error(std::string context, type_enum expected, type_enum got)
+{
+            throw (error("Error: Type mismatch in " + context + ": was expecting " + friendly_type_names[expected] +
+                         " but got " + friendly_type_names[got]));
+}
 
 // Scope definitions: //
 scope::scope(scope *_parent)
@@ -318,6 +323,10 @@ void compiler::compile(assignment *assg)
     }
     assg->name = currentscope->get(assg->name).name;
     compile(assg->expr);
+    type_enum assg_type = globalsymboltable[assg->name].type;
+    // Check for type mismatch:
+    if (!match_types(assg_type, assg->expr->val_type))
+        throw_type_error("assignment of variable " + assg->name.substr(0, assg->name.find("@")), assg_type, assg->expr->val_type);
 }
 
 // To compile an expression:
@@ -325,8 +334,10 @@ void compiler::compile(assignment *assg)
 //     - if so, replace the local name with the global one.
 //     - if it refers to a constant, swap the constant value in for the name.
 // - otherwise, leave it
+// - get its type once we've compiled it
 void compiler::compile(expression *expr)
 {
+    bool typeAlreadyDetermined = false;
     if (expr->type == exp_name)
     {
         if (!currentscope->exists(expr->name))
@@ -340,6 +351,8 @@ void compiler::compile(expression *expr)
         {
             expr->type = exp_number;
             expr->number = globalsymboltable[expr->name].value;
+            expr->val_type = globalsymboltable[expr->name].type;
+            typeAlreadyDetermined = true;
         }
     }
     else if (expr->type == exp_funccall)
@@ -350,5 +363,48 @@ void compiler::compile(expression *expr)
     else if (expr->type != exp_number)
     {
         throw(error("Error: attempted to compile unknown expression type"));
+    }
+    // tell the compiler to make note of the type: (if we haven't already gotten it from the symbol table)
+    if (!typeAlreadyDetermined)
+        gettype(expr);
+}
+
+// Find the type of the expression (possibly by looking at subexpressions), and
+// then note it in the type field.
+// As this is called at the end of the end of expression compilation, it is
+// guaranteed that subexpressions will already be compiled, so their types
+// will be known.
+void compiler::gettype(expression *expr)
+{
+    if (expr->type == exp_name)
+    {
+        expr->val_type = globalsymboltable[expr->name].type;
+    }
+    else if (expr->type == exp_number)
+    {
+        expr->val_type = type_number;
+    }
+    else if (expr->type == exp_funccall)
+    {
+        expr->val_type = functions[expr->name].return_type;
+    }
+}
+
+
+// check that received matches accepted, and refine the generic "number" type.
+// if there is no possible match, return false.
+bool compiler::match_types(type_enum expected, type_enum &received)
+{
+    if (expected == received)
+        return true;
+
+    if ((expected == type_int || expected == type_pointer) && received == type_number)
+    {
+        received = expected;   // replace generic number with int/pointer.
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }

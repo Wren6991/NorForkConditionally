@@ -3,7 +3,7 @@
 
 #include <sstream>
 
-extern std::string friendly_type_names[];
+extern std::string friendly_tokentype_names[];
 
 // Throw a preformatted error that we've received an unexpected token.
 void throw_unexpected(std::string value, token_type_enum expected = t_eof, token_type_enum got = t_eof)
@@ -11,7 +11,7 @@ void throw_unexpected(std::string value, token_type_enum expected = t_eof, token
     std::stringstream ss;
     ss << "Error: unexpected token near \"" << value << "\"";
     if (expected)
-        ss << ": expected " << friendly_type_names[expected] << ", got " << friendly_type_names[got];
+        ss << ": expected " << friendly_tokentype_names[expected] << ", got " << friendly_tokentype_names[got];
     throw(error(ss.str()));
 }
 
