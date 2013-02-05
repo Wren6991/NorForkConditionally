@@ -12,8 +12,10 @@ struct func_signature
 {
     type_enum return_type;
     std::vector<type_enum> arg_types;
+    bool args_must_match;       // to be used with macros, and special builtins like NFC.
     bool operator==(func_signature &rhs) const {return rhs.return_type == return_type && rhs.arg_types == arg_types;}
     bool operator!=(func_signature &rhs) const {return !operator==(rhs);}
+    func_signature() {args_must_match = true;}
 };
 
 struct symbol

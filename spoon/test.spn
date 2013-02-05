@@ -17,10 +17,6 @@ macro logical_not(src, dest)
     nfc(dest, src);
 }
 
-macro read_pointer(ptr)
-{
-
-}
 
 function main()
 {

@@ -17,8 +17,12 @@ std::string makeguid(std::string name, int ptr)
 
 void throw_type_error(std::string context, type_enum expected, type_enum got)
 {
-            throw (error("Error: Type mismatch in " + context + ": was expecting " + friendly_type_names[expected] +
-                         " but got " + friendly_type_names[got]));
+    if (expected < 0 or expected >= n_types)
+        expected = type_none;
+    if (got < 0 or got >= n_types)
+        got = type_none;
+    throw (error("Error: Type mismatch in " + context + ": was expecting " + friendly_type_names[expected] +
+                 " but got " + friendly_type_names[got]));
 }
 
 // Scope definitions: //
@@ -62,12 +66,17 @@ compiler::compiler()
     globalscope = new scope();
     currentscope = globalscope;
     func_signature sig;
-    sig.arg_types.push_back(type_pointer);
-    sig.arg_types.push_back(type_pointer);
+    sig.args_must_match = false;
+    sig.arg_types.push_back(type_number);
+    sig.arg_types.push_back(type_number);
     functions["nfc"] = sig;
-    sig.arg_types.push_back(type_pointer);
-    sig.arg_types.push_back(type_pointer);
+    sig.arg_types.push_back(type_number);
+    sig.arg_types.push_back(type_number);
     functions["nfc4"] = sig;
+    func_signature val_sig;
+    val_sig.return_type = type_pointer;
+    val_sig.arg_types.push_back(type_int);
+    functions["val"] = val_sig;
 }
 
 void compiler::pushscope()
@@ -282,9 +291,17 @@ void compiler::compile(funccall *fcall)
         ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
         throw(error(ss.str()));
     }
+    func_signature &sig = functions[fcall->name];
+    if (fcall->args.size() < sig.arg_types.size())
+        throw(error("Error: not enough arguments to function " + fcall->name));
+    else if (fcall->args.size() > sig.arg_types.size())
+        throw(error("Error: too many arguments to function " + fcall->name));
+
     for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
     {
         compile(fcall->args[argnum]);
+        if (sig.args_must_match && !match_types(sig.arg_types[argnum], fcall->args[argnum]->val_type))
+            throw_type_error(std::string("argument ") + "" + " to function " + fcall->name, sig.arg_types[argnum], fcall->args[argnum]->val_type);
     }
 }
 
@@ -357,8 +374,18 @@ void compiler::compile(expression *expr)
     }
     else if (expr->type == exp_funccall)
     {
+
+        func_signature &sig = functions[expr->name];
+        if (expr->args.size() < sig.arg_types.size())
+            throw(error("Error: not enough arguments to function " + expr->name));
+        else if (expr->args.size() > sig.arg_types.size())
+            throw(error("Error: too many arguments to function " + expr->name));
         for (unsigned int i = 0; i < expr->args.size(); i++)
+        {
             compile(expr->args[i]);
+            if (sig.args_must_match && !match_types(sig.arg_types[i], expr->args[i]->val_type))
+                throw_type_error(std::string("argument ") + "" + " to function " + expr->name, sig.arg_types[i], expr->args[i]->val_type);
+        }
     }
     else if (expr->type != exp_number)
     {

@@ -52,7 +52,7 @@ int main()
         std::vector<token> tokens = tokenize(&source[0]);
         parser p(tokens);
         program *prog = p.getprogram();
-        printtree(prog);
+        //printtree(prog);
         compiler c;
         object *obj = c.compile(prog);
         std::cout << "\nPost-compile tree:\n\n";
