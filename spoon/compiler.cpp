@@ -156,10 +156,14 @@ void compiler::compile(macrodef *mdef)
 {
     //std::string guid = makeguid(mdef->name, (int)mdef);
     pushscope();
+    func_signature sig;
+    sig.args_must_match = false;
+    sig.return_type = type_none;
     for (unsigned int i = 0; i < mdef->args.size(); i++)
     {
         addvar(mdef->args[i], type_label, (int)&(mdef->args[i]));
         mdef->args[i] = currentscope->get(mdef->args[i]).name;
+        sig.arg_types.push_back(type_none);
     }
     if (defined_funcs.find(mdef->name) != defined_funcs.end())
     {
@@ -169,6 +173,7 @@ void compiler::compile(macrodef *mdef)
     }
     compile(mdef->body);
     popscope();
+    functions[mdef->name] = sig;           // never mind that it's a macro instead of a function - the calls are the same, we'll let the linker worry about the code generation.
     defined_funcs.insert(mdef->name);
 }
 
@@ -284,8 +289,7 @@ void compiler::compile(block *blk)
 // compile ALL the arguments!
 void compiler::compile(funccall *fcall)
 {
-    if (functions.find(fcall->name) == functions.end() &&
-        defined_funcs.find(fcall->name) == defined_funcs.end())
+    if (functions.find(fcall->name) == functions.end())
     {
         std::stringstream ss;
         ss << "Error: implicit declaration of function \"" << fcall->name << "\"";

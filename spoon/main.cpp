@@ -20,7 +20,7 @@ void printout(std::vector<char> buffer)
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
         if (i % 8 == 7)
             std::cout << "\n";
-        else if (false || i % 2 == 1)
+        else if (true || i % 2 == 1)
             std::cout << " ";
 
         if (buffer[i] == 0)
@@ -37,7 +37,7 @@ int main()
 {
     try
     {
-        std::ifstream sourcefile("./test.spn");
+        std::fstream sourcefile("./test.spn", std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
             throw(error("Error: could not open file!"));
@@ -67,6 +67,7 @@ int main()
     catch (error e)
     {
         std::cout << e.errstring << "\n";
+        return -1;
     }
-
+    return 0;
 }

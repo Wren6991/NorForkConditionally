@@ -458,10 +458,23 @@ void linker::link(assignment *assg)
     expression targetexp;
     targetexp.type = exp_name;
     targetexp.name = assg->name;
-    for (int i = 0; i < 1; i++) // TODO: typesizes[assg->exp->type];
+    linkval target = evaluate(&targetexp);
+    if (assg->expr->type == exp_number)
     {
-        emit_copy(evaluate(assg->expr), evaluate(&targetexp));
+        for (int i = 0; i < typesizes[assg->expr->val_type]; i++)
+        {
+            emit_writeconst((assg->expr->number >> (typesizes[assg->expr->val_type] - i - 1) * 8) & 0xff, target + i);
+        }
     }
+    else
+    {
+        linkval value = evaluate(assg->expr);
+        for (int i = 0; i < typesizes[assg->expr->val_type]; i++)
+        {
+            emit_copy(value + i, target + i);
+        }
+    }
+
 }
 
 

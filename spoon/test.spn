@@ -3,7 +3,7 @@ const pointer debugin = 0xc001;
 const pointer true = 0x7d00;        // constant ff
 const pointer false = 0x7d01;       // constant 0
 
-macro write(src, dest)
+macro output(src, dest)
 {
     var int x;
     nfc(x, val(0xff));
@@ -21,10 +21,11 @@ macro logical_not(src, dest)
 function main()
 {
     var int x;
+    var pointer p;
+    x = 5;
+    p = 0x1234;
     while (true)
     {
-        x = val(5);                 // this line is bad.
-        write(debugin, debugout);
+        output(debugin, debugout);
     }
 }
-                                                                    //
