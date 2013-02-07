@@ -222,6 +222,22 @@ void linker::emit_writeconst(uint8_t val, linkval dest)
     emit_nfc2(dest, getconstaddress(~val));
 }
 
+void linker::emit_copy_multiple(linkval src, linkval dest, int nbytes)
+{
+    for (int i = 0; i < nbytes; i++)
+    {
+        emit_copy(src + i, dest + i);
+    }
+}
+
+void linker::emit_writeconst_multiple(int value, linkval dest, int nbytes)
+{
+    for (int i = 0; i < nbytes; i++)
+    {
+        emit_writeconst((value >> (nbytes - i - 1) * 8) & 0xff, dest + i);
+    }
+}
+
 void linker::add_object(object *obj)
 {
     // check for collisions:
@@ -461,18 +477,11 @@ void linker::link(assignment *assg)
     linkval target = evaluate(&targetexp);
     if (assg->expr->type == exp_number)
     {
-        for (int i = 0; i < typesizes[assg->expr->val_type]; i++)
-        {
-            emit_writeconst((assg->expr->number >> (typesizes[assg->expr->val_type] - i - 1) * 8) & 0xff, target + i);
-        }
+        emit_writeconst_multiple(assg->expr->number, target, typesizes[assg->expr->val_type]);
     }
     else
     {
-        linkval value = evaluate(assg->expr);
-        for (int i = 0; i < typesizes[assg->expr->val_type]; i++)
-        {
-            emit_copy(value + i, target + i);
-        }
+        emit_copy_multiple(evaluate(assg->expr), target, typesizes[assg->expr->val_type]);
     }
 
 }
