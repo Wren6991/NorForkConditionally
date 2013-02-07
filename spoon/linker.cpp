@@ -71,12 +71,14 @@ int vardict::getspace(int size)
 // the heap bottom to this value to get a machine address.
 int vardict::addvar(std::string name, type_enum type)
 {
+    std::cout << "adding var " << name;
     variable *var = new variable;
     var->type = type;
     var->offset = getspace(typesizes[type]);
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
+    std::cout << " " << var->offset << "\n";
     return var->offset;
 }
 
@@ -283,6 +285,9 @@ std::vector<char> linker::link()
     }
     valtable.clear();
 
+    // Allocate static storage for function arguments/return vectors:
+    allocatefunctionstorage();
+
     // set up pointer read instructions:
     // bfd0:    bff0 'ff  bfd8 bfd8
     // bfd8:    bff0 pppp bfe0 bfe0
@@ -309,12 +314,30 @@ std::vector<char> linker::link()
     emit_writeconst(0x7d, 0xbfe2);
     emit_writeconst(0x00, 0xbfe3);
 
+    // Link in the main function body
     link(((funcdef*)defined_funcs["main"])->body);
 
     // generate halt instruction:
     emit_branchalways(index);
 
+    // Link in the rest of the functions afterwards.
+    for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
+    {
+        if (iter->second && iter->second->type == dt_funcdef && ((funcdef*)iter->second)->name != "main")
+            link((funcdef*)iter->second);
+    }
+
     return assemble();
+}
+
+void linker::link(funcdef* fdef)
+{
+    std::cout << "Linking function: " << fdef->name << "\n";
+    savelabel(fdef->name + ":__startvector", index);
+    link(fdef->body);
+    emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM,
+                       JUMP_PVECTOR, typesizes[type_pointer]);
+    emit_branchalways(JUMP_INSTRUCTION);
 }
 
 void linker::link(block *blk)
@@ -367,6 +390,8 @@ void linker::link(statement *stat)
     }
 }
 
+
+// TODO: make this work properly for macros! (symbol problems)
 void linker::link(funccall *call)
 {
     if (defined_funcs.find(call->name) == defined_funcs.end())
@@ -411,7 +436,23 @@ void linker::link(funccall *call)
             for (unsigned int i = 0; i < mdef->args.size(); i++)
                 vars.remove(mdef->args[i]);
         }
+        else if (def->type == dt_funcdef)
+        {
+            linkfunctioncall(call, (funcdef*)def);
+        }
     }
+}
+
+// passes in arguments, sets up return vector and jumps.
+// returns: the location of the function returnval register.
+uint16_t linker::linkfunctioncall(funccall *fcall, funcdef *fdef)
+{
+    for (unsigned int i = 0; i < fcall->args.size(); i++)
+        emit_copy_multiple(evaluate(fcall->args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+    // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
+    emit_writeconst_multiple(index + 8 * (2 * typesizes[type_pointer] + 1), vars.getvar(fcall->name + ":__returnvector")->offset + HEAP_BOTTOM, typesizes[type_pointer]);
+    emit_branchalways(linkval(fcall->name + ":__startvector"));
+    return vars.getvar(fcall->name + ":__returnval")->offset + HEAP_BOTTOM;
 }
 
 void linker::link(goto_stat *sgoto)
@@ -495,7 +536,7 @@ linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
     {
-        return expr->number;
+        return getconstaddress(expr->number);       //TODO: make this work for multi-byte
     }
     else if (expr->type == exp_name)
     {
@@ -539,13 +580,19 @@ linkval linker::evaluate(expression *expr)
         }
         else
         {
-
+            if (defined_funcs[expr->name]->type != dt_funcdef)
+                throw(error("Error: only functions can return values (call to " + expr->name + ")"));
+            funccall fcall;
+            fcall.args = expr->args;
+            fcall.name = expr->name;
+            return linkfunctioncall(&fcall, (funcdef*)defined_funcs[expr->name]);
         }
     }
     else
     {
         throw(error("Error: linking unknown expression type"));
     }
+    return 0;
 }
 
 
@@ -590,6 +637,30 @@ linkval& linkval::operator+(uint16_t rhs)
     return *this;
 }
 
+// For each function, allocate the following statically:
+// - a return value address, of a size matching the return type. The retval is found here after execution.
+// - a return vector address: the caller writes its next address here before calling, and the callee jumps to this address.
+// - an appropriately-sized variable for each argument (pass-by-value).
+void linker::allocatefunctionstorage()
+{
+    for (std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
+    {
+        std::cout << iter->first << "\n";
+        if (iter->second && iter->second->type == dt_funcdef)
+        {
+            funcdef *fdef = (funcdef*)(iter->second);
+            if (fdef->name == "main")
+                continue;
+            vars.addvar(fdef->name + ":__returnval", fdef->return_type);
+            vars.addvar(fdef->name + ":__returnvector", type_pointer);
+            for (unsigned int argnum = 0; argnum < fdef->args.size(); argnum++)
+            {
+                vars.addvar(fdef->args[argnum].name, fdef->args[argnum].type);  // name is already resolved to a global symbol by compiler.
+            }
+        }
+    }
+}
+
 uint16_t linker::evaluate(linkval lv)
 {
     switch (lv.type)
@@ -608,6 +679,7 @@ uint16_t linker::evaluate(linkval lv)
             }
         }
     }
+    return 0;
 }
 
 

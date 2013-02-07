@@ -158,6 +158,8 @@ std::vector <token> tokenize(std::string str)
                 if (c == '\n' || c == '\r')
                     state = s_start;
                 break;
+            case s_streamcomment:
+            case s_staraccepted:
             case s_number:
                 if (!is_digit(c))
                 {

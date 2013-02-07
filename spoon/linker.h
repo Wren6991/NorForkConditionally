@@ -17,6 +17,11 @@ const int HEAP_TOP = 0xbfff;
 const int HEAP_BOTTOM = 0x8000;
 const int HEAP_SIZE = HEAP_TOP - HEAP_BOTTOM + 1;
 
+const int POINTER_READ_INSTRUCTION = HEAP_TOP - 0x2f;
+const int POINTER_READ_PVECTOR = POINTER_READ_INSTRUCTION;
+const int JUMP_INSTRUCTION = HEAP_TOP - 0x1f;
+const int JUMP_PVECTOR = JUMP_INSTRUCTION + 0x6;
+
 
 // TODO: might be better to just have a stack of maps for scope, rather
 // than this multiple-linked-list juggling bullshit.
@@ -92,9 +97,11 @@ class linker
     void emit_writeconst(uint8_t val, linkval dest);
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
     void emit_writeconst_multiple(int value, linkval dest, int nbytes);         //TODO: fill these out
+    void link(funcdef*);
     void link(block*);
     void link(statement*);
     void link(funccall*);
+    uint16_t linkfunctioncall(funccall*, funcdef*);
     void link(goto_stat*);
     void link(if_stat*);
     void link(while_stat*);
@@ -102,6 +109,7 @@ class linker
     linkval evaluate(expression*);
     uint16_t evaluate(linkval);
     std::vector<char> assemble();
+    void allocatefunctionstorage();
 public:
     linker();
     void add_object(object* obj);

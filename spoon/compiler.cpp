@@ -209,6 +209,11 @@ void compiler::compile(funcdef *fdef)
     {
         if (fdef->defined)
         {
+            symbol retsym;
+            retsym.type = fdef->return_type;
+            retsym.name = fdef->name + ":__returnval";
+            currentscope->insert(fdef->name, retsym);
+            globalsymboltable[retsym.name] = retsym;
             compile(fdef->body);
             defined_funcs.insert(fdef->name);
         }

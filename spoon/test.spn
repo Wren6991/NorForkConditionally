@@ -11,21 +11,16 @@ macro output(src, dest)
     nfc(dest, x);
 }
 
-macro logical_not(src, dest)
-{
-    nfc(dest, val(0xff));
-    nfc(dest, src);
-}
 
+
+function int dostuff(pointer p)
+{
+    dostuff = 0xc5;
+}
 
 function main()
 {
     var int x;
-    var pointer p;
-    x = 5;
-    p = 0x1234;
-    while (true)
-    {
-        output(debugin, debugout);
-    }
+    x = dostuff(0x1234);
+    output(x, debugout);
 }
