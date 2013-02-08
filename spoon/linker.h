@@ -18,9 +18,10 @@ const int HEAP_BOTTOM = 0x8000;
 const int HEAP_SIZE = HEAP_TOP - HEAP_BOTTOM + 1;
 
 const int POINTER_READ_INSTRUCTION = HEAP_TOP - 0x2f;
-const int POINTER_READ_PVECTOR = POINTER_READ_INSTRUCTION;
+const int POINTER_READ_PVECTOR = POINTER_READ_INSTRUCTION + 0x0a;       // B field of the next instruction - the one we read from.
 const int JUMP_INSTRUCTION = HEAP_TOP - 0x1f;
 const int JUMP_PVECTOR = JUMP_INSTRUCTION + 0x6;
+const int POINTER_READ_RESULT = HEAP_TOP - 0x0f;
 
 
 // TODO: might be better to just have a stack of maps for scope, rather
@@ -76,8 +77,8 @@ struct linkval
     op_type operation;
     linkval(uint16_t lit) {type = lv_literal; literal = lit;}
     linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
-    linkval& operator+(linkval rhs);
-    linkval& operator-(linkval rhs);
+    linkval operator+(linkval rhs);
+    linkval operator-(linkval rhs);
     linkval gethighbyte();
     linkval getlowbyte();
 };
@@ -94,6 +95,7 @@ class linker
     void write8(linkval);
     void write16(linkval);
     void padto8bytes();
+    linkval evaluate_or_return_literal(expression*);
     void emit_nfc2(linkval x, linkval y);
     void emit_branchifzero(linkval testloc, linkval dest);
     void emit_branchalways(linkval dest);

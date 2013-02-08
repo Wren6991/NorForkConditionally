@@ -390,6 +390,15 @@ void linker::link(statement *stat)
     }
 }
 
+// For the special case of NFC, where inputs are treated as hard addresses so we want the actual
+// literal value instead of getconstaddress().
+linkval linker::evaluate_or_return_literal(expression *expr)
+{
+    if (expr->type == exp_number)
+        return expr->number;
+    else
+        return evaluate(expr);
+}
 
 // TODO: make this work properly for macros! (symbol problems)
 void linker::link(funccall *call)
@@ -405,20 +414,16 @@ void linker::link(funccall *call)
     {
         if (call->name == "nfc")
         {
-            padto8bytes();
-            write16(evaluate(call->args[0]));
-            write16(evaluate(call->args[1]));
-            uint16_t next = index + 4;
-            write16(next);
-            write16(next);
+            emit_nfc2(evaluate_or_return_literal(call->args[0]), evaluate_or_return_literal(call->args[1]));
+
         }
         else if (call->name == "nfc4")
         {
             padto8bytes();
-            write16(evaluate(call->args[0]));
-            write16(evaluate(call->args[1]));
-            write16(evaluate(call->args[2]));
-            write16(evaluate(call->args[3]));
+            write16(evaluate_or_return_literal(call->args[0]));
+            write16(evaluate_or_return_literal(call->args[1]));
+            write16(evaluate_or_return_literal(call->args[2]));
+            write16(evaluate_or_return_literal(call->args[3]));
         }
     }
     else
@@ -429,7 +434,7 @@ void linker::link(funccall *call)
             // WHAT HAPPENS IF THE SAME MACRO IS CALLED IN DIFFERENT LOCATIONS?
             for (unsigned int i = 0; i < mdef->args.size(); i++)
             {
-                savelabel(mdef->args[i], evaluate(call->args[i]).literal);
+                savelabel(mdef->args[i], evaluate_or_return_literal(call->args[i]).literal);
                 vars.addvar(mdef->args[i], type_label);
             }
             link(mdef->body);
@@ -543,7 +548,15 @@ linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
     {
-        return expr->number;            // if it's a constant, let the caller worry about const-transfer instructions.
+        if (expr->val_type == type_int)
+            return getconstaddress(expr->number);       // NOT the literal itself. If you want the actual literal (e.g. with NFC) then fetch it directly, as this is an oddball case.
+        else
+        {
+            uint16_t constloc = vars.addvar("__consttemp", expr->val_type) + HEAP_BOTTOM;
+            emit_writeconst_multiple(expr->number, constloc, typesizes[expr->val_type]);
+            vars.remove("__consttemp");
+            return constloc;
+        }
     }
     else if (expr->type == exp_name)
     {
@@ -566,7 +579,7 @@ linkval linker::evaluate(expression *expr)
     {
         if (expr->name == "val")
         {
-            return getconstaddress(evaluate(expr->args[0]).literal);
+            return getconstaddress(evaluate_or_return_literal(expr->args[0]).literal);
         }
         //TODO: make these return the value of this address.
         else if (expr->name == "first")
@@ -584,6 +597,39 @@ linkval linker::evaluate(expression *expr)
                 return ptr.literal & 0xff;
             else
                 return ptr.sym + "_LO";
+        }
+        else if (expr->name == "read" || expr->name == "increment" || expr->name == "decrement" ||
+                 expr->name == "shiftleft" || expr->name == "shiftright")
+        {
+            std::string returnlabel = getlabel();
+            if (expr->name == "read")
+            {
+                if (expr->args[0]->type == exp_number)
+                    emit_writeconst_multiple(expr->args[0]->number, POINTER_READ_PVECTOR, typesizes[type_pointer]);
+                else
+                    emit_copy_multiple(evaluate(expr->args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
+            }
+            else
+            {
+                if (expr->name == "increment")
+                    emit_writeconst(INCREMENT_START >> 8, POINTER_READ_PVECTOR);
+                else if (expr->name == "decrement")
+                    emit_writeconst(DECREMENT_START >> 8, POINTER_READ_PVECTOR);
+                else if (expr->name == "shiftleft")
+                    emit_writeconst(LEFTSHIFT_START >> 8, POINTER_READ_PVECTOR);
+                else //if (expr->name == "shiftright")
+                    emit_writeconst(RIGHTSHIFT_START >> 8, POINTER_READ_PVECTOR);
+                if (expr->args[0]->type == exp_number)
+                    emit_writeconst(expr->args[0]->number, POINTER_READ_PVECTOR + 1);
+                else
+                    emit_copy(evaluate(expr->args[0]), POINTER_READ_PVECTOR + 1);
+            }
+
+            emit_writelabel(returnlabel, JUMP_PVECTOR);
+            emit_branchalways(POINTER_READ_INSTRUCTION);
+            savelabel(returnlabel, index);
+            emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
+            return POINTER_READ_RESULT;                             // Careful of collisions.
         }
         else
         {
@@ -625,50 +671,54 @@ std::vector<char> linker::assemble()
     return image;
 }
 
-linkval& linkval::operator+(linkval rhs)
+linkval linkval::operator+(linkval rhs)
 {
+    linkval result(0);
     switch (type)
     {
     case lv_literal:
         if (rhs.type == lv_literal)
         {
-            literal += rhs.literal;
+            result.type = lv_literal;
+            result.literal = literal + rhs.literal;
             break;
         }   // fall through if not:
     case lv_symbol:
     case lv_expression:
-        argA = new linkval(0);
-        argB = new linkval(0);
-        *argA = *this;
-        *argB = rhs;
-        type = lv_expression;
-        operation = op_add;
+        result.type = lv_expression;
+        result.operation = op_add;
+        result.argA = new linkval(0);
+        *result.argA = *this;
+        result.argB = new linkval(0);
+        *result.argB = rhs;
         break;
     }
-    return *this;
+    return result;
 }
 
-linkval& linkval::operator-(linkval rhs)
+linkval linkval::operator-(linkval rhs)
 {
+    linkval result(0);
     switch (type)
     {
     case lv_literal:
         if (rhs.type == lv_literal)
         {
-            literal -= rhs.literal;
+            result.type = lv_literal;
+            result.literal = literal - rhs.literal;
             break;
         }   // fall through if not:
     case lv_symbol:
     case lv_expression:
-        argA = new linkval(0);
-        argB = new linkval(0);
-        *argA = *this;
-        *argB = rhs;
-        type = lv_expression;
-        operation = op_sub;
+        result.type = lv_expression;
+        result.operation = op_sub;
+        result.argA = new linkval(0);
+        *result.argA = *this;
+        result.argB = new linkval(0);
+        *result.argB = rhs;
         break;
     }
-    return *this;
+    return result;
 }
 
 linkval linkval::gethighbyte()
