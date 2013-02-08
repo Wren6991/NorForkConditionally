@@ -448,7 +448,12 @@ void linker::link(funccall *call)
 uint16_t linker::linkfunctioncall(funccall *fcall, funcdef *fdef)
 {
     for (unsigned int i = 0; i < fcall->args.size(); i++)
-        emit_copy_multiple(evaluate(fcall->args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+    {
+        if (fcall->args[i]->type == exp_number)
+            emit_writeconst_multiple(fcall->args[i]->number, vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+        else
+            emit_copy_multiple(evaluate(fcall->args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+    }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
     emit_writeconst_multiple(index + 8 * (2 * typesizes[type_pointer] + 1), vars.getvar(fcall->name + ":__returnvector")->offset + HEAP_BOTTOM, typesizes[type_pointer]);
     emit_branchalways(linkval(fcall->name + ":__startvector"));
@@ -536,7 +541,7 @@ linkval linker::evaluate(expression *expr)
 {
     if (expr->type == exp_number)
     {
-        return getconstaddress(expr->number);       //TODO: make this work for multi-byte
+        return expr->number;            // if it's a constant, let the caller worry about const-transfer instructions.
     }
     else if (expr->type == exp_name)
     {

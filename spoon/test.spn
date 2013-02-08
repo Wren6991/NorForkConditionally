@@ -11,16 +11,20 @@ macro output(src, dest)
     nfc(dest, x);
 }
 
-
-
-function int dostuff(pointer p)
+function int not(int x)
 {
-    dostuff = 0xc5;
+    nfc(not, val(0xff));
+    nfc(not, x);
+}
+
+function int dostuff(int x)
+{
+    dostuff = not(x);
 }
 
 function main()
 {
     var int x;
-    x = dostuff(0x1234);
+    x = dostuff(0x3a);
     output(x, debugout);
 }

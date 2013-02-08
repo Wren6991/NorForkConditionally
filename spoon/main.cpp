@@ -10,7 +10,8 @@
 #define _s(str) #str
 #define _xs(str) _s(str)
 
-void printout(std::vector<char> buffer)
+
+void printout(std::vector<char> buffer, bool printasbytes = true)
 {
     int nconsecutivezeroes = 0;
     for (unsigned int i = 0; i < buffer.size(); i++)
@@ -20,7 +21,7 @@ void printout(std::vector<char> buffer)
         std::cout << std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
         if (i % 8 == 7)
             std::cout << "\n";
-        else if (false || i % 2 == 1)
+        else if (printasbytes || i % 2 == 1)
             std::cout << " ";
 
         if (buffer[i] == 0)

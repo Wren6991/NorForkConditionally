@@ -96,7 +96,7 @@ class linker
     void emit_copy(linkval src, linkval dest);
     void emit_writeconst(uint8_t val, linkval dest);
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
-    void emit_writeconst_multiple(int value, linkval dest, int nbytes);         //TODO: fill these out
+    void emit_writeconst_multiple(int value, linkval dest, int nbytes);
     void link(funcdef*);
     void link(block*);
     void link(statement*);
