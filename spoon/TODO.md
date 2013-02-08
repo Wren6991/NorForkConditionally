@@ -18,4 +18,9 @@ Todo:
 - Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
 - Clear up distinctions between what's a value and what's a pointer to a value.
-- make linker valtable contain linkvals, so we can have chains of symbols (sym1->sym2->constant)
+- make linker valtable contain linkvals, so we can have chains of symbols (sym1->sym2->constant) (is this necessary?)
+- return statements in functions
+	- the block and statement compile funcs will need to know the current function name
+- break/continue
+	- have labels, pass them into each block at link time, and jump to them on break/continue statements.
+

@@ -67,15 +67,19 @@ typedef enum
 // They get evaluated in the final "assemble" step.
 struct linkval
 {
-    enum op_type {op_add};
+    enum op_type {op_add, op_sub, op_gethigh, op_getlow};
     lv_type type;
     uint16_t literal;
     std::string sym;
-    linkval *next;
+    linkval *argA;
+    linkval *argB;
     op_type operation;
     linkval(uint16_t lit) {type = lv_literal; literal = lit;}
     linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
-    linkval& operator+(uint16_t rhs);
+    linkval& operator+(linkval rhs);
+    linkval& operator-(linkval rhs);
+    linkval gethighbyte();
+    linkval getlowbyte();
 };
 
 class linker
@@ -97,6 +101,7 @@ class linker
     void emit_writeconst(uint8_t val, linkval dest);
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
     void emit_writeconst_multiple(int value, linkval dest, int nbytes);
+    void emit_writelabel(std::string label, linkval dest);
     void link(funcdef*);
     void link(block*);
     void link(statement*);

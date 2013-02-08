@@ -159,16 +159,8 @@ void linker::write8(linkval val)
 
 void linker::write16(linkval val)
 {
-    if (val.type == lv_literal)
-    {
-        write8(val.literal >> 8);           // big endian!
-        write8(val.literal & 0xff);
-    }
-    else
-    {
-        write8(linkval(val.sym + "_HI"));
-        write8(linkval(val.sym + "_LO"));
-    }
+    write8(val.gethighbyte());
+    write8(val.getlowbyte());
 }
 
 void linker::padto8bytes()
@@ -238,6 +230,14 @@ void linker::emit_writeconst_multiple(int value, linkval dest, int nbytes)
     {
         emit_writeconst((value >> (nbytes - i - 1) * 8) & 0xff, dest + i);
     }
+}
+
+void linker::emit_writelabel(std::string label, linkval dest)
+{
+    emit_nfc2(dest, getconstaddress(0xff));
+    emit_nfc2(dest, linkval(DECREMENT_START) + 256 - linkval(label + "_HI"));           // 256 - x  == ~x + 1
+    emit_nfc2(dest + 1, getconstaddress(0xff));
+    emit_nfc2(dest + 1, linkval(DECREMENT_START) + 256 - linkval(label + "_LO"));
 }
 
 void linker::add_object(object *obj)
@@ -455,8 +455,10 @@ uint16_t linker::linkfunctioncall(funccall *fcall, funcdef *fdef)
             emit_copy_multiple(evaluate(fcall->args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
     }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
-    emit_writeconst_multiple(index + 8 * (2 * typesizes[type_pointer] + 1), vars.getvar(fcall->name + ":__returnvector")->offset + HEAP_BOTTOM, typesizes[type_pointer]);
+    std::string returnlabel = getlabel();
+    emit_writelabel(returnlabel, vars.getvar(fcall->name + ":__returnvector")->offset + HEAP_BOTTOM);
     emit_branchalways(linkval(fcall->name + ":__startvector"));
+    savelabel(returnlabel, index);
     return vars.getvar(fcall->name + ":__returnval")->offset + HEAP_BOTTOM;
 }
 
@@ -623,24 +625,86 @@ std::vector<char> linker::assemble()
     return image;
 }
 
-linkval& linkval::operator+(uint16_t rhs)
+linkval& linkval::operator+(linkval rhs)
 {
     switch (type)
     {
     case lv_literal:
-        literal += rhs;
-        break;
+        if (rhs.type == lv_literal)
+        {
+            literal += rhs.literal;
+            break;
+        }   // fall through if not:
     case lv_symbol:
     case lv_expression:
-        next = new linkval(0);
-        *next = *this;
+        argA = new linkval(0);
+        argB = new linkval(0);
+        *argA = *this;
+        *argB = rhs;
         type = lv_expression;
         operation = op_add;
-        literal = rhs;
         break;
     }
     return *this;
 }
+
+linkval& linkval::operator-(linkval rhs)
+{
+    switch (type)
+    {
+    case lv_literal:
+        if (rhs.type == lv_literal)
+        {
+            literal -= rhs.literal;
+            break;
+        }   // fall through if not:
+    case lv_symbol:
+    case lv_expression:
+        argA = new linkval(0);
+        argB = new linkval(0);
+        *argA = *this;
+        *argB = rhs;
+        type = lv_expression;
+        operation = op_sub;
+        break;
+    }
+    return *this;
+}
+
+linkval linkval::gethighbyte()
+{
+    if (type == lv_literal)
+        return literal >> 8;
+    else if (type == lv_symbol)
+        return sym + "_HI";
+    else
+    {
+        linkval lv(0);
+        lv.type = lv_expression;
+        lv.operation = op_gethigh;
+        lv.argA = new linkval(0);
+        *lv.argA = *this;
+        return lv;
+    }
+}
+
+linkval linkval::getlowbyte()
+{
+    if (type == lv_literal)
+        return literal & 0xff;
+    else if (type == lv_symbol)
+        return sym + "_LO";
+    else
+    {
+        linkval lv(0);
+        lv.type = lv_expression;
+        lv.operation = op_getlow;
+        lv.argA = new linkval(0);
+        *lv.argA = *this;
+        return lv;
+    }
+}
+
 
 // For each function, allocate the following statically:
 // - a return value address, of a size matching the return type. The retval is found here after execution.
@@ -673,14 +737,27 @@ uint16_t linker::evaluate(linkval lv)
     case lv_literal:
         return lv.literal;
     case lv_symbol:
-        return valtable[lv.sym];
+        if (valtable.find(lv.sym) == valtable.end())
+            throw(error("Linker error: no such symbol: " + lv.sym));
+        else
+            return valtable[lv.sym];
     case lv_expression:
         {
-            uint16_t first_operand = evaluate(*lv.next);
+            linkval lv1 = *lv.argA;
+            uint16_t first_operand = evaluate(lv1);
+            uint16_t second_operand;
+            if (lv.argB)
+                second_operand = evaluate(*lv.argB);
             switch (lv.operation)
             {
             case linkval::op_add:
-                return first_operand + lv.literal;
+                return first_operand + second_operand;
+            case linkval::op_sub:
+                return first_operand - second_operand;
+            case linkval::op_gethigh:
+                return first_operand >> 8;
+            case linkval::op_getlow:
+                return first_operand & 0xff;
             }
         }
     }

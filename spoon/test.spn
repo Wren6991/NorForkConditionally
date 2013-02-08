@@ -11,15 +11,9 @@ macro output(src, dest)
     nfc(dest, x);
 }
 
-function int not(int x)
-{
-    nfc(not, val(0xff));
-    nfc(not, x);
-}
-
 function int dostuff(int x)
 {
-    dostuff = not(x);
+    dostuff = x;
 }
 
 function main()
