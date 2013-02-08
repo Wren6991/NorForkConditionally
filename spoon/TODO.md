@@ -23,4 +23,5 @@ Todo:
 	- the block and statement compile funcs will need to know the current function name
 - break/continue
 	- have labels, pass them into each block at link time, and jump to them on break/continue statements.
-
+- line numbers for syntax errors
+- stack unwinding information for syntax errors ("in function main" etc.)
