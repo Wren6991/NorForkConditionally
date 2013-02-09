@@ -201,6 +201,7 @@ void linker::emit_branchalways(linkval dest)
     write16(temploc);
     write16(dest);
     write16(dest);
+    vars.remove("__temp");
 }
 
 void linker::emit_copy(linkval src, linkval dest)
@@ -315,6 +316,7 @@ std::vector<char> linker::link()
     emit_writeconst(0x00, 0xbfe3);
 
     // Link in the main function body
+    std::cout << "Linking main\n";
     link(((funcdef*)defined_funcs["main"])->body);
 
     // generate halt instruction:
@@ -332,7 +334,7 @@ std::vector<char> linker::link()
 
 void linker::link(funcdef* fdef)
 {
-    std::cout << "Linking function: " << fdef->name << "\n";
+    std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
     savelabel(fdef->name + ":__startvector", index);
     link(fdef->body);
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM,
@@ -764,7 +766,7 @@ void linker::allocatefunctionstorage()
 {
     for (std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
     {
-        std::cout << iter->first << "\n";
+        std::cout << "Allocating for " << iter->first << "\n";
         if (iter->second && iter->second->type == dt_funcdef)
         {
             funcdef *fdef = (funcdef*)(iter->second);

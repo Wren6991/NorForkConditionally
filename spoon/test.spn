@@ -1,8 +1,9 @@
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
-const pointer true = 0x7d00;        // constant ff
-const pointer false = 0x7d01;       // constant 0
+const int true = 0xff;
+const int false = 0x00;
 
+function int read(pointer p);
 function int increment(int x);
 function int decrement(int x);
 function int shiftleft(int x);
@@ -18,5 +19,11 @@ macro output(src, dest)
 
 function main()
 {
-    output(increment(0xc5), debugout);
+    while (true)
+    {
+        if (read(debugin))
+            output(true, debugout);
+        else
+            output(false, debugout);
+    }
 }

@@ -151,6 +151,8 @@ std::vector <token> tokenize(std::string str)
             case s_slashaccepted:
                 if (c == '/')
                     state = s_linecomment;
+                else if (c == '*')
+                    state = s_streamcomment;
                 else
                     tokens.push_back(symbols['/']);
                 break;
@@ -159,7 +161,15 @@ std::vector <token> tokenize(std::string str)
                     state = s_start;
                 break;
             case s_streamcomment:
+                if (c == '*')
+                    state = s_staraccepted;
+                break;
             case s_staraccepted:
+                if (c == '/')
+                    state = s_start;
+                else
+                    state = s_streamcomment;
+                break;
             case s_number:
                 if (!is_digit(c))
                 {
