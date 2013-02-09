@@ -28,7 +28,7 @@ void vardict::find_first_available_space(int searchstart)
 {
     for (int i = searchstart; i < HEAP_SIZE; i++)
     {
-        if (!memory[i])
+        if (!memory_in_use[i])
         {
             first_available_space = i;
             return;
@@ -48,7 +48,7 @@ int vardict::getspace(int size)
         bool enoughSpace = true;
         for (int i = start; i < start + size; i++)
         {
-            if (memory[i])
+            if (memory_in_use[i])
             {
                 enoughSpace = false;
                 start = i + 1;          // start checking again at the next unchecked location
@@ -58,7 +58,10 @@ int vardict::getspace(int size)
         if (enoughSpace)
         {
             for (int i = start; i < start + size; i++)
-                memory[i] = true;
+            {
+                memory_in_use[i] = true;
+                has_been_used[i] = true;
+            }
             if (start == first_available_space)
                 find_first_available_space(first_available_space);       // if we've covered the first known free space, find a new one.
             return start;
@@ -90,7 +93,7 @@ void vardict::remove(std::string name)
         throw(error("Error: tried to free non-existent variable! (Link-time)"));
     // release the memory:
     for (int i = iter->second->offset; i < iter->second->offset + typesizes[iter->second->type]; i++)
-        memory[i] = 0;
+        memory_in_use[i] = 0;
     if (iter->second->offset < first_available_space)
         first_available_space = iter->second->offset;
     // update the dictionary: pop or remove
@@ -121,12 +124,22 @@ bool vardict::exists(std::string name)
     return vars.find(name) != vars.end();
 }
 
+// When we link a new function body, we mark all memory that is used by other functions as currently in use.
+// This means memory is still packed as efficiently as possible within functions, but functions
+// can't clobber memory used by others when they declare vars.
+void vardict::push_function_scope()
+{
+    memory_in_use = has_been_used;
+}
 
 vardict::vardict()
 {
     first_available_space = 0;
     for (int i = 0; i < (HEAP_TOP - HEAP_BOTTOM); i++)
-        memory.push_back(0);
+    {
+        memory_in_use.push_back(0);
+        has_been_used.push_back(0);
+    }
 }
 
 
@@ -335,6 +348,7 @@ std::vector<char> linker::link()
 void linker::link(funcdef* fdef)
 {
     std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
+    vars.push_function_scope();
     savelabel(fdef->name + ":__startvector", index);
     link(fdef->body);
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM,

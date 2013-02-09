@@ -37,7 +37,8 @@ struct variable
 class vardict
 {
     std::map<std::string, variable*> vars;
-    std::vector<bool> memory;
+    std::vector<bool> memory_in_use;
+    std::vector<bool> has_been_used;
     int first_available_space;
     int getspace(int size);
     void find_first_available_space(int searchstart = 0);
@@ -46,6 +47,7 @@ public:
     void remove(std::string name);
     variable* getvar(std::string name);
     bool exists(std::string name);
+    void push_function_scope();     // so functions can't clobber each other's memory, we mark all memory used by other functions as currently in use.
     vardict();
 };
 
