@@ -1,0 +1,43 @@
+Benchmarking
+============
+
+Sample program:
+---------------
+
+```
+const pointer debugout = 0xc000;
+const pointer debugin = 0xc001;
+const int true = 0xff;
+const int false = 0x00;
+
+function int decrement(int x);
+function int read(pointer p);
+
+function sleep(int time)
+{
+    while (time)
+        time = decrement(time);
+}
+
+function main()
+{
+    while (true)
+    {
+        var int period;
+        period = read(debugin);
+        sleep(period);
+        nfc(debugout, val(0xff));
+        sleep(period);
+        nfc(debugout, val(0x00));
+    }
+}
+```
+
+Before optimization
+-------------------
+
+Frequency when debugin == 0:
+4.167 kHz
+
+Frequency when debugin == ff:
+23.21 Hz

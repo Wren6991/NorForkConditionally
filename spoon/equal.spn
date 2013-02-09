@@ -1,0 +1,80 @@
+const pointer debugout = 0xc000;
+const pointer debugin = 0xc001;
+const int true = 0xff;
+const int false = 0x00;
+
+function int read(pointer p);
+function int increment(int x);
+function int decrement(int x);
+function int shiftleft(int x);
+function int shiftright(int x);
+
+macro output(src, dest)
+{
+    var int temp;
+    nfc(temp, val(0xff));
+    nfc(temp, src);
+    nfc(dest, temp);
+}
+
+function int andnot(int a, int b)
+{
+    nfc(andnot, val(0xff));
+    nfc(andnot, a);
+    nfc(andnot, b);
+}
+
+function int and(int a, int b)
+{
+    nfc(and, val(0xff));
+    nfc(and, a);
+    nfc(b, b);
+    nfc(and, b);
+}
+
+function int or(int a, int b)
+{
+    var int temp;
+    nfc(or, val(0xff));
+    nfc(or, a);
+    nfc(or, or);
+    nfc(or, b);
+    nfc(or, or);
+}
+
+function int xor(int a, int b)
+{
+    var int temp1, temp2;
+    temp1 = andnot(a, b);
+    temp2 = andnot(b, a);
+    xor = or(temp1, temp2);
+}
+
+function int equal(int a, int b)
+{
+    if (xor(a, b))
+        equal = 0;
+    else
+        equal = 1;
+}
+
+function main()
+{
+    while (true)
+    {
+        if (equal(read(debugin), 0xc5))
+        {
+            var int temp;
+            nfc(temp, val(0xff));
+            nfc(temp, val(true));
+            nfc(debugout, temp);
+        }
+        else
+        {
+            var int temp;
+            nfc(temp, val(0xff));
+            nfc(temp, val(false));
+            nfc(debugout, temp);
+        }
+    }
+}

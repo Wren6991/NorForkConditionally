@@ -25,3 +25,4 @@ Todo:
 	- have labels, pass them into each block at link time, and jump to them on break/continue statements.
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
+- have a better way of handling builtins! (some sort of map to function pointers?)

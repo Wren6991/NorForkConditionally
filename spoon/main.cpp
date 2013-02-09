@@ -18,7 +18,7 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
     {
         if (i % 8 == 0)
             std::cout << std::hex << std::setw(4) << std::setfill('0') << i << ":\t";
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
+        std::cout <<  std::hex << std::setw(2) << std::setfill('0') << (((int)buffer[i]) & 0xff);
         if (i % 8 == 7)
             std::cout << "\n";
         else if (printasbytes || i % 2 == 1)
