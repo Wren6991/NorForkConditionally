@@ -79,10 +79,11 @@ struct linkval
     op_type operation;
     linkval(uint16_t lit = 0) {type = lv_literal; literal = lit;}
     linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
-    linkval operator+(linkval rhs);
-    linkval operator-(linkval rhs);
-    linkval gethighbyte();
-    linkval getlowbyte();
+    linkval operator+(linkval rhs) const;
+    linkval operator-(linkval rhs) const;
+    bool operator==(linkval &rhs) const;
+    linkval gethighbyte() const;
+    linkval getlowbyte() const;
 };
 
 class linker
@@ -98,6 +99,7 @@ class linker
     void write16(linkval);
     void padto8bytes();
     linkval evaluate_or_return_literal(expression*);
+// Code generation routines:
     void emit_nfc2(linkval x, linkval y);
     void emit_branchifzero(linkval testloc, linkval dest);
     void emit_branchalways(linkval dest);
@@ -106,6 +108,7 @@ class linker
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
     void emit_writeconst_multiple(int value, linkval dest, int nbytes);
     void emit_writelabel(std::string label, linkval dest);
+// Tree traversal:
     void link(funcdef*);
     void link(block*);
     void link(statement*);

@@ -18,8 +18,9 @@ Todo:
 	- OR we could recompile macro bodies in each context.
 - return statements in functions
 	- the block and statement compile funcs will need to know the current function name
-- break/continue
-	- have labels, pass them into each block at link time, and jump to them on break/continue statements.
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
 - have a better way of handling builtins! (some sort of map to function pointers?)
+- Arrays
+	- act as const pointers, but vardict allocates the correct amount of storage at the required location.
+- Make code generator its own separate class, friend of linker.

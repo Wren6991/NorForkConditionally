@@ -209,13 +209,27 @@ void linker::emit_branchifzero(linkval testloc, linkval dest)
 
 void linker::emit_branchalways(linkval dest)
 {
-    uint16_t temploc = vars.addvar("__temp", type_int) + HEAP_BOTTOM;
     padto8bytes();
-    write16(temploc);
-    write16(temploc);
-    write16(dest);
-    write16(dest);
-    vars.remove("__temp");
+    // check if the last instruction points at this one:
+    if (buffer[index - 4] == buffer[index  - 2] && buffer[index - 3] == buffer[index - 1] &&
+        buffer[index - 4].type == lv_literal && buffer[index - 4].literal == index >> 8 &&
+        buffer[index - 3].type == lv_literal && buffer[index - 3].literal == (index & 0xff))
+    {
+        buffer[index - 4] = dest.gethighbyte();
+        buffer[index - 3] = dest.getlowbyte();
+        buffer[index - 2] = dest.gethighbyte();
+        buffer[index - 1] = dest.getlowbyte();
+    }
+    else
+    {
+        uint16_t temploc = vars.addvar("__temp", type_int) + HEAP_BOTTOM;
+        write16(temploc);
+        write16(temploc);
+        write16(dest);
+        write16(dest);
+        vars.remove("__temp");
+    }
+
 }
 
 void linker::emit_copy(linkval src, linkval dest)
@@ -620,9 +634,11 @@ linkval linker::evaluate(expression *expr)
             if (expr->name == "read")
             {
                 if (expr->args[0]->type == exp_number)
-                    emit_writeconst_multiple(expr->args[0]->number, POINTER_READ_PVECTOR, typesizes[type_pointer]);
-                else
-                    emit_copy_multiple(evaluate(expr->args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
+                {
+                    emit_copy(expr->args[0]->number, POINTER_READ_RESULT);
+                    return POINTER_READ_RESULT;
+                }
+                emit_copy_multiple(evaluate(expr->args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
             }
             else
             {
@@ -685,7 +701,7 @@ std::vector<char> linker::assemble()
     return image;
 }
 
-linkval linkval::operator+(linkval rhs)
+linkval linkval::operator+(linkval rhs) const
 {
     linkval result(0);
     switch (type)
@@ -710,7 +726,7 @@ linkval linkval::operator+(linkval rhs)
     return result;
 }
 
-linkval linkval::operator-(linkval rhs)
+linkval linkval::operator-(linkval rhs) const
 {
     linkval result(0);
     switch (type)
@@ -735,7 +751,24 @@ linkval linkval::operator-(linkval rhs)
     return result;
 }
 
-linkval linkval::gethighbyte()
+bool linkval::operator==(linkval &rhs) const
+{
+    if (type != rhs.type)   // this is a conservative equality: those of different types may be equal, but we assume not.
+        return false;
+    switch (type)
+    {
+    case lv_literal:
+        return literal == rhs.literal;
+    case lv_symbol:
+        return sym == rhs.sym;
+    case lv_expression:
+        return operation == rhs.operation &&
+        (argA && rhs.argA ? *argA == *rhs.argA : argA == rhs.argA) &&
+        (argB && rhs.argB ? *argB == *rhs.argB : argB == rhs.argB);     // compare by value if both non-null, else compare by reference.
+    }
+}
+
+linkval linkval::gethighbyte() const
 {
     if (type == lv_literal)
         return literal >> 8;
@@ -752,7 +785,7 @@ linkval linkval::gethighbyte()
     }
 }
 
-linkval linkval::getlowbyte()
+linkval linkval::getlowbyte() const
 {
     if (type == lv_literal)
         return literal & 0xff;
