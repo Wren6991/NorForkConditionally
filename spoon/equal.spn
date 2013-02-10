@@ -45,9 +45,17 @@ function int or(int a, int b)
 function int xor(int a, int b)
 {
     var int temp1, temp2;
-    temp1 = andnot(a, b);
-    temp2 = andnot(b, a);
-    xor = or(temp1, temp2);
+    nfc(temp1, val(0xff));
+    nfc(temp1, a);
+    nfc(temp1, b);
+    nfc(temp2, val(0xff));
+    nfc(temp2, b);
+    nfc(temp2, a);
+    nfc(xor, val(0xff));
+    nfc(xor, temp1);
+    nfc(xor, xor);
+    nfc(xor, temp2);
+    nfc(xor, xor);
 }
 
 function int equal(int a, int b)
@@ -62,19 +70,28 @@ function main()
 {
     while (true)
     {
-        if (equal(read(debugin), 0xc5))
+        var int x, op;
+        x = read(debugin);
+        op = and(x, 0xc0);
+        x = and(x, 0x3f);
+        var int temp;
+        nfc(temp, val(0xff));
+        if (equal(op, 0x00))
         {
-            var int temp;
-            nfc(temp, val(0xff));
-            nfc(temp, val(true));
-            nfc(debugout, temp);
+            nfc(temp, increment(x));
+        }
+        else if (equal(op, 0x40))
+        {
+            nfc(temp, decrement(x));
+        }
+        else if (equal(op, 0x80))
+        {
+            nfc(temp, shiftleft(x));
         }
         else
         {
-            var int temp;
-            nfc(temp, val(0xff));
-            nfc(temp, val(false));
-            nfc(debugout, temp);
+            nfc(temp, shiftright(x));
         }
+        nfc(debugout, temp);
     }
 }

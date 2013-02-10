@@ -10,6 +10,7 @@
 
 typedef enum {
     t_eof = 0,  //end of file
+    t_break,
     t_colon,
     t_comma,
     t_const,
