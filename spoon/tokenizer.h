@@ -14,6 +14,7 @@ typedef enum {
     t_colon,
     t_comma,
     t_const,
+    t_continue,
     t_else,
     t_equals,
     t_function,

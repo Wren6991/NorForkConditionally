@@ -229,6 +229,18 @@ statement* parser::getstatement()
     {
         return getwhile();
     }
+    else if (accept(t_break))
+    {
+        resourcep <break_stat> breaks;
+        expect(t_semicolon);
+        return breaks.release();
+    }
+    else if (accept(t_continue))
+    {
+        resourcep <continue_stat> continues;
+        expect(t_semicolon);
+        return continues.release();
+    }
     else
     {
         expect(t_name);

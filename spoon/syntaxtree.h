@@ -43,7 +43,9 @@ typedef enum {
     stat_assignment,
     stat_label,
     stat_if,
-    stat_while
+    stat_while,
+    stat_break,
+    stat_continue
 } stat_type;
 
 typedef enum {
@@ -155,6 +157,16 @@ struct while_stat: public statement
     expression *expr;
     block *blk;
     while_stat() {type = stat_while;}
+};
+
+struct break_stat: public statement
+{
+    break_stat() {type = stat_break;}
+};
+
+struct continue_stat: public statement
+{
+    continue_stat() {type = stat_continue;}
 };
 
 struct block

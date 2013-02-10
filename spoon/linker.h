@@ -77,7 +77,7 @@ struct linkval
     linkval *argA;
     linkval *argB;
     op_type operation;
-    linkval(uint16_t lit) {type = lv_literal; literal = lit;}
+    linkval(uint16_t lit = 0) {type = lv_literal; literal = lit;}
     linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
     linkval operator+(linkval rhs);
     linkval operator-(linkval rhs);
@@ -92,8 +92,8 @@ class linker
     std::vector<definition*> definitions;
     int index;
     std::vector<linkval> buffer;
-    std::map<std::string, int> valtable;        // contains values for substitution
-    void savelabel(std::string, uint16_t);
+    std::map<std::string, linkval> valtable;        // contains values for substitution
+    void savelabel(std::string, linkval);
     void write8(linkval);
     void write16(linkval);
     void padto8bytes();

@@ -155,10 +155,10 @@ linker::linker()
     buffer.reserve(ROM_SIZE);
 }
 
-void linker::savelabel(std::string name, uint16_t address)
+void linker::savelabel(std::string name, linkval address)
 {
-    valtable[name + "_HI"] = address >> 8;
-    valtable[name + "_LO"] = address & 0xff;
+    valtable[name + "_HI"] = address.gethighbyte();
+    valtable[name + "_LO"] = address.getlowbyte();
 }
 
 // NB: index refers to the location _about_ to be written. (I.e. next location)
@@ -309,24 +309,11 @@ std::vector<char> linker::link()
     // we write to bfda (rrrr) to set the pointer read location
     // when we jump to bfd0, it clears bff0 and then reads ~*ptr into it.
     // bff1 is cleared - as the result is always 0, the machine jumps to the return (rrrr) which was written beforehand.
-    emit_writeconst(0xbf, 0xbfd0);
-    emit_writeconst(0xf0, 0xbfd1);
-    emit_writeconst(0x7d, 0xbfd2);
-    emit_writeconst(0x00, 0xbfd3);
-    emit_writeconst(0xbf, 0xbfd4);
-    emit_writeconst(0xd8, 0xbfd5);
-    emit_writeconst(0xbf, 0xbfd6);
-    emit_writeconst(0xd8, 0xbfd7);
-    emit_writeconst(0xbf, 0xbfd8);
-    emit_writeconst(0xf0, 0xbfd9);
-    emit_writeconst(0xbf, 0xbfdc);
-    emit_writeconst(0xe0, 0xbfdd);
-    emit_writeconst(0xbf, 0xbfde);
-    emit_writeconst(0xe0, 0xbfdf);
-    emit_writeconst(0xbf, 0xbfe0);
-    emit_writeconst(0xf1, 0xbfe1);
-    emit_writeconst(0x7d, 0xbfe2);
-    emit_writeconst(0x00, 0xbfe3);
+    emit_writeconst_multiple(0xbff07d00, 0xbfd0, 4);
+    emit_writeconst_multiple(0xbfd8bfd8, 0xbfd4, 4);
+    emit_writeconst_multiple(0xbff0, 0xbfd8, 2);
+    emit_writeconst_multiple(0xbfe0bfe0, 0xbfdc, 4);
+    emit_writeconst_multiple(0xbff17d00, 0xbfe0, 4);
 
     // Link in the main function body
     std::cout << "Linking main\n";
@@ -450,7 +437,9 @@ void linker::link(funccall *call)
             // WHAT HAPPENS IF THE SAME MACRO IS CALLED IN DIFFERENT LOCATIONS?
             for (unsigned int i = 0; i < mdef->args.size(); i++)
             {
-                savelabel(mdef->args[i], evaluate_or_return_literal(call->args[i]).literal);
+                std::string local_argname = getlabel();
+                savelabel(local_argname, evaluate_or_return_literal(call->args[i]));
+                valtable[mdef->args[i]] = local_argname;
                 vars.addvar(mdef->args[i], type_label);
             }
             link(mdef->body);
@@ -579,8 +568,13 @@ linkval linker::evaluate(expression *expr)
         if (vars.exists(expr->name))
         {
             variable *var = vars.getvar(expr->name);
+            // eager evaluation of labels: we get the most recently bound lable identity,
+            // not the last one. This is what allows us to change argname meaning in different calls to a macro.
             if (var->type == type_label)
-                return expr->name;
+                if (valtable.find(expr->name) != valtable.end())
+                    return valtable[expr->name];
+                else
+                    return expr->name;
             else
                 return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
         }
@@ -806,7 +800,7 @@ uint16_t linker::evaluate(linkval lv)
         if (valtable.find(lv.sym) == valtable.end())
             throw(error("Linker error: no such symbol: " + lv.sym));
         else
-            return valtable[lv.sym];
+            return evaluate(valtable[lv.sym]);
     case lv_expression:
         {
             linkval lv1 = *lv.argA;

@@ -22,8 +22,8 @@ function main()
     while (true)
     {
         if (read(debugin))
-            output(true, debugout);
+            output(val(true), debugout);
         else
-            output(false, debugout);
+            output(val(false), debugout);
     }
 }
