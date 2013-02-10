@@ -56,15 +56,15 @@ class compiler
     object* compile(program*);
     void compile(macrodef*);
     void compile(funcdef*);
-    void compile(block*);
+    void compile(block*, std::string exitlabel = "", std::string toplabel = ""); // optionally supply labels for break/continue
     void compile(funccall*);
     void compile(goto_stat*);
     void compile(label*);
-    void compile(if_stat*);
+    void compile(if_stat*, std::string exitlabel, std::string toplabel);
     void compile(while_stat*);
+    void compile(assignment*);
     void compile(expression*);
     void gettype(expression*);
-    void compile(assignment*);
     bool match_types(type_enum expected, type_enum &received);
     void addvar(std::string name, type_enum type, int ptr, bool isConstant = false, int constvalue = 0);
 };

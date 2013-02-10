@@ -7,6 +7,7 @@
 #include <iostream>
 
 extern const int typesizes[n_types];
+std::string makeguid(std::string name, int ptr);
 
 
 std::string getlabel()
@@ -517,14 +518,18 @@ void linker::link(if_stat* ifs)
 //L2:
 void linker::link(while_stat *whiles)
 {
-    std::string toplabel = getlabel();
-    std::string exitlabel = getlabel();
+    std::string toplabel = makeguid("__top", (int)whiles->blk);
+    std::string exitlabel = makeguid("__exit", (int)whiles->blk);
+    vars.addvar(toplabel, type_label);
+    vars.addvar(exitlabel, type_label);
     savelabel(toplabel, index);
     emit_branchifzero(evaluate(whiles->expr), exitlabel);
     link(whiles->blk);
     // jump unconditionally to top:
     emit_branchalways(linkval(toplabel));
     savelabel(exitlabel, index);
+    vars.remove(toplabel);
+    vars.remove(exitlabel);
 }
 
 void linker::link(assignment *assg)
@@ -634,7 +639,6 @@ linkval linker::evaluate(expression *expr)
                 else
                     emit_copy(evaluate(expr->args[0]), POINTER_READ_PVECTOR + 1);
             }
-
             emit_writelabel(returnlabel, JUMP_PVECTOR);
             emit_branchalways(POINTER_READ_INSTRUCTION);
             savelabel(returnlabel, index);

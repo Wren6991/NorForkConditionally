@@ -182,6 +182,8 @@ struct expression
     int number;
     type_enum val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
     std::vector<expression*> args;
+    expression() {}
+    expression(std::string _name) {type = exp_name; name = _name;}
 };
 
 

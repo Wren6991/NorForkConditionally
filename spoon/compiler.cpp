@@ -233,7 +233,7 @@ void compiler::compile(funcdef *fdef)
 // Push all the variable declarations into a new scope.
 // run through all the statements and delegate compilation based
 // on statement type
-void compiler::compile(block *blk)
+void compiler::compile(block *blk, std::string exitlabel, std::string toplabel)
 {
     pushscope();
     for (unsigned int i = 0; i < blk->declarations.size(); i++)
@@ -262,7 +262,7 @@ void compiler::compile(block *blk)
     // compile the remaining statements:
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
-        statement *stat = blk->statements[i];
+        statement *&stat = blk->statements[i];      // reference to pointer to statement (so we can reassign it)
 
         switch (stat->type)
         {
@@ -276,13 +276,27 @@ void compiler::compile(block *blk)
             ((label*)stat)->name = currentscope->get(((label*)stat)->name).name;        // replace local label with globally unique one
             break;
         case stat_if:
-            compile((if_stat*)stat);
+            compile((if_stat*)stat, exitlabel, toplabel);
             break;
         case stat_while:
             compile((while_stat*)stat);
             break;
         case stat_assignment:
             compile((assignment*)stat);
+            break;
+        case stat_break:
+            if (exitlabel == "")
+                throw(error("Error: no loop to break from"));
+            delete stat;
+            stat = new goto_stat;
+            ((goto_stat*)stat)->target = new expression(exitlabel);
+            break;
+        case stat_continue:
+            if (toplabel == "")
+                throw(error("Error: no loop to continue"));
+            delete stat;
+            stat = new goto_stat;
+            ((goto_stat*)stat)->target = new expression(toplabel);
             break;
         default:
             throw(error("Error: unrecognised statement type"));
@@ -327,18 +341,18 @@ void compiler::compile(label *lbl)
 
 // we only need to compile the expression and if bodies:
 // the actual code generation and labelling happens at link time.
-void compiler::compile(if_stat *ifs)
+void compiler::compile(if_stat *ifs, std::string exitlabel, std::string toplabel)
 {
     compile(ifs->expr);
-    compile(ifs->ifblock);
+    compile(ifs->ifblock, exitlabel, toplabel);
     if (ifs->elseblock)
-        compile(ifs->elseblock);
+        compile(ifs->elseblock, exitlabel, toplabel);
 }
 
 void compiler::compile(while_stat *whiles)
 {
     compile(whiles->expr);
-    compile(whiles->blk);
+    compile(whiles->blk, makeguid("__exit", (int)whiles->blk), makeguid("__top", (int)whiles->blk));
 }
 
 void compiler::compile(assignment *assg)
@@ -368,9 +382,7 @@ void compiler::compile(expression *expr)
     {
         if (!currentscope->exists(expr->name))
         {
-            std::stringstream ss;
-            ss << "Error: undeclared name \"" << expr->name << "\" in expression.";
-            throw(error(ss.str()));
+            throw(error("Error: undeclared name \"" + expr->name + "\" in expression."));
         }
         expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
         if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
