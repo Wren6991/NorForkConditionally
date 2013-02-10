@@ -24,3 +24,4 @@ Todo:
 - Arrays
 	- act as const pointers, but vardict allocates the correct amount of storage at the required location.
 - Make code generator its own separate class, friend of linker.
+- Make the compiler usable as a standalone executable.

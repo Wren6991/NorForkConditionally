@@ -150,3 +150,20 @@ Frequency when debugin == ff:
 Size benchmark:
 
 - 1984 bytes
+
+Read becomes copy when address constant, 0-byte branchalways instructions:
+--------------------------------------------------------------------------
+
+Frequency when debugin == 0:
+
+- 5.556 kHz
+
+Frequency when debugin == ff:
+
+- 25.68 Hz
+
+Size benchmark:
+
+- 1776 bytes
+
+
