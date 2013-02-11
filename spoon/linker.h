@@ -24,46 +24,13 @@ const int JUMP_PVECTOR = JUMP_INSTRUCTION + 0x6;
 const int POINTER_READ_RESULT = HEAP_TOP - 0x0f;
 
 
-// TODO: might be better to just have a stack of maps for scope, rather
-// than this multiple-linked-list juggling bullshit.
-struct variable
-{
-    type_enum type;
-    variable *next;     // for stack operations we can build a linked list, in case we get the same symbol twice. (Shadowing)
-    int offset;
-    variable() {next = 0;}
-};
-
-class vardict
-{
-    std::map<std::string, variable*> vars;
-    std::vector<bool> memory_in_use;
-    std::vector<bool> has_been_used;
-    int first_available_space;
-    int getspace(int size);
-    void find_first_available_space(int searchstart = 0);
-public:
-    int addvar(std::string name, type_enum type);
-    void remove(std::string name);
-    variable* getvar(std::string name);
-    bool exists(std::string name);
-    void push_function_scope();     // so functions can't clobber each other's memory, we mark all memory used by other functions as currently in use.
-    vardict();
-};
-
-struct substitution
-{
-    std::string name;
-    int nbytes;
-    substitution(std::string _name = "", int _nbytes = 0) {name = _name; nbytes = _nbytes;}
-};
-
 typedef enum
 {
     lv_literal = 0,
     lv_symbol,
     lv_expression
 } lv_type;
+
 
 // linkvals are our "Assembly language" - they let us pass symbols and expressions for machine code
 // instead of just the literal addresses, e.g. with labels where we don't know the location til we reach it.
@@ -84,6 +51,40 @@ struct linkval
     bool operator==(linkval &rhs) const;
     linkval gethighbyte() const;
     linkval getlowbyte() const;
+};
+
+struct variable
+{
+    type_enum type;
+    variable *next;     // for stack operations we can build a linked list, in case we get the same symbol twice. (Shadowing)
+    int offset;
+    linkval address;
+    variable() {next = 0;}
+};
+
+class vardict
+{
+    std::map<std::string, variable*> vars;
+    std::vector<bool> memory_in_use;
+    std::vector<bool> has_been_used;
+    int first_available_space;
+    int getspace(int size);
+    void find_first_available_space(int searchstart = 0);
+public:
+    linkval addvar(std::string name, type_enum type);
+    void registervar(std::string name, type_enum type, linkval address);    // for when we want to push an existing address as a var, and the memory is already allocated. (it's removed in the same way)
+    void remove(std::string name);
+    variable* getvar(std::string name);
+    bool exists(std::string name);
+    void push_function_scope();     // so functions can't clobber each other's memory, we mark all memory used by other functions as currently in use.
+    vardict();
+};
+
+struct substitution
+{
+    std::string name;
+    int nbytes;
+    substitution(std::string _name = "", int _nbytes = 0) {name = _name; nbytes = _nbytes;}
 };
 
 class linker
@@ -113,7 +114,7 @@ class linker
     void link(block*);
     void link(statement*);
     void link(funccall*);
-    uint16_t linkfunctioncall(std::vector<expression*>&, funcdef*);
+    linkval linkfunctioncall(std::vector<expression*>&, funcdef*);
     linkval linkbuiltinfunction(std::vector<expression*>&, std::string);
     void link(goto_stat*);
     void link(if_stat*);

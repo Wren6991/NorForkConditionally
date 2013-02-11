@@ -73,7 +73,7 @@ int vardict::getspace(int size)
 
 // Note: returns an offset from the heap start, you'll have to add
 // the heap bottom to this value to get a machine address.
-int vardict::addvar(std::string name, type_enum type)
+linkval vardict::addvar(std::string name, type_enum type)
 {
     std::cout << "adding var " << name;
     variable *var = new variable;
@@ -83,7 +83,19 @@ int vardict::addvar(std::string name, type_enum type)
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
     std::cout << " " << var->offset << "\n";
-    return var->offset;
+    var->address = var->offset + HEAP_BOTTOM;
+    return var->address;
+}
+
+void vardict::registervar(std::string name, type_enum type, linkval address)
+{
+    variable *var = new variable;
+    var->type = type;
+    var->offset = -1;
+    if (vars.find(name) != vars.end())
+        var->next = vars[name];
+    vars[name] = var;
+    var->address = address;
 }
 
 void vardict::remove(std::string name)
@@ -92,21 +104,25 @@ void vardict::remove(std::string name)
     std::map<std::string, variable*>::iterator iter = vars.find(name);
     if (iter == vars.end())
         throw(error("Error: tried to free non-existent variable! (Link-time)"));
+    variable *var = iter->second;
     // release the memory:
-    for (int i = iter->second->offset; i < iter->second->offset + typesizes[iter->second->type]; i++)
-        memory_in_use[i] = 0;
-    if (iter->second->offset < first_available_space)
-        first_available_space = iter->second->offset;
-    // update the dictionary: pop or remove
-    if (iter->second->next)
+    if (var->offset >= 0)   // registervar() doesn't allocate memory, so it sets offset to -1.
     {
-        variable *old = iter->second;
-        iter->second = iter->second->next;
+        for (int i = var->offset; i < var->offset + typesizes[var->type]; i++)
+            memory_in_use[i] = 0;
+        if (var->offset < first_available_space)
+            first_available_space = var->offset;
+    }
+    // update the dictionary: pop or remove
+    if (var->next)
+    {
+        variable *old = var;
+        var = var->next;
         delete old;
     }
     else
     {
-        delete iter->second;
+        delete var;
         vars.erase(iter);
     }
 }
@@ -203,7 +219,7 @@ void linker::emit_nfc2(linkval x, linkval y)
 // clear temp; set temp to not(x);  invert temp and branch on result.
 void linker::emit_branchifzero(linkval testloc, linkval dest)
 {
-    uint16_t temploc = vars.addvar("__iftemp", type_int) + HEAP_BOTTOM;
+    linkval temploc = vars.addvar("__iftemp", type_int);
     emit_nfc2(temploc, getconstaddress(0xff));
     emit_nfc2(temploc, testloc);
     uint16_t next = index + 8;
@@ -229,7 +245,7 @@ void linker::emit_branchalways(linkval dest)
     }
     else
     {
-        uint16_t temploc = vars.addvar("__temp", type_int) + HEAP_BOTTOM;
+        linkval temploc = vars.addvar("__temp", type_int);
         write16(temploc);
         write16(temploc);
         write16(dest);
@@ -365,7 +381,7 @@ void linker::link(funcdef* fdef)
     savelabel(fdef->name + ":__startvector", index);
     link(fdef->body);
     savelabel(returnstat_target, index);
-    emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM,
+    emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
                        JUMP_PVECTOR, typesizes[type_pointer]);
     emit_branchalways(JUMP_INSTRUCTION);
 }
@@ -482,21 +498,21 @@ void linker::link(funccall *call)
 
 // passes in arguments, sets up return vector and jumps.
 // returns: the location of the function returnval register.
-uint16_t linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
+linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
 {
     for (unsigned int i = 0; i < args.size(); i++)
     {
         if (args[i]->type == exp_number)
-            emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+            emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->address, typesizes[fdef->args[i].type]);
         else
-            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->address, typesizes[fdef->args[i].type]);
     }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
     std::string returnlabel = getlabel();
-    emit_writelabel(returnlabel, vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM);
+    emit_writelabel(returnlabel, vars.getvar(fdef->name + ":__returnvector")->address);
     emit_branchalways(linkval(fdef->name + ":__startvector"));
     savelabel(returnlabel, index);
-    return vars.getvar(fdef->name + ":__returnval")->offset + HEAP_BOTTOM;
+    return vars.getvar(fdef->name + ":__returnval")->address;
 }
 
 linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string name)
@@ -544,7 +560,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
 
 void linker::link(goto_stat *sgoto)
 {
-    uint16_t temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
+    linkval temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
     write16(temploc);
     write16(temploc);
     linkval target = evaluate(sgoto->target);
@@ -631,7 +647,7 @@ linkval linker::evaluate(expression *expr)
             return getconstaddress(expr->number);       // NOT the literal itself. If you want the actual literal (e.g. with NFC) then fetch it directly, as this is an oddball case. (SEE evaluate_or_return_literal())
         else
         {
-            uint16_t constloc = vars.addvar("__consttemp", expr->val_type) + HEAP_BOTTOM;
+            linkval constloc = vars.addvar("__consttemp", expr->val_type);
             emit_writeconst_multiple(expr->number, constloc, typesizes[expr->val_type]);
             vars.remove("__consttemp");
             return constloc;
@@ -650,7 +666,7 @@ linkval linker::evaluate(expression *expr)
                 else
                     return expr->name;
             else
-                return vars.getvar(expr->name)->offset + HEAP_BOTTOM;
+                return vars.getvar(expr->name)->address;
         }
         else
         {

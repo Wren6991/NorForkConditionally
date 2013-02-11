@@ -10,8 +10,6 @@ Todo:
 	- still probably better for function return location to be decided by caller, more convenient that way
 - Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
-- return statements in functions
-	- the block and statement compile funcs will need to know the current function name
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
 - have a better way of handling builtins! (some sort of map to function pointers?)
