@@ -1,8 +1,6 @@
 Todo:
 -----
 
-- Optimize "emit_branchalways" to modify the skip fields of the previous instruction where possible
-	- 0-byte jump instructions!
 - Create "object" class containing the file's definitions
 	- make it (de)serializable?
 - bulk out the standard library
@@ -12,10 +10,6 @@ Todo:
 	- still probably better for function return location to be decided by caller, more convenient that way
 - Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
-- Clear up distinctions between what's a value and what's a pointer to a value.
-- make linker valtable contain linkvals, so we can have chains of symbols (sym1->sym2->constant) (is this necessary?)
-	- yes, because macros.
-	- OR we could recompile macro bodies in each context.
 - return statements in functions
 	- the block and statement compile funcs will need to know the current function name
 - line numbers for syntax errors

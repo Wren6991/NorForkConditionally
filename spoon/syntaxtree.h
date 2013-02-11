@@ -45,7 +45,8 @@ typedef enum {
     stat_if,
     stat_while,
     stat_break,
-    stat_continue
+    stat_continue,
+    stat_return
 } stat_type;
 
 typedef enum {
@@ -167,6 +168,11 @@ struct break_stat: public statement
 struct continue_stat: public statement
 {
     continue_stat() {type = stat_continue;}
+};
+
+struct return_stat: public statement
+{
+    return_stat() {type = stat_return;}
 };
 
 struct block

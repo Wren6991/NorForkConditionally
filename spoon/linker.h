@@ -113,7 +113,8 @@ class linker
     void link(block*);
     void link(statement*);
     void link(funccall*);
-    uint16_t linkfunctioncall(funccall*, funcdef*);
+    uint16_t linkfunctioncall(std::vector<expression*>&, funcdef*);
+    linkval linkbuiltinfunction(std::vector<expression*>&, std::string);
     void link(goto_stat*);
     void link(if_stat*);
     void link(while_stat*);

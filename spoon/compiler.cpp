@@ -214,7 +214,7 @@ void compiler::compile(funcdef *fdef)
             retsym.name = fdef->name + ":__returnval";
             currentscope->insert(fdef->name, retsym);
             globalsymboltable[retsym.name] = retsym;
-            compile(fdef->body);
+            compile(fdef->body, "", "", makeguid("__return", (int)fdef));
             defined_funcs.insert(fdef->name);
         }
     }
@@ -233,7 +233,7 @@ void compiler::compile(funcdef *fdef)
 // Push all the variable declarations into a new scope.
 // run through all the statements and delegate compilation based
 // on statement type
-void compiler::compile(block *blk, std::string exitlabel, std::string toplabel)
+void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, std::string returnlabel)
 {
     pushscope();
     for (unsigned int i = 0; i < blk->declarations.size(); i++)
@@ -276,10 +276,10 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel)
             ((label*)stat)->name = currentscope->get(((label*)stat)->name).name;        // replace local label with globally unique one
             break;
         case stat_if:
-            compile((if_stat*)stat, exitlabel, toplabel);
+            compile((if_stat*)stat, exitlabel, toplabel, returnlabel);
             break;
         case stat_while:
-            compile((while_stat*)stat);
+            compile((while_stat*)stat, returnlabel);
             break;
         case stat_assignment:
             compile((assignment*)stat);
@@ -297,6 +297,13 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel)
             delete stat;
             stat = new goto_stat;
             ((goto_stat*)stat)->target = new expression(toplabel);
+            break;
+        case stat_return:
+            if (returnlabel == "")
+                throw(error("Error: no function to break from"));
+            delete stat;
+            stat = new goto_stat;
+            ((goto_stat*)stat)->target = new expression(returnlabel);
             break;
         default:
             throw(error("Error: unrecognised statement type"));
@@ -341,18 +348,18 @@ void compiler::compile(label *lbl)
 
 // we only need to compile the expression and if bodies:
 // the actual code generation and labelling happens at link time.
-void compiler::compile(if_stat *ifs, std::string exitlabel, std::string toplabel)
+void compiler::compile(if_stat *ifs, std::string exitlabel, std::string toplabel, std::string returnlabel)
 {
     compile(ifs->expr);
-    compile(ifs->ifblock, exitlabel, toplabel);
+    compile(ifs->ifblock, exitlabel, toplabel, returnlabel);
     if (ifs->elseblock)
-        compile(ifs->elseblock, exitlabel, toplabel);
+        compile(ifs->elseblock, exitlabel, toplabel, returnlabel);
 }
 
-void compiler::compile(while_stat *whiles)
+void compiler::compile(while_stat *whiles, std::string returnlabel)
 {
     compile(whiles->expr);
-    compile(whiles->blk, makeguid("__exit", (int)whiles->blk), makeguid("__top", (int)whiles->blk));
+    compile(whiles->blk, makeguid("__exit", (int)whiles->blk), makeguid("__top", (int)whiles->blk), returnlabel);
 }
 
 void compiler::compile(assignment *assg)

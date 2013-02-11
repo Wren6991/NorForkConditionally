@@ -151,6 +151,13 @@ linker::linker()
 {
     defined_funcs["nfc"] = 0;
     defined_funcs["nfc4"] = 0;  // hardcoded funcs
+    defined_funcs["val"] = 0;
+    defined_funcs["read"] = 0;
+    defined_funcs["increment"] = 0;
+    defined_funcs["decrement"] = 0;
+    defined_funcs["shiftleft"] = 0;
+    defined_funcs["shiftright"] = 0;
+
 
     index = 0;
     buffer.reserve(ROM_SIZE);
@@ -332,7 +339,9 @@ std::vector<char> linker::link()
 
     // Link in the main function body
     std::cout << "Linking main\n";
+    vars.addvar(makeguid("__return", (int)defined_funcs["main"]), type_label);
     link(((funcdef*)defined_funcs["main"])->body);
+    savelabel(makeguid("__return", (int)defined_funcs["main"]), index);
 
     // generate halt instruction:
     emit_branchalways(index);
@@ -351,8 +360,11 @@ void linker::link(funcdef* fdef)
 {
     std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
     vars.push_function_scope();
+    std::string returnstat_target = makeguid("__return", (int)fdef);
+    vars.addvar(returnstat_target, type_label);
     savelabel(fdef->name + ":__startvector", index);
     link(fdef->body);
+    savelabel(returnstat_target, index);
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM,
                        JUMP_PVECTOR, typesizes[type_pointer]);
     emit_branchalways(JUMP_INSTRUCTION);
@@ -463,28 +475,71 @@ void linker::link(funccall *call)
         }
         else if (def->type == dt_funcdef)
         {
-            linkfunctioncall(call, (funcdef*)def);
+            linkfunctioncall(call->args, (funcdef*)def);
         }
     }
 }
 
 // passes in arguments, sets up return vector and jumps.
 // returns: the location of the function returnval register.
-uint16_t linker::linkfunctioncall(funccall *fcall, funcdef *fdef)
+uint16_t linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
 {
-    for (unsigned int i = 0; i < fcall->args.size(); i++)
+    for (unsigned int i = 0; i < args.size(); i++)
     {
-        if (fcall->args[i]->type == exp_number)
-            emit_writeconst_multiple(fcall->args[i]->number, vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+        if (args[i]->type == exp_number)
+            emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
         else
-            emit_copy_multiple(evaluate(fcall->args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
+            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->offset + HEAP_BOTTOM, typesizes[fdef->args[i].type]);
     }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
     std::string returnlabel = getlabel();
-    emit_writelabel(returnlabel, vars.getvar(fcall->name + ":__returnvector")->offset + HEAP_BOTTOM);
-    emit_branchalways(linkval(fcall->name + ":__startvector"));
+    emit_writelabel(returnlabel, vars.getvar(fdef->name + ":__returnvector")->offset + HEAP_BOTTOM);
+    emit_branchalways(linkval(fdef->name + ":__startvector"));
     savelabel(returnlabel, index);
-    return vars.getvar(fcall->name + ":__returnval")->offset + HEAP_BOTTOM;
+    return vars.getvar(fdef->name + ":__returnval")->offset + HEAP_BOTTOM;
+}
+
+linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string name)
+{
+        if (name == "val")
+        {
+            return getconstaddress(evaluate_or_return_literal(args[0]).literal);
+        }
+        else if (name == "read" || name == "increment" || name == "decrement" ||
+                 name == "shiftleft" || name == "shiftright")
+        {
+            std::string returnlabel = getlabel();
+            if (name == "read")
+            {
+                if (args[0]->type == exp_number)
+                {
+                    emit_copy(args[0]->number, POINTER_READ_RESULT);
+                    return POINTER_READ_RESULT;
+                }
+                emit_copy_multiple(evaluate(args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
+            }
+            else
+            {
+                if (name == "increment")
+                    emit_writeconst(INCREMENT_START >> 8, POINTER_READ_PVECTOR);
+                else if (name == "decrement")
+                    emit_writeconst(DECREMENT_START >> 8, POINTER_READ_PVECTOR);
+                else if (name == "shiftleft")
+                    emit_writeconst(LEFTSHIFT_START >> 8, POINTER_READ_PVECTOR);
+                else //if (name == "shiftright")
+                    emit_writeconst(RIGHTSHIFT_START >> 8, POINTER_READ_PVECTOR);
+                if (args[0]->type == exp_number)
+                    emit_writeconst(args[0]->number, POINTER_READ_PVECTOR + 1);
+                else
+                    emit_copy(evaluate(args[0]), POINTER_READ_PVECTOR + 1);
+            }
+            emit_writelabel(returnlabel, JUMP_PVECTOR);
+            emit_branchalways(POINTER_READ_INSTRUCTION);
+            savelabel(returnlabel, index);
+            emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
+            return POINTER_READ_RESULT;                             // Careful of collisions.
+        }
+
 }
 
 void linker::link(goto_stat *sgoto)
@@ -573,7 +628,7 @@ linkval linker::evaluate(expression *expr)
     if (expr->type == exp_number)
     {
         if (expr->val_type == type_int)
-            return getconstaddress(expr->number);       // NOT the literal itself. If you want the actual literal (e.g. with NFC) then fetch it directly, as this is an oddball case.
+            return getconstaddress(expr->number);       // NOT the literal itself. If you want the actual literal (e.g. with NFC) then fetch it directly, as this is an oddball case. (SEE evaluate_or_return_literal())
         else
         {
             uint16_t constloc = vars.addvar("__consttemp", expr->val_type) + HEAP_BOTTOM;
@@ -606,69 +661,15 @@ linkval linker::evaluate(expression *expr)
     }
     else if (expr->type == exp_funccall)
     {
-        if (expr->name == "val")
+        if (!defined_funcs[expr->name])
         {
-            return getconstaddress(evaluate_or_return_literal(expr->args[0]).literal);
-        }
-        //TODO: make these return the value of this address.
-        else if (expr->name == "first")
-        {
-            linkval ptr = evaluate(expr->args[0]);
-            if (ptr.type == lv_literal)
-                return ptr.literal >> 8;
-            else
-                return ptr.sym + "_HI";
-        }
-        else if (expr->name == "second")
-        {
-            linkval ptr = evaluate(expr->args[0]);
-            if (ptr.type == lv_literal)
-                return ptr.literal & 0xff;
-            else
-                return ptr.sym + "_LO";
-        }
-        else if (expr->name == "read" || expr->name == "increment" || expr->name == "decrement" ||
-                 expr->name == "shiftleft" || expr->name == "shiftright")
-        {
-            std::string returnlabel = getlabel();
-            if (expr->name == "read")
-            {
-                if (expr->args[0]->type == exp_number)
-                {
-                    emit_copy(expr->args[0]->number, POINTER_READ_RESULT);
-                    return POINTER_READ_RESULT;
-                }
-                emit_copy_multiple(evaluate(expr->args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
-            }
-            else
-            {
-                if (expr->name == "increment")
-                    emit_writeconst(INCREMENT_START >> 8, POINTER_READ_PVECTOR);
-                else if (expr->name == "decrement")
-                    emit_writeconst(DECREMENT_START >> 8, POINTER_READ_PVECTOR);
-                else if (expr->name == "shiftleft")
-                    emit_writeconst(LEFTSHIFT_START >> 8, POINTER_READ_PVECTOR);
-                else //if (expr->name == "shiftright")
-                    emit_writeconst(RIGHTSHIFT_START >> 8, POINTER_READ_PVECTOR);
-                if (expr->args[0]->type == exp_number)
-                    emit_writeconst(expr->args[0]->number, POINTER_READ_PVECTOR + 1);
-                else
-                    emit_copy(evaluate(expr->args[0]), POINTER_READ_PVECTOR + 1);
-            }
-            emit_writelabel(returnlabel, JUMP_PVECTOR);
-            emit_branchalways(POINTER_READ_INSTRUCTION);
-            savelabel(returnlabel, index);
-            emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
-            return POINTER_READ_RESULT;                             // Careful of collisions.
+            return linkbuiltinfunction(expr->args, expr->name);
         }
         else
         {
             if (defined_funcs[expr->name]->type != dt_funcdef)
                 throw(error("Error: only functions can return values (call to " + expr->name + ")"));
-            funccall fcall;
-            fcall.args = expr->args;
-            fcall.name = expr->name;
-            return linkfunctioncall(&fcall, (funcdef*)defined_funcs[expr->name]);
+            return linkfunctioncall(expr->args, (funcdef*)defined_funcs[expr->name]);
         }
     }
     else

@@ -26,6 +26,7 @@ typedef enum {
     t_name,
     t_number,
     t_rbrace,
+    t_return,
     t_rparen,
     t_semicolon,
     t_string,

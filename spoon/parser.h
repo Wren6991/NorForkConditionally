@@ -33,6 +33,9 @@ class parser
         label* getlabel();
         if_stat* getif();
         while_stat* getwhile();
+        break_stat* getbreak();
+        continue_stat* getcontinue();
+        return_stat* getreturn();
     expression* getexpression();
 };
 

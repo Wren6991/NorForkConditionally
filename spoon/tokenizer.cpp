@@ -93,6 +93,7 @@ std::vector <token> tokenize(std::string str)
     keywords["int"] = t_type;
     keywords["macro"] = t_macro;
     keywords["pointer"] = t_type;
+    keywords["return"] = t_return;
     keywords["var"] = t_var;
     keywords["while"] = t_while;
 

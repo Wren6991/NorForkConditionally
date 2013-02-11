@@ -241,6 +241,12 @@ statement* parser::getstatement()
         expect(t_semicolon);
         return continues.release();
     }
+    else if (accept(t_return))
+    {
+        resourcep <return_stat> returns;
+        expect(t_semicolon);
+        return returns.release();
+    }
     else
     {
         expect(t_name);

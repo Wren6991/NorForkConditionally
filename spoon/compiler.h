@@ -56,12 +56,12 @@ class compiler
     object* compile(program*);
     void compile(macrodef*);
     void compile(funcdef*);
-    void compile(block*, std::string exitlabel = "", std::string toplabel = ""); // optionally supply labels for break/continue
+    void compile(block*, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = ""); // optionally supply labels for break/continue
     void compile(funccall*);
     void compile(goto_stat*);
     void compile(label*);
-    void compile(if_stat*, std::string exitlabel, std::string toplabel);
-    void compile(while_stat*);
+    void compile(if_stat*, std::string exitlabel, std::string toplabel, std::string returnlabel);
+    void compile(while_stat*, std::string returnlabel);
     void compile(assignment*);
     void compile(expression*);
     void gettype(expression*);
