@@ -458,19 +458,7 @@ void linker::link(funccall *call)
     definition *def = defined_funcs[call->name];
     if (!def)   // it's a hardcoded function...
     {
-        if (call->name == "nfc")
-        {
-            emit_nfc2(evaluate_or_return_literal(call->args[0]), evaluate_or_return_literal(call->args[1]));
-
-        }
-        else if (call->name == "nfc4")
-        {
-            padto8bytes();
-            write16(evaluate_or_return_literal(call->args[0]));
-            write16(evaluate_or_return_literal(call->args[1]));
-            write16(evaluate_or_return_literal(call->args[2]));
-            write16(evaluate_or_return_literal(call->args[3]));
-        }
+        linkbuiltinfunction(call->args, call->name);
     }
     else
     {
@@ -517,7 +505,19 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
 
 linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string name)
 {
-        if (name == "val")
+        if (name == "nfc")
+        {
+            emit_nfc2(evaluate_or_return_literal(args[0]), evaluate_or_return_literal(args[1]));
+        }
+        else if (name == "nfc4")
+        {
+            padto8bytes();
+            write16(evaluate_or_return_literal(args[0]));
+            write16(evaluate_or_return_literal(args[1]));
+            write16(evaluate_or_return_literal(args[2]));
+            write16(evaluate_or_return_literal(args[3]));
+        }
+        else if (name == "val")
         {
             return getconstaddress(evaluate_or_return_literal(args[0]).literal);
         }
@@ -555,7 +555,67 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
             return POINTER_READ_RESULT;                             // Careful of collisions.
         }
-
+        else if (name == "andnot")
+        {
+            linkval returnloc = vars.addvar("__andnottemp", type_int);
+            emit_nfc2(returnloc, getconstaddress(0xff));
+            emit_nfc2(returnloc, evaluate(args[0]));
+            emit_nfc2(returnloc, evaluate(args[1]));
+            vars.remove("__andnottemp");
+            return returnloc;
+        }
+        else if (name == "and")
+        {
+            linkval returnloc = vars.addvar("__andreturnloc", type_int);
+            linkval temploc = vars.addvar("__andtemploc", type_int);
+            emit_nfc2(returnloc, getconstaddress(0xff));
+            emit_nfc2(returnloc, evaluate(args[0]));
+            emit_nfc2(temploc, getconstaddress(0xff));
+            emit_nfc2(temploc, evaluate(args[1]));
+            emit_nfc2(returnloc, temploc);
+            vars.remove("__andreturnloc");
+            vars.remove("__andtemploc");
+            return returnloc;
+        }
+        else if (name == "not")
+        {
+            linkval returnloc = vars.addvar("__notreturnloc", type_int);
+            emit_nfc2(returnloc, getconstaddress(0xff));
+            emit_nfc2(returnloc, evaluate(args[0]));
+            vars.remove("__notreturnloc");
+            return returnloc;
+        }
+        else if (name == "or")
+        {
+            linkval returnloc = vars.addvar("__orreturnloc", type_int);
+            emit_copy(evaluate(args[0]), returnloc);
+            emit_nfc2(returnloc, evaluate(args[1]));
+            emit_nfc2(returnloc, returnloc);
+            vars.remove("__orreturnloc");
+            return returnloc;
+        }
+        else if (name == "xor")
+        {
+            linkval returnloc = vars.addvar("__xorreturnloc", type_int);
+            linkval temp1 = vars.addvar("__xortemp1", type_int);
+            linkval temp2 = vars.addvar("__xortemp2", type_int);
+            linkval argA = evaluate(args[0]);
+            linkval argB = evaluate(args[1]);   // WATCH OUT: possibly clobber each other's memory, cause we're not passing by value
+            emit_nfc2(temp1, getconstaddress(0xff));
+            emit_nfc2(temp1, argA);
+            emit_nfc2(temp1, argB);
+            emit_nfc2(temp2, getconstaddress(0xff));
+            emit_nfc2(temp2, argB);
+            emit_nfc2(temp2, argA);
+            emit_copy(temp1, returnloc);
+            emit_nfc2(returnloc, temp2);
+            emit_nfc2(returnloc, returnloc);
+            vars.remove("__xorreturnloc");
+            vars.remove("__xortemp1");
+            vars.remove("__xortemp2");
+            return returnloc;
+        }
+        return 0;
 }
 
 void linker::link(goto_stat *sgoto)
@@ -782,6 +842,8 @@ bool linkval::operator==(linkval &rhs) const
         return operation == rhs.operation &&
         (argA && rhs.argA ? *argA == *rhs.argA : argA == rhs.argA) &&
         (argB && rhs.argB ? *argB == *rhs.argB : argB == rhs.argB);     // compare by value if both non-null, else compare by reference.
+    default:
+        return false;
     }
 }
 

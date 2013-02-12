@@ -17,3 +17,6 @@ Todo:
 	- act as const pointers, but vardict allocates the correct amount of storage at the required location.
 - Make code generator its own separate class, friend of linker.
 - Make the compiler usable as a standalone executable.
+- compile-to-RAM option
+- export definitions and offsets of globals for RAM programs to use ROM routines.
+- headers/preprocessor

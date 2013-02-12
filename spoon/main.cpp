@@ -11,7 +11,7 @@
 #define _xs(str) _s(str)
 
 
-void printout(std::vector<char> buffer, bool printasbytes = false)
+void printout(std::vector<char> buffer, bool printasbytes = true)
 {
     int nconsecutivezeroes = 0;
     for (unsigned int i = 0; i < buffer.size(); i++)
@@ -38,7 +38,7 @@ int main()
 {
     try
     {
-        std::fstream sourcefile("./beep.spn", std::ios::in | std::ios::binary);
+        std::fstream sourcefile("./equal.spn", std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
             throw(error("Error: could not open file!"));

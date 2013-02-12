@@ -53,13 +53,17 @@ struct linkval
     linkval getlowbyte() const;
 };
 
+class vardict;
+
 struct variable
 {
+    friend vardict;
     type_enum type;
     variable *next;     // for stack operations we can build a linked list, in case we get the same symbol twice. (Shadowing)
-    int offset;
     linkval address;
     variable() {next = 0;}
+private:
+    int offset;     // we don't want to use this by mistake...
 };
 
 class vardict

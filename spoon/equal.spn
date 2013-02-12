@@ -17,46 +17,10 @@ macro output(src, dest)
     nfc(dest, temp);
 }
 
-function int andnot(int a, int b)
-{
-    nfc(andnot, val(0xff));
-    nfc(andnot, a);
-    nfc(andnot, b);
-}
-
-function int and(int a, int b)
-{
-    nfc(and, val(0xff));
-    nfc(and, a);
-    nfc(b, b);
-    nfc(and, b);
-}
-
-function int or(int a, int b)
-{
-    var int temp;
-    nfc(or, val(0xff));
-    nfc(or, a);
-    nfc(or, or);
-    nfc(or, b);
-    nfc(or, or);
-}
-
-function int xor(int a, int b)
-{
-    var int temp1, temp2;
-    nfc(temp1, val(0xff));
-    nfc(temp1, a);
-    nfc(temp1, b);
-    nfc(temp2, val(0xff));
-    nfc(temp2, b);
-    nfc(temp2, a);
-    nfc(xor, val(0xff));
-    nfc(xor, temp1);
-    nfc(xor, xor);
-    nfc(xor, temp2);
-    nfc(xor, xor);
-}
+function int andnot(int a, int b);
+function int and(int a, int b);
+function int or(int a, int b);
+function int xor(int a, int b);
 
 function int equal(int a, int b)
 {
