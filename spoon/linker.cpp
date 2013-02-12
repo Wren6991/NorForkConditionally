@@ -360,7 +360,12 @@ std::vector<char> linker::link()
     savelabel(makeguid("__return", (int)defined_funcs["main"]), index);
 
     // generate halt instruction:
-    emit_branchalways(index);
+    padto8bytes();
+    linkval jumpaddress = index;
+    linkval tempaddress = vars.addvar("__HALT", type_int);
+    write16(tempaddress); write16(tempaddress);
+    write16(jumpaddress); write16(jumpaddress);                         // branchalways(index) can't be used, as the branch may take place from the previous instruction, into zeroes.
+    vars.remove("__HALT");
 
     // Link in the rest of the functions afterwards.
     for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)

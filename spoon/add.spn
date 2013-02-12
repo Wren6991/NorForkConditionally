@@ -1,0 +1,32 @@
+const pointer debugout = 0xc000;
+const pointer debugin = 0xc001;
+
+function int xor(int a, int b);
+function int and(int a, int b);
+function int shiftleft(int x);
+
+macro output(src, dest)
+{
+    var int temp;
+    nfc(temp, val(0xff));
+    nfc(temp, src);
+    nfc(dest, temp);
+}
+
+function int add(int a, int b)
+{
+    var int carry, temp;
+    add = xor(a, b);
+    carry = shiftleft(and(a, b));
+    while (carry)
+    {
+        temp = add;
+        add = xor(add, carry);
+        carry = shiftleft(and(temp, carry));
+    }
+}
+
+function main()
+{
+    output(add(23, 5), debugout);
+}
