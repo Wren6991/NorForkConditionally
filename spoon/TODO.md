@@ -20,3 +20,13 @@ Todo:
 - compile-to-RAM option
 - export definitions and offsets of globals for RAM programs to use ROM routines.
 - headers/preprocessor
+- sort out temp collisions between ifs and logical functions
+	- leave the temps allocated, so the ifs/whiles etc. don't clobber them
+	- keep a list of the allocated temps
+	- have a cleanuptemps() function that removes all of the allocated temps from the vardict.
+- also have to do this for macros!
+	- have a "clobbers" list?
+	- or do the same thing, have a cleanuptemps() that executes when the macro's finished executing.
+	- OR have a return value location for each logical operation?
+		- Would probably be easier.
+		- Would have to check a stack to see which functions we're currently inside, to avoid collisions.
