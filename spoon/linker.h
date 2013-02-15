@@ -74,6 +74,7 @@ class vardict
     int first_available_space;
     int getspace(int size);
     void find_first_available_space(int searchstart = 0);
+    std::vector<std::vector<std::string> > tempscopes;       // in an if/while test we may use multiple temp locations, and we don't want them to clobber each other, so we keep track of temps and clean up after test finished.
 public:
     linkval addvar(std::string name, type_enum type);
     void registervar(std::string name, type_enum type, linkval address);    // for when we want to push an existing address as a var, and the memory is already allocated. (it's removed in the same way)
@@ -81,6 +82,9 @@ public:
     variable* getvar(std::string name);
     bool exists(std::string name);
     void push_function_scope();     // so functions can't clobber each other's memory, we mark all memory used by other functions as currently in use.
+    void push_temp_scope();
+    void pop_temp_scope();
+    void register_temp_for_deletion(std::string name);
     vardict();
 };
 

@@ -89,6 +89,7 @@ class norforkconditionallyFrame: public wxFrame
         wxButton* cmdWatchAddress;
         wxSlider* dbg7;
         wxButton* btnRunStop;
+        wxMenu* Menu3;
         wxMenuItem* MenuItem4;
         wxButton* btnStep;
         wxSlider* dbg0;
@@ -97,6 +98,7 @@ class norforkconditionallyFrame: public wxFrame
         wxTimer tmrUpdate;
         wxTextCtrl* txtProgram;
         wxSlider* dbg2;
+        wxMenuItem* MenuItem3;
         wxListCtrl* lstWatches;
         wxButton* btnLoad;
         wxSlider* dbg6;

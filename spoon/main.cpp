@@ -38,7 +38,7 @@ int main()
 {
     try
     {
-        std::fstream sourcefile("./add.spn", std::ios::in | std::ios::binary);
+        std::fstream sourcefile("./equal.spn", std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
             throw(error("Error: could not open file!"));

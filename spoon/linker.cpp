@@ -149,6 +149,29 @@ void vardict::push_function_scope()
     memory_in_use = has_been_used;
 }
 
+void vardict::push_temp_scope()
+{
+    tempscopes.push_back(std::vector<std::string>());
+}
+
+void vardict::pop_temp_scope()
+{
+    std::vector<std::vector<std::string> >::iterator iter = tempscopes.end() - 1;
+    if (iter == tempscopes.begin())
+        throw(error("Linker error: no tempscope to pop!"));
+    std::vector<std::string> &names = *iter;
+    for (unsigned int i = 0; i < names.size(); i++)
+        remove(names[i]);
+    tempscopes.erase(iter);
+}
+
+void vardict::register_temp_for_deletion(std::string name)
+{
+    if (tempscopes.size() < 1)
+        throw(error("Error: no tempscope to register temp in!"));
+    tempscopes[tempscopes.size() - 1].push_back(name);
+}
+
 vardict::vardict()
 {
     first_available_space = 0;

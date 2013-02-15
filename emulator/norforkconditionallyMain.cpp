@@ -89,11 +89,9 @@ norforkconditionallyFrame::norforkconditionallyFrame(wxWindow* parent,wxWindowID
     wxBoxSizer* BoxSizer6;
     wxBoxSizer* BoxSizer5;
     wxMenuItem* MenuItem2;
-    wxMenu* Menu3;
     wxMenuItem* MenuItem1;
     wxBoxSizer* BoxSizer2;
     wxMenu* Menu1;
-    wxMenuItem* MenuItem3;
     wxMenuItem* mnuNew;
     wxBoxSizer* BoxSizer1;
     wxMenuBar* MenuBar1;
