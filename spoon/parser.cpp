@@ -3,6 +3,8 @@
 
 #include <sstream>
 
+const int x = 
+
 extern std::string friendly_tokentype_names[];
 
 // Throw a preformatted error that we've received an unexpected token.

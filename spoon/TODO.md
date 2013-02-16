@@ -15,18 +15,21 @@ Todo:
 - have a better way of handling builtins! (some sort of map to function pointers?)
 - Arrays
 	- act as const pointers, but vardict allocates the correct amount of storage at the required location.
+	- have a varname struct instead of std::string in vardecs, which has an optional array length field
+		- (like C modifiers)
+	- at compile time, check that all arrays are of type int (or put in the semantics for other arrays)
+	- give vardict::addvar an optional count parameter (default 1) which is multiplied into the type size before allocation.
+		- also need to make a note of count for deallocation.
 - Make code generator its own separate class, friend of linker.
 - Make the compiler usable as a standalone executable.
 - compile-to-RAM option
 - export definitions and offsets of globals for RAM programs to use ROM routines.
 - headers/preprocessor
 - sort out temp collisions between ifs and logical functions
-	- leave the temps allocated, so the ifs/whiles etc. don't clobber them
-	- keep a list of the allocated temps
-	- have a cleanuptemps() function that removes all of the allocated temps from the vardict.
 - also have to do this for macros!
 	- have a "clobbers" list?
 	- or do the same thing, have a cleanuptemps() that executes when the macro's finished executing.
 	- OR have a return value location for each logical operation?
 		- Would probably be easier.
 		- Would have to check a stack to see which functions we're currently inside, to avoid collisions.
+- strings!
