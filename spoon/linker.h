@@ -84,7 +84,7 @@ public:
     void push_function_scope();     // so functions can't clobber each other's memory, we mark all memory used by other functions as currently in use.
     void push_temp_scope();
     void pop_temp_scope();
-    void register_temp_for_deletion(std::string name);
+    void remove_on_pop(std::string name);
     vardict();
 };
 
@@ -111,7 +111,7 @@ class linker
 // Code generation routines:
     void emit_nfc2(linkval x, linkval y);
     void emit_branchifzero(linkval testloc, linkval dest);
-    void emit_branchalways(linkval dest);
+    void emit_branchalways(linkval dest, bool always_emit = false);     // can pass true to disable the follow behaviour, if the jump is jumped to (e.g. end of while)
     void emit_copy(linkval src, linkval dest);
     void emit_writeconst(uint8_t val, linkval dest);
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);

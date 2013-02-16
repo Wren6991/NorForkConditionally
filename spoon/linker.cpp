@@ -156,20 +156,24 @@ void vardict::push_temp_scope()
 
 void vardict::pop_temp_scope()
 {
-    std::vector<std::vector<std::string> >::iterator iter = tempscopes.end() - 1;
-    if (iter == tempscopes.begin())
+    if (tempscopes.size() < 1)
         throw(error("Linker error: no tempscope to pop!"));
+    std::vector<std::vector<std::string> >::iterator iter = tempscopes.end() - 1;
     std::vector<std::string> &names = *iter;
     for (unsigned int i = 0; i < names.size(); i++)
+    {
+        std::cout << "removing " << names[i] << "\n";
         remove(names[i]);
+    }
     tempscopes.erase(iter);
 }
 
-void vardict::register_temp_for_deletion(std::string name)
+void vardict::remove_on_pop(std::string name)
 {
     if (tempscopes.size() < 1)
-        throw(error("Error: no tempscope to register temp in!"));
-    tempscopes[tempscopes.size() - 1].push_back(name);
+        remove(name);               // if we're not in a temp scope, assume we can just chuck the variable away.
+    else
+        tempscopes[tempscopes.size() - 1].push_back(name);
 }
 
 vardict::vardict()
@@ -242,7 +246,7 @@ void linker::emit_nfc2(linkval x, linkval y)
 // clear temp; set temp to not(x);  invert temp and branch on result.
 void linker::emit_branchifzero(linkval testloc, linkval dest)
 {
-    linkval temploc = vars.addvar("__iftemp", type_int);
+    linkval temploc = vars.addvar("__brztemp", type_int);
     emit_nfc2(temploc, getconstaddress(0xff));
     emit_nfc2(temploc, testloc);
     uint16_t next = index + 8;
@@ -250,14 +254,15 @@ void linker::emit_branchifzero(linkval testloc, linkval dest)
     write16(temploc);
     write16(next);
     write16(dest);
-    vars.remove("__iftemp");
+    vars.remove("__brztemp");
 }
 
-void linker::emit_branchalways(linkval dest)
+void linker::emit_branchalways(linkval dest, bool always_emit)
 {
     padto8bytes();
     // check if the last instruction points at this one:
-    if (buffer[index - 4] == buffer[index  - 2] && buffer[index - 3] == buffer[index - 1] &&
+    if (!always_emit &&
+        buffer[index - 4] == buffer[index  - 2] && buffer[index - 3] == buffer[index - 1] &&
         buffer[index - 4].type == lv_literal && buffer[index - 4].literal == index >> 8 &&
         buffer[index - 3].type == lv_literal && buffer[index - 3].literal == (index & 0xff))
     {
@@ -383,12 +388,7 @@ std::vector<char> linker::link()
     savelabel(makeguid("__return", (int)defined_funcs["main"]), index);
 
     // generate halt instruction:
-    padto8bytes();
-    linkval jumpaddress = index;
-    linkval tempaddress = vars.addvar("__HALT", type_int);
-    write16(tempaddress); write16(tempaddress);
-    write16(jumpaddress); write16(jumpaddress);                         // branchalways(index) can't be used, as the branch may take place from the previous instruction, into zeroes.
-    vars.remove("__HALT");
+    emit_branchalways(index, true);
 
     // Link in the rest of the functions afterwards.
     for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
@@ -589,7 +589,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
             emit_nfc2(returnloc, evaluate(args[1]));
-            vars.remove("__andnottemp");
+            vars.remove_on_pop("__andnottemp");
             return returnloc;
         }
         else if (name == "and")
@@ -601,8 +601,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_nfc2(temploc, getconstaddress(0xff));
             emit_nfc2(temploc, evaluate(args[1]));
             emit_nfc2(returnloc, temploc);
-            vars.remove("__andreturnloc");
-            vars.remove("__andtemploc");
+            vars.remove_on_pop("__andreturnloc");
+            vars.remove_on_pop("__andtemploc");
             return returnloc;
         }
         else if (name == "not")
@@ -610,7 +610,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             linkval returnloc = vars.addvar("__notreturnloc", type_int);
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
-            vars.remove("__notreturnloc");
+            vars.remove_on_pop("__notreturnloc");
             return returnloc;
         }
         else if (name == "or")
@@ -619,7 +619,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_copy(evaluate(args[0]), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             emit_nfc2(returnloc, returnloc);
-            vars.remove("__orreturnloc");
+            vars.remove_on_pop("__orreturnloc");
             return returnloc;
         }
         else if (name == "xor")
@@ -638,9 +638,9 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_copy(temp1, returnloc);
             emit_nfc2(returnloc, temp2);
             emit_nfc2(returnloc, returnloc);
-            vars.remove("__xorreturnloc");
-            vars.remove("__xortemp1");
-            vars.remove("__xortemp2");
+            vars.remove_on_pop("__xorreturnloc");
+            vars.remove_on_pop("__xortemp1");
+            vars.remove_on_pop("__xortemp2");
             return returnloc;
         }
         return 0;
@@ -666,6 +666,7 @@ void linker::link(goto_stat *sgoto)
 //L2:
 void linker::link(if_stat* ifs)
 {
+    vars.push_temp_scope();
     std::string elselabel = getlabel();
     std::string endlabel = getlabel();
     linkval testloc = linker::evaluate(ifs->expr);
@@ -681,6 +682,7 @@ void linker::link(if_stat* ifs)
     else
         savelabel(elselabel, index);
     savelabel(endlabel, index);
+    vars.pop_temp_scope();
 }
 
 //L1:
@@ -691,6 +693,7 @@ void linker::link(if_stat* ifs)
 //L2:
 void linker::link(while_stat *whiles)
 {
+    vars.push_temp_scope();
     std::string toplabel = makeguid("__top", (int)whiles->blk);
     std::string exitlabel = makeguid("__exit", (int)whiles->blk);
     vars.addvar(toplabel, type_label);
@@ -699,10 +702,11 @@ void linker::link(while_stat *whiles)
     emit_branchifzero(evaluate(whiles->expr), exitlabel);
     link(whiles->blk);
     // jump unconditionally to top:
-    emit_branchalways(linkval(toplabel));
+    emit_branchalways(linkval(toplabel), true);
     savelabel(exitlabel, index);
     vars.remove(toplabel);
     vars.remove(exitlabel);
+    vars.pop_temp_scope();
 }
 
 void linker::link(assignment *assg)
