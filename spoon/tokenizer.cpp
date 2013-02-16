@@ -7,9 +7,11 @@
 
 std::string friendly_tokentype_names[] = {
     "EOF",
+    "\"break\"",
     "colon",
     "comma",
     "\"const\"",
+    "\"continue\"",
     "\"else\"",
     "\"=\"",
     "\"function\"",
@@ -21,6 +23,7 @@ std::string friendly_tokentype_names[] = {
     "name",
     "number",
     "\"}\"",
+    "\"return\"",
     "\")\"",
     "semicolon",
     "string",
@@ -39,7 +42,8 @@ enum state_enum
     s_slashaccepted,
     s_linecomment,
     s_streamcomment,
-    s_staraccepted
+    s_staraccepted,
+    s_whitespace
 };
 
 
@@ -49,15 +53,24 @@ extern std::string token_type_names[];
 
 token::token()
 {
-    token::type = t_eof;
-    token::value = std::string();
+    type = t_eof;
+    value = std::string();
 }
 
-token::token(token_type_enum type_, std::string value_)
+token::token(token_type_enum type_, std::string value_, int linenumber_ = -1)
 {
-    token::type = type_;
-    token::value = value_;
+    type = type_;
+    value = value_;
+    linenumber = linenumber_;
 }
+
+token::token(const token &other, int linenumber_)
+{
+    type = other.type;
+    value = other.value;
+    linenumber = linenumber_;
+}
+
 
 inline bool is_digit(char c)
 {
@@ -108,6 +121,7 @@ std::vector <token> tokenize(std::string str)
     symbols[';'] = token(t_semicolon, ";");
 
     std::vector <token> tokens;
+    int linenumber = 1;
 
     int index = -1;
     const char *buffer = str.c_str();
@@ -117,6 +131,8 @@ std::vector <token> tokenize(std::string str)
     do  // while(c);  - breaks at end of loop instead of start, so we can process ids etc. that rest up against the end of the string.
     {
         c = buffer[++index];
+        if (c == '\n')
+            linenumber++;
         switch(state)
         {
             case s_start:
@@ -126,20 +142,17 @@ std::vector <token> tokenize(std::string str)
                 else if (allowed_in_name(c))
                     state = s_name;
                 else if (is_whitespace(c))   // swallow all the whitespace
-                {
-                    while (is_whitespace(buffer[++index]));
-                    index--;        // we've now encountered a character that isn't whitespace; unget it so the next loop can pick it up.
-                }
-                else if (c == '/')
+                    state = s_whitespace;
+               else if (c == '/')
                     state = s_slashaccepted;
                 else if (symbols.find(c) != symbols.end())  //if we find a matching symbol, push a matching token onto the list.
-                    tokens.push_back(symbols.find(c)->second);
+                    tokens.push_back(token(symbols.find(c)->second, linenumber));
                 else if (c == '"')
                     state = s_string;
                 else if (c)
                 {
                     std::stringstream ss;
-                    ss << "Error: unrecognized character near " << c;
+                    ss << "Error: unrecognized character near \"" << c << "\", on line " << linenumber;
                     throw(error(ss.str()));
                 }
 
@@ -147,7 +160,7 @@ std::vector <token> tokenize(std::string str)
             case s_string:
                 if (c == '"')
                 {
-                    tokens.push_back(token(t_string, str.substr(startindex + 1, index - startindex - 1)));
+                    tokens.push_back(token(t_string, str.substr(startindex + 1, index - startindex - 1), linenumber));
                     state = s_start;
                 }
                 break;
@@ -157,7 +170,7 @@ std::vector <token> tokenize(std::string str)
                 else if (c == '*')
                     state = s_streamcomment;
                 else
-                    tokens.push_back(symbols['/']);
+                    tokens.push_back(token(symbols['/'], linenumber));
                 break;
             case s_linecomment:
                 if (c == '\n' || c == '\r')
@@ -184,7 +197,7 @@ std::vector <token> tokenize(std::string str)
                     }
                     else
                     {
-                        tokens.push_back(token(t_number, val));
+                        tokens.push_back(token(t_number, val, linenumber));
                         state = s_start;
                         index--;
                     }
@@ -199,7 +212,7 @@ std::vector <token> tokenize(std::string str)
                     ss >> value;
                     std::stringstream ss2;
                     ss2 << value;
-                    tokens.push_back(token(t_number, ss2.str()));
+                    tokens.push_back(token(t_number, ss2.str(), linenumber));
                     state = s_start;
                     index--;
                 }
@@ -207,7 +220,7 @@ std::vector <token> tokenize(std::string str)
             case s_name:
                 if (!allowed_in_name(c))
                 {
-                    token t(t_name, str.substr(startindex, index - startindex));
+                    token t(t_name, str.substr(startindex, index - startindex), linenumber);
                     if (keywords.find(t.value) != keywords.end())
                         t.type = keywords.find(t.value)->second;
                     tokens.push_back(t);
@@ -215,6 +228,14 @@ std::vector <token> tokenize(std::string str)
                     index--;
                 }
                 break;
+            case s_whitespace:
+                if (!is_whitespace(c))
+                {
+                    index--;   // we've now encountered a character that isn't whitespace; unget it so the next loop can pick it up.
+                    state = s_start;
+                }
+                break;
+
         }
     } while (c);
     if (state == s_string)

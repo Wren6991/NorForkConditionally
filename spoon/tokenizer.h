@@ -40,8 +40,10 @@ class token
     public:
     token_type_enum type;
     std::string value;
+    int linenumber;
     token();
-    token(token_type_enum, std::string);
+    token(token_type_enum, std::string, int);
+    token(const token&, int);   // for different line number instances of token
 };
 
 std::vector <token> tokenize(std::string);

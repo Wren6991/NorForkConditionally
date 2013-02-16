@@ -3,15 +3,15 @@
 
 #include <sstream>
 
-const int x = 
-
 extern std::string friendly_tokentype_names[];
 
 // Throw a preformatted error that we've received an unexpected token.
-void throw_unexpected(std::string value, token_type_enum expected = t_eof, token_type_enum got = t_eof)
+void throw_unexpected(std::string value, int linenumber = 0, token_type_enum expected = t_eof, token_type_enum got = t_eof)
 {
     std::stringstream ss;
     ss << "Error: unexpected token near \"" << value << "\"";
+    if (linenumber)
+        ss << " on line " << linenumber;
     if (expected)
         ss << ": expected " << friendly_tokentype_names[expected] << ", got " << friendly_tokentype_names[got];
     throw(error(ss.str()));
@@ -63,7 +63,7 @@ void parser::expect(token_type_enum type)
 {
     if (!accept(type))
     {
-        throw_unexpected(t.value, type, t.type);
+        throw_unexpected(t.value, t.linenumber, type, t.type);
     }
 }
 
@@ -88,7 +88,7 @@ program* parser::getprogram()
         }
         else
         {
-            throw_unexpected(t.value);
+            throw_unexpected(t.value, t.linenumber);
         }
     }
     return prog.release();

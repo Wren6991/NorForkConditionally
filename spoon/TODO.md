@@ -1,8 +1,6 @@
 Todo:
 -----
 
-- Create "object" class containing the file's definitions
-	- make it (de)serializable?
 - bulk out the standard library
 - if we assign from a function result, pass the assignment target into the function link routine.
 	- this way we can write straight to the assignment target
