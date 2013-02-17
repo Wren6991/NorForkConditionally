@@ -127,20 +127,22 @@ object* compiler::compile(program *prog)
             compile((funcdef*)def);
         }
     }
+#ifdef EBUG // -DEBUG :o)
     std::cout << "\nGlobal symbol table:\n";
     std::map<std::string, symbol>::iterator iter = globalsymboltable.begin();
     for(; iter != globalsymboltable.end(); iter++)
     {
         std::cout << iter->first << "\n";
     }
-
+#endif
     object *obj = new object;
     obj->defined_funcs = defined_funcs;
     obj->tree = prog;
     std::vector<definition*>::iterator idef = obj->tree->defs.begin();
     while (idef != obj->tree->defs.end())
     {
-        if (((*idef)->type != dt_funcdef || !((funcdef*)*idef)->defined) && (*idef)->type != dt_macrodef)
+        definition *def = *idef;
+        if ((def->type != dt_funcdef || !((funcdef*)def)->defined)  &&  def->type != dt_macrodef)
         {
             idef = obj->tree->defs.erase(idef);     // strip out everything apart from function definitions. (macros have already been subbed by this point)
         }

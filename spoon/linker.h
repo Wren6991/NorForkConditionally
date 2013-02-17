@@ -44,8 +44,9 @@ struct linkval
     linkval *argA;
     linkval *argB;
     op_type operation;
-    linkval(uint16_t lit = 0) {type = lv_literal; literal = lit;}
-    linkval(std::string s) {type = lv_symbol; sym = s; literal = 0;}
+    linkval() {argA = 0; argB = 0;}
+    linkval(uint16_t lit):linkval() {type = lv_literal; literal = lit;}
+    linkval(std::string s):linkval() {type = lv_symbol; sym = s;}
     linkval operator+(linkval rhs) const;
     linkval operator-(linkval rhs) const;
     bool operator==(linkval &rhs) const;

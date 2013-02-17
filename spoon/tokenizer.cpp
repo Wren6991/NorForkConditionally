@@ -126,7 +126,7 @@ std::vector <token> tokenize(std::string str)
     int index = -1;
     const char *buffer = str.c_str();
     char c;
-    int startindex;
+    int startindex = index;
     state_enum state = s_start;
     do  // while(c);  - breaks at end of loop instead of start, so we can process ids etc. that rest up against the end of the string.
     {
@@ -152,7 +152,7 @@ std::vector <token> tokenize(std::string str)
                 else if (c)
                 {
                     std::stringstream ss;
-                    ss << "Error: unrecognized character near \"" << c << "\", on line " << linenumber;
+                    ss << "Error: unexpected character near \"" << c << "\", on line " << linenumber;
                     throw(error(ss.str()));
                 }
 

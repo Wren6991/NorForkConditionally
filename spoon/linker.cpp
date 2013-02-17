@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-extern const int typesizes[n_types];
+extern const int typesizes[n_types];    // def'd syntaxtree.h
 std::string makeguid(std::string name, int ptr);
 
 
@@ -75,15 +75,16 @@ int vardict::getspace(int size)
 // the heap bottom to this value to get a machine address.
 linkval vardict::addvar(std::string name, type_enum type)
 {
-    std::cout << "adding var " << name;
     variable *var = new variable;
     var->type = type;
     var->offset = getspace(typesizes[type]);
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
-    std::cout << " " << var->offset << "\n";
     var->address = var->offset + HEAP_BOTTOM;
+#ifdef EBUG
+    std::cout << "adding var " << name << " " << var->offset << "\n";
+#endif
     return var->address;
 }
 
@@ -162,7 +163,9 @@ void vardict::pop_temp_scope()
     std::vector<std::string> &names = *iter;
     for (unsigned int i = 0; i < names.size(); i++)
     {
-        std::cout << "removing " << names[i] << "\n";
+#ifdef EBUG
+        std::cout << "popping " << names[i] << "\n";
+#endif
         remove(names[i]);
     }
     tempscopes.erase(iter);
@@ -273,12 +276,12 @@ void linker::emit_branchalways(linkval dest, bool always_emit)
     }
     else
     {
-        linkval temploc = vars.addvar("__temp", type_int);
+        linkval temploc = vars.addvar("__bratemp", type_int);
         write16(temploc);
         write16(temploc);
         write16(dest);
         write16(dest);
-        vars.remove("__temp");
+        vars.remove("__bratemp");
     }
 
 }
@@ -382,7 +385,9 @@ std::vector<char> linker::link()
     emit_writeconst_multiple(0xbff17d00, 0xbfe0, 4);
 
     // Link in the main function body
+#ifdef EBUG
     std::cout << "Linking main\n";
+#endif
     vars.addvar(makeguid("__return", (int)defined_funcs["main"]), type_label);
     link(((funcdef*)defined_funcs["main"])->body);
     savelabel(makeguid("__return", (int)defined_funcs["main"]), index);
@@ -393,16 +398,19 @@ std::vector<char> linker::link()
     // Link in the rest of the functions afterwards.
     for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
     {
+        if (!iter->second)  // skip it if it's hardcoded! (largely 'cause we don't want null dereferencing.)
+            continue;
         if (iter->second && iter->second->type == dt_funcdef && ((funcdef*)iter->second)->name != "main")
             link((funcdef*)iter->second);
     }
-
     return assemble();
 }
 
 void linker::link(funcdef* fdef)
 {
+#ifdef EBUG
     std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
+#endif
     vars.push_function_scope();
     std::string returnstat_target = makeguid("__return", (int)fdef);
     vars.addvar(returnstat_target, type_label);
@@ -922,7 +930,9 @@ void linker::allocatefunctionstorage()
 {
     for (std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
     {
+#ifdef EBUG
         std::cout << "Allocating for " << iter->first << "\n";
+#endif
         if (iter->second && iter->second->type == dt_funcdef)
         {
             funcdef *fdef = (funcdef*)(iter->second);
@@ -953,7 +963,7 @@ uint16_t linker::evaluate(linkval lv)
         {
             linkval lv1 = *lv.argA;
             uint16_t first_operand = evaluate(lv1);
-            uint16_t second_operand;
+            uint16_t second_operand = 0;
             if (lv.argB)
                 second_operand = evaluate(*lv.argB);
             switch (lv.operation)

@@ -34,14 +34,18 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
 }
 
 
-int main()
+int main(int argc, char **argv)
 {
-    try
+    if (argc != 3)
     {
-        std::fstream sourcefile("./equal.spn", std::ios::in | std::ios::binary);
+        std::cout << "Usage: spoon (inputfile) (outputfile)\n";
+    }
+    else try
+    {
+        std::fstream sourcefile(argv[1], std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
-            throw(error("Error: could not open file!"));
+            throw(error(std::string("Error: could not open file ") + argv[1]));
         }
         sourcefile.seekg(0, std::ios::end);
         int sourcelength = sourcefile.tellg();
@@ -49,21 +53,24 @@ int main()
         std::vector<char> source(sourcelength);
         sourcefile.read(&source[0], sourcelength);
         source.push_back(0);
-        std::cout << "Read:\n" << &source[0];
+        sourcefile.close();
         std::vector<token> tokens = tokenize(&source[0]);
         parser p(tokens);
         program *prog = p.getprogram();
-        //printtree(prog);
         compiler c;
         object *obj = c.compile(prog);
-        std::cout << "\nPost-compile tree:\n\n";
-        printtree(prog);
-        std::cout << "Linking...\n\n";
         linker l;
         l.add_object(obj);
         std::vector<char> machinecode = l.link();
+#ifdef EBUG
         printout(machinecode);
-
+#endif
+        std::fstream outfile(argv[2], std::ios::out | std::ios::binary);
+        if (!outfile.is_open())
+            throw(error(std::string("Error: could not open file ") + argv[2]));
+        for (unsigned int i = 0; i < machinecode.size(); i++)
+            outfile.put(machinecode[i]);
+        outfile.close();
     }
     catch (error e)
     {
