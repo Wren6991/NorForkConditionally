@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <wxsmith>
 	<object class="wxFrame" name="ideFrame">
+		<title>SpoonIDE - Untitled</title>
 		<size>800,600</size>
 		<fg>wxSYS_COLOUR_BTNFACE</fg>
 		<id_arg>0</id_arg>
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
 			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<object class="wxButton" name="DUMMY_SAVEAS_BUTTON" variable="Button1" member="yes">
+					<label>Label</label>
+					<size>0,0</size>
+					<handler function="OnSaveAsClicked" entry="EVT_BUTTON" />
+				</object>
+				<flag>wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+				<border>5</border>
+			</object>
 		</object>
 		<object class="wxToolBar" name="ID_TOOLBAR1" variable="ToolBar1" member="yes">
 			<style>wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER</style>
@@ -13,22 +23,27 @@
 				<label>New</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_add.png</bitmap>
 				<tooltip>New file</tooltip>
+				<handler function="OnNewClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_OPEN" variable="ToolBarItem2" member="yes">
 				<label>Open</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\folder_page.png</bitmap>
 				<tooltip>Open file</tooltip>
+				<handler function="OnOpenClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_SAVE" variable="ToolBarItem3" member="yes">
 				<label>Save</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disk.png</bitmap>
 				<tooltip>Right click for save as</tooltip>
+				<handler function="OnSaveClicked" entry="EVT_TOOL" />
+				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
 			</object>
 			<object class="separator" />
 			<object class="tool" name="TOOL_RUN" variable="ToolBarItem4" member="yes">
 				<label>Run</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\resultset_next.png</bitmap>
 				<tooltip>Run in simulator</tooltip>
+				<handler function="OnRunClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_CONNECT" variable="ToolBarItem5" member="yes">
 				<label>Connect</label>
@@ -47,6 +62,16 @@
 				<tooltip>About this software</tooltip>
 				<handler function="OnAbout" entry="EVT_TOOL" />
 			</object>
+		</object>
+		<object class="wxFileDialog" variable="dlgOpen" member="yes">
+			<message>Open</message>
+			<wildcard>Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*</wildcard>
+			<style>wxFD_OPEN|wxFD_FILE_MUST_EXIST</style>
+		</object>
+		<object class="wxFileDialog" variable="dlgSaveAs" member="yes">
+			<message>Save As</message>
+			<wildcard>Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*</wildcard>
+			<style>wxFD_SAVE|wxFD_OVERWRITE_PROMPT</style>
 		</object>
 	</object>
 </wxsmith>

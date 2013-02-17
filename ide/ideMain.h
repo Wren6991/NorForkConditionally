@@ -13,6 +13,8 @@
 //(*Headers(ideFrame)
 #include <wx/sizer.h>
 #include <wx/toolbar.h>
+#include <wx/filedlg.h>
+#include <wx/button.h>
 #include <wx/frame.h>
 //*)
 #include <wx/stc/stc.h>
@@ -29,9 +31,16 @@ class ideFrame: public wxFrame
         //(*Handlers(ideFrame)
         void OnQuit(wxCommandEvent& event);
         void OnAbout(wxCommandEvent& event);
+        void OnOpenClicked(wxCommandEvent& event);
+        void OnSaveAsClicked(wxCommandEvent& event);
+        void OnSaveClicked(wxCommandEvent& event);
+        void OnNewClicked(wxCommandEvent& event);
+        void OnRunClicked(wxCommandEvent& event);
         //*)
+        void OnTextChange(wxStyledTextEvent &event);
 
         //(*Identifiers(ideFrame)
+        static const long DUMMY_SAVEAS_BUTTON;
         static const long TOOL_NEW;
         static const long TOOL_OPEN;
         static const long TOOL_SAVE;
@@ -41,19 +50,28 @@ class ideFrame: public wxFrame
         static const long TOOL_ABOUT;
         static const long ID_TOOLBAR1;
         //*)
-        static const long ID_EDITCTRL;
+        static const long ID_TEXT;
 
         //(*Declarations(ideFrame)
         wxToolBarToolBase* ToolBarItem4;
         wxToolBar* ToolBar1;
         wxToolBarToolBase* ToolBarItem3;
+        wxButton* Button1;
+        wxFileDialog* dlgOpen;
         wxToolBarToolBase* ToolBarItem6;
         wxToolBarToolBase* ToolBarItem1;
         wxToolBarToolBase* ToolBarItem5;
+        wxFileDialog* dlgSaveAs;
         wxToolBarToolBase* ToolBarItem2;
         wxToolBarToolBase* ToolBarItem7;
         //*)
         wxStyledTextCtrl *Text;
+
+        bool filehaschanged;
+        std::string filepath;
+        std::string filename;
+        void SetFileName(std::string path);
+        void NewBuffer();
 
         DECLARE_EVENT_TABLE()
 };
