@@ -22,6 +22,9 @@ const int POINTER_READ_PVECTOR = POINTER_READ_INSTRUCTION + 0x0a;       // B fie
 const int JUMP_INSTRUCTION = HEAP_TOP - 0x1f;
 const int JUMP_PVECTOR = JUMP_INSTRUCTION + 0x6;
 const int POINTER_READ_RESULT = HEAP_TOP - 0x0f;
+const int POINTER_WRITE_VALUE = POINTER_READ_RESULT;
+const int POINTER_WRITE_CLEAR_INSTRUCTION = POINTER_READ_INSTRUCTION - 0x10;
+const int POINTER_WRITE_COPY_INSTRUCTION = POINTER_WRITE_CLEAR_INSTRUCTION + 0x8;
 
 
 typedef enum
@@ -114,6 +117,7 @@ class linker
     void emit_branchifzero(linkval testloc, linkval dest);
     void emit_branchalways(linkval dest, bool always_emit = false);     // can pass true to disable the follow behaviour, if the jump is jumped to (e.g. end of while)
     void emit_copy(linkval src, linkval dest);
+    void emit_copy_inverted(linkval src, linkval dest);
     void emit_writeconst(uint8_t val, linkval dest);
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
     void emit_writeconst_multiple(int value, linkval dest, int nbytes);

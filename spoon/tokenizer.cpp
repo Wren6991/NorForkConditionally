@@ -111,6 +111,7 @@ std::vector <token> tokenize(std::string str)
     keywords["pointer"] = t_type;
     keywords["return"] = t_return;
     keywords["var"] = t_var;
+    keywords["void"] = t_type;
     keywords["while"] = t_while;
 
     std::map<char, token> symbols;

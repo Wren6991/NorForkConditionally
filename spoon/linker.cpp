@@ -198,11 +198,11 @@ linker::linker()
     defined_funcs["nfc4"] = 0;  // hardcoded funcs
     defined_funcs["val"] = 0;
     defined_funcs["read"] = 0;
+    defined_funcs["write"] = 0;
     defined_funcs["increment"] = 0;
     defined_funcs["decrement"] = 0;
     defined_funcs["shiftleft"] = 0;
     defined_funcs["shiftright"] = 0;
-
 
     index = 0;
     buffer.reserve(ROM_SIZE);
@@ -290,6 +290,12 @@ void linker::emit_copy(linkval src, linkval dest)
     emit_nfc2(dest, getconstaddress(0xff));
     emit_nfc2(dest, src);
     emit_nfc2(dest, dest);
+}
+
+void linker::emit_copy_inverted(linkval src, linkval dest)
+{
+    emit_nfc2(dest, getconstaddress(0xff));
+    emit_nfc2(dest, src);
 }
 
 void linker::emit_writeconst(uint8_t val, linkval dest)
@@ -384,13 +390,23 @@ std::vector<char> linker::link()
         }
     }
 
-    // set up pointer read instructions:
+    // set up pointer read/write instructions:
+    // bfc0:    qqqq 'ff  bfc8 bfc8
+    // bfc8:    qqqq bff0 bfe0 bfe0
     // bfd0:    bff0 'ff  bfd8 bfd8
     // bfd8:    bff0 pppp bfe0 bfe0
     // bfe0:    bff1 'ff  xxxx rrrr
+    // To write:
+    // we write ~val to bff0, jump to RAM.
+    // in RAM we clear dest, write ~(~val) to dest, and then jump back to ROM using the same return instruction as for reads.
+    // To read:
     // we write to bfda (rrrr) to set the pointer read location
     // when we jump to bfd0, it clears bff0 and then reads ~*ptr into it.
     // bff1 is cleared - as the result is always 0, the machine jumps to the return (rrrr) which was written beforehand.
+    emit_writeconst_multiple(0x7d00, 0xbfc2, 2);
+    emit_writeconst_multiple(0xbfc8bfc8, 0xbfc4, 4);
+    emit_writeconst_multiple(0xbff0, 0xbfca, 2);
+    emit_writeconst_multiple(0xbfe0bfe0, 0xbfcc, 4);
     emit_writeconst_multiple(0xbff07d00, 0xbfd0, 4);
     emit_writeconst_multiple(0xbfd8bfd8, 0xbfd4, 4);
     emit_writeconst_multiple(0xbff0, 0xbfd8, 2);
@@ -580,6 +596,17 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_copy(evaluate(args[1]), temploc + 1);
             vars.remove_on_pop("__pairtemp");
             return temploc;
+        }
+        else if (name == "write")
+        {
+            std::string returnlabel = getlabel();
+            emit_copy_inverted(evaluate(args[1]), POINTER_READ_RESULT);
+            linkval pointerpos = evaluate(args[0]);
+            emit_copy_multiple(pointerpos, POINTER_WRITE_CLEAR_INSTRUCTION, type_t(type_pointer).getsize());
+            emit_copy_multiple(pointerpos, POINTER_WRITE_COPY_INSTRUCTION, type_t(type_pointer).getsize());
+            emit_writelabel(returnlabel, JUMP_PVECTOR);
+            emit_branchalways(POINTER_WRITE_CLEAR_INSTRUCTION);
+            savelabel(returnlabel, index);                                          // URGH this is so inefficient :(
         }
         else if (name == "read" || name == "increment" || name == "decrement" ||
                  name == "shiftleft" || name == "shiftright")
@@ -837,6 +864,8 @@ std::vector<char> linker::assemble()
     {
         image.push_back(evaluate(*iter));
     }
+    if (image.size() > INCREMENT_START)
+        throw(error("Error: program is too big!"));
     // put constant tables into last kilobyte.
     while (image.size() < (unsigned)INCREMENT_START)
         image.push_back(0);

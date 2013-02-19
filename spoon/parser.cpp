@@ -24,6 +24,7 @@ parser::parser(std::vector<token> tokens_)
     typestrings["char"] = type_int;
     typestrings["int"] = type_int;
     typestrings["pointer"] = type_pointer;
+    typestrings["void"] = type_none;
     tokens = tokens_;
     index = 0;
     if (tokens.size() > 0)

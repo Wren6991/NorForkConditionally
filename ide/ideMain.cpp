@@ -307,7 +307,7 @@ page::page(wxWindow *parent)
     Text->StyleSetBold(wxSTC_C_COMMENTDOCKEYWORD, true);
 
     Text->SetKeyWords(0, wxT("break const continue do else false for function goto if macro nfc return static true var while"));
-    Text->SetKeyWords(1, wxT("int pointer void"));
+    Text->SetKeyWords(1, wxT("int pointer void char"));
 
     filename = "Untitled";
     filepath = "Untitled";
