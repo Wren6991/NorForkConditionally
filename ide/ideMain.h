@@ -17,7 +17,6 @@
 #include <wx/filedlg.h>
 #include <wx/button.h>
 #include <wx/frame.h>
-#include <wx/statusbr.h>
 //*)
 #include <vector>
 #include <wx/statbmp.h>
@@ -31,6 +30,17 @@ struct page
     bool filehaschanged;
     long id;
     page(wxWindow *parent);
+};
+
+class MyStatusBar: public wxStatusBar
+{
+public:
+    wxStaticBitmap *Indicator;
+    MyStatusBar(wxWindow *parent, long id = wxID_ANY, long style = wxSTB_DEFAULT_STYLE, wxString name = wxStatusBarNameStr);
+    virtual ~MyStatusBar();
+    void OnSize(wxSizeEvent &event);
+
+    DECLARE_EVENT_TABLE()
 };
 
 class ideFrame: public wxFrame
@@ -67,9 +77,9 @@ class ideFrame: public wxFrame
         static const long TOOL_DOWNLOAD;
         static const long TOOL_ABOUT;
         static const long ID_TOOLBAR1;
-        static const long ID_STATUSBAR1;
         //*)
         static const long ID_TEXT;
+        static const long ID_STATUSBAR;
 
         //(*Declarations(ideFrame)
         wxToolBarToolBase* ToolBarItem4;
@@ -82,13 +92,12 @@ class ideFrame: public wxFrame
         wxToolBarToolBase* ToolBarItem5;
         wxToolBarToolBase* ToolBarItem8;
         wxFileDialog* dlgSaveAs;
-        wxStatusBar* StatusBar;
         wxToolBarToolBase* ToolBarItem2;
         wxNotebook* Pages;
         wxToolBarToolBase* ToolBarItem7;
         //*)
         wxStyledTextCtrl *Text;
-        wxStaticBitmap *Indicator;
+        MyStatusBar *StatusBar;
 
         bool filehaschanged;
         std::string filepath;

@@ -1,5 +1,5 @@
 const pointer debugout = 0xc000;
-const ponter debugin = 0xc001;
+const pointer debugin = 0xc001;
 const int true = 0xff;
 const int false = 0x00;
 

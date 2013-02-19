@@ -87,11 +87,5 @@
 			<wildcard>Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*</wildcard>
 			<style>wxFD_SAVE|wxFD_OVERWRITE_PROMPT</style>
 		</object>
-		<object class="wxStatusBar" name="ID_STATUSBAR1" variable="StatusBar" member="yes">
-			<fields>2</fields>
-			<widths>-10,16</widths>
-			<styles>wxSB_NORMAL,wxSB_NORMAL</styles>
-			<style>wxST_SIZEGRIP</style>
-		</object>
 	</object>
 </wxsmith>

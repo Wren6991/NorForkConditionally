@@ -71,13 +71,17 @@ const long ideFrame::TOOL_CONNECT = wxNewId();
 const long ideFrame::TOOL_DOWNLOAD = wxNewId();
 const long ideFrame::TOOL_ABOUT = wxNewId();
 const long ideFrame::ID_TOOLBAR1 = wxNewId();
-const long ideFrame::ID_STATUSBAR1 = wxNewId();
 //*)
 const long ideFrame::ID_TEXT = wxNewId();
+const long ideFrame::ID_STATUSBAR = wxNewId();
 
 BEGIN_EVENT_TABLE(ideFrame,wxFrame)
     //(*EventTable(ideFrame)
     //*)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE(MyStatusBar, wxStatusBar)
+    EVT_SIZE(MyStatusBar::OnSize)
 END_EVENT_TABLE()
 
 ideFrame::ideFrame(wxWindow* parent,wxWindowID id)
@@ -110,12 +114,6 @@ ideFrame::ideFrame(wxWindow* parent,wxWindowID id)
     SetToolBar(ToolBar1);
     dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
     dlgSaveAs = new wxFileDialog(this, _("Save As"), wxEmptyString, wxEmptyString, _("Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
-    StatusBar = new wxStatusBar(this, ID_STATUSBAR1, wxST_SIZEGRIP, _T("ID_STATUSBAR1"));
-    int __wxStatusBarWidths_1[2] = { -10, 16 };
-    int __wxStatusBarStyles_1[2] = { wxSB_NORMAL, wxSB_NORMAL };
-    StatusBar->SetFieldsCount(2,__wxStatusBarWidths_1);
-    StatusBar->SetStatusStyles(2,__wxStatusBarStyles_1);
-    SetStatusBar(StatusBar);
     SetSizer(BoxSizer1);
     Layout();
 
@@ -130,7 +128,6 @@ ideFrame::ideFrame(wxWindow* parent,wxWindowID id)
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&ideFrame::OnAbout);
     //*)
 
-    Connect(ID_STATUSBAR1, wxEVT_SIZE, (wxObjectEventFunction)&ideFrame::OnStatusBarResize);
 
     wxAcceleratorEntry entries[4];
     entries[0].Set(wxACCEL_CTRL, (int)'N', TOOL_NEW);
@@ -151,9 +148,10 @@ ideFrame::ideFrame(wxWindow* parent,wxWindowID id)
     filename = "Untitled";
     filehaschanged = false;
 
-    StatusBar->SetStatusText("Ready.");
+    StatusBar = new MyStatusBar(this, ID_STATUSBAR, wxST_SIZEGRIP, _T("ID_STATUSBAR"));
+    SetStatusBar(StatusBar);
 
-    Indicator = new wxStaticBitmap(StatusBar, wxID_ANY, wxIcon(error_xpm));
+    StatusBar->SetStatusText("Ready.");
 }
 
 ideFrame::~ideFrame()
@@ -252,7 +250,7 @@ void ideFrame::OnRunClicked(wxCommandEvent& event)
 {
     OnSaveClicked(event);
     FILE *pProcess;
-    if (pProcess = popen((progfolder + "/spoon \"" + filepath + "\" \"" + filepath + ".bin\"").c_str(), "r"))
+    if ((pProcess = popen((progfolder + "/spoon \"" + filepath + "\" \"" + filepath + ".bin\"").c_str(), "r")))
     {
         std::string message;
         char messagebuffer[256];
@@ -264,11 +262,13 @@ void ideFrame::OnRunClicked(wxCommandEvent& event)
         if (message == "")
         {
             StatusBar->SetStatusText("Done.");
+            StatusBar->Indicator->SetIcon(wxIcon(accept_xpm));
         }
         else
         {
             StatusBar->SetStatusText(message);
             wxBell();
+            StatusBar->Indicator->SetIcon(wxIcon(error_xpm));
         }
         pclose(pProcess);
     }
@@ -352,13 +352,25 @@ void ideFrame::OnCloseClicked(wxCommandEvent& event)
 
 }
 
-void ideFrame::OnStatusBarResize(wxSizeEvent &event)
+void MyStatusBar::OnSize(wxSizeEvent &event)
 {
-    wxMessageBox("Wassup!");
     wxRect rect;
-    StatusBar->GetFieldRect(1, rect);
+    GetFieldRect(1, rect);
     wxSize size = Indicator->GetSize();
     Indicator->Move(rect.GetX() + (rect.GetWidth() - size.GetX()) / 2, rect.GetY() + (rect.GetHeight() - size.GetY()) / 2);
+}
+
+MyStatusBar::MyStatusBar(wxWindow *parent, long id, long style, wxString name): wxStatusBar(parent, id, style, name)
+{
+    Indicator = new wxStaticBitmap(this, wxID_ANY, wxIcon(accept_xpm));
+    int __wxStatusBarWidths_1[2] = { -1, 16 };
+    int __wxStatusBarStyles_1[2] = { wxSB_NORMAL, wxSB_NORMAL };
+    SetFieldsCount(2,__wxStatusBarWidths_1);
+    SetStatusStyles(2,__wxStatusBarStyles_1);
+}
+
+MyStatusBar::~MyStatusBar()
+{
 }
 
 
