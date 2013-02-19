@@ -57,6 +57,7 @@ class compiler
     void compile(macrodef*);
     void compile(funcdef*);
     void compile(block*, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = ""); // optionally supply labels for break/continue
+    void compile(vardeclaration *dec);
     void compile(funccall*);
     void compile(goto_stat*);
     void compile(label*);

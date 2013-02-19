@@ -122,6 +122,10 @@ object* compiler::compile(program *prog)
         {
             compile((funcdef*)def);
         }
+        else if (def->type == dt_vardec)
+        {
+            compile((vardeclaration*)def);
+        }
     }
 #ifdef EBUG // -DEBUG :o)
     std::cout << "\nGlobal symbol table:\n";
@@ -138,7 +142,7 @@ object* compiler::compile(program *prog)
     while (idef != obj->tree->defs.end())
     {
         definition *def = *idef;
-        if ((def->type != dt_funcdef || !((funcdef*)def)->defined)  &&  def->type != dt_macrodef)
+        if (def->type == dt_constdef || (def->type == dt_funcdef && !((funcdef*)def)->defined))
         {
             idef = obj->tree->defs.erase(idef);     // strip out everything apart from function definitions. (macros have already been subbed by this point)
         }
@@ -234,15 +238,10 @@ void compiler::compile(funcdef *fdef)
 void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, std::string returnlabel)
 {
     pushscope();
+    // Process variable declarations:
     for (unsigned int i = 0; i < blk->declarations.size(); i++)
-    {
-        vardeclaration *dec = blk->declarations[i];
-        for (unsigned int j = 0; j < dec->vars.size(); j++)
-        {
-            addvar(dec->vars[j].name, dec->vars[j].type, (int)dec);
-            dec->vars[j].name = currentscope->get(dec->vars[j].name).name;      // replace the declaration with the global name of the var; makes linking easier.
-        }
-    }
+        compile(blk->declarations[i]);
+
     // scan through for labels: (because they break the forward-view scoping rule)
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
@@ -310,6 +309,15 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
         }
     }
     popscope();
+}
+
+void compiler::compile(vardeclaration *dec)
+{
+    for (unsigned int j = 0; j < dec->vars.size(); j++)
+    {
+        addvar(dec->vars[j].name, dec->vars[j].type, (int)dec);
+        dec->vars[j].name = currentscope->get(dec->vars[j].name).name;      // replace the declaration with the global name of the var; makes linking easier.
+    }
 }
 
 // compile ALL the arguments!

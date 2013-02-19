@@ -9,7 +9,8 @@
 typedef enum {
     dt_constdef = 0,
     dt_funcdef,
-    dt_macrodef
+    dt_macrodef,
+    dt_vardec       // dec vs. def I know...
 } def_type;
 
 typedef enum {
@@ -83,7 +84,7 @@ struct macrodef: public definition
     macrodef() {type = dt_macrodef;}
 };
 
-struct vardeclaration
+struct vardeclaration: public definition
 {
     struct varpair
     {
@@ -91,6 +92,7 @@ struct vardeclaration
         type_t type;
     };
     std::vector <varpair> vars;
+    vardeclaration() {type = dt_vardec;}
 };
 
 struct statement

@@ -99,6 +99,7 @@ std::vector <token> tokenize(std::string str)
 {
     std::map<std::string, token_type_enum> keywords;
     keywords["break"] = t_break;
+    keywords["char"] = t_type;
     keywords["const"] = t_const;
     keywords["continue"] = t_continue;
     keywords["else"] = t_else;

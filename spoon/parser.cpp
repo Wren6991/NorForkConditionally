@@ -21,6 +21,7 @@ void throw_unexpected(std::string value, int linenumber = 0, token_type_enum exp
 // Set up the type dicts and the state vars
 parser::parser(std::vector<token> tokens_)
 {
+    typestrings["char"] = type_int;
     typestrings["int"] = type_int;
     typestrings["pointer"] = type_pointer;
     tokens = tokens_;
@@ -86,9 +87,13 @@ program* parser::getprogram()
         {
             prog.obj->defs.push_back(getconstdef());
         }
+        else if (accept(t_var))
+        {
+            prog.obj->defs.push_back(getvardeclaration());
+        }
         else
         {
-            throw_unexpected(t.value, t.linenumber);
+            throw_unexpected(t.value, t.linenumber, t_function, t.type);
         }
     }
     return prog.release();

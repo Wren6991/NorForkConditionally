@@ -338,7 +338,7 @@ void linker::add_object(object *obj)
     for (unsigned int i = 0; i < obj->tree->defs.size(); i++)
     {
         definition *def = obj->tree->defs[i];
-        if ((def->type != dt_funcdef || !((funcdef*)def)->defined) && (def->type != dt_macrodef))
+        if ((def->type != dt_funcdef || !((funcdef*)def)->defined) && (def->type != dt_macrodef && def->type != dt_vardec))
         {
             throw(error("Error: linker only accepts defined functions as symbols, wtf are you doing."));
         }
@@ -347,7 +347,7 @@ void linker::add_object(object *obj)
             funcdef *fdef = (funcdef*)def;
             defined_funcs[fdef->name] = fdef;
         }
-        else
+        else if (def->type == dt_macrodef)
         {
             macrodef *mdef = (macrodef*)def;
             defined_funcs[mdef->name] = mdef;
@@ -367,8 +367,22 @@ std::vector<char> linker::link()
     }
     valtable.clear();
 
-    // Allocate static storage for function arguments/return vectors:
+    // Allocate static storage for function arguments/return vectors, and global variables:
     allocatefunctionstorage();
+    for (unsigned int i = 0; i < definitions.size(); i++)
+    {
+        if (definitions[i]->type == dt_vardec)
+        {
+            vardeclaration &dec = *((vardeclaration*)definitions[i]);
+            for (unsigned int i = 0; i < dec.vars.size(); i++)
+            {
+                vardeclaration::varpair &var = dec.vars[i];
+                vars.addvar(var.name, var.type);
+                if (var.type.type == type_array)
+                    savelabel(var.name, vars.getvar(var.name)->address);
+            }
+        }
+    }
 
     // set up pointer read instructions:
     // bfd0:    bff0 'ff  bfd8 bfd8
