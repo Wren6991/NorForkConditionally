@@ -16,7 +16,7 @@ const int type_sizes[] = {
     1,
     2,
     0,
-    -1,
+    2,
     1
 };
 
@@ -30,12 +30,19 @@ bool type_t::operator==(const type_t &rhs) const
         return false;
 }
 
-int type_t::getsize() const
+// tells us how much space the thing takes up in memory - used primarily by vardict when allocating memory.
+int type_t::getstoragesize() const
 {
     if (type == type_array)
         return count * type_sizes[second];
     else
         return type_sizes[type];
+}
+
+// tells us the size of the type, as interacted with by the programmer: e.g. arrays have size of two, as the programmer uses them as const pointers.
+int type_t::getsize() const
+{
+    return type_sizes[type];
 }
 
 std::string type_t::getname() const

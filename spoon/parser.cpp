@@ -21,8 +21,8 @@ void throw_unexpected(std::string value, int linenumber = 0, token_type_enum exp
 // Set up the type dicts and the state vars
 parser::parser(std::vector<token> tokens_)
 {
-    types["int"] = type_int;
-    types["pointer"] = type_pointer;
+    typestrings["int"] = type_int;
+    typestrings["pointer"] = type_pointer;
     tokens = tokens_;
     index = 0;
     if (tokens.size() > 0)
@@ -100,7 +100,7 @@ constdef* parser::getconstdef()
 {
     resourcep <constdef> def;
     expect(t_type);
-    def.obj->valtype = types[lastt.value];
+    def.obj->valtype = typestrings[lastt.value];
     expect(t_name);
     def.obj->name = lastt.value;
     expect(t_equals);
@@ -139,7 +139,7 @@ funcdef* parser::getfuncdef()
     resourcep <funcdef> def;
     if (accept(t_type))
     {
-        def.obj->return_type = types[lastt.value];
+        def.obj->return_type = typestrings[lastt.value];
     }
     else
     {
@@ -150,13 +150,13 @@ funcdef* parser::getfuncdef()
     expect(t_lparen);
     if (accept(t_type))
     {
-        type_t type = types[lastt.value];
+        type_t type = typestrings[lastt.value];
         expect(t_name);
         def.obj->args.push_back(argument(type, lastt.value));
         while (accept(t_comma))
         {
             expect(t_type);
-            type_t type = types[lastt.value];
+            type_t type = typestrings[lastt.value];
             expect(t_name);
             def.obj->args.push_back(argument(type, lastt.value));
         }
@@ -204,16 +204,37 @@ vardeclaration* parser::getvardeclaration()
 {
     resourcep <vardeclaration> vardec;
     expect(t_type);
-    vardec.obj->type = types[lastt.value];
+    type_enum basetype = typestrings[lastt.value];
     expect(t_name);
-    vardec.obj->names.push_back(lastt.value);
+    vardec.obj->vars.push_back(getvarname_and_type(basetype));  // handles all of the array length arguments and stuff for us too :)
     while (accept(t_comma))
     {
         expect(t_name);
-        vardec.obj->names.push_back(lastt.value);
+        vardec.obj->vars.push_back(getvarname_and_type(basetype));
     }
     expect(t_semicolon);
     return vardec.release();
+}
+
+vardeclaration::varpair parser::getvarname_and_type(type_enum basetype)
+{
+    vardeclaration::varpair var;
+    var.name = lastt.value;
+    if (accept(t_lsquareb))
+    {
+        var.type.type = type_array;
+        var.type.second = basetype;
+        expect(t_number);
+        std::stringstream ss;
+        ss << lastt.value;
+        ss >> var.type.count;
+        expect(t_rsquareb);
+    }
+    else
+    {
+        var.type.type = basetype;
+    }
+    return var;
 }
 
 

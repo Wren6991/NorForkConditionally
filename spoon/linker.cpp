@@ -76,7 +76,7 @@ linkval vardict::addvar(std::string name, type_t type)
 {
     variable *var = new variable;
     var->type = type;
-    var->offset = getspace(type.getsize());
+    var->offset = getspace(type.getstoragesize());
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
@@ -108,7 +108,7 @@ void vardict::remove(std::string name)
     // release the memory:
     if (var->offset >= 0)   // registervar() doesn't allocate memory, so it sets offset to -1.
     {
-        for (int i = var->offset; i < var->offset + var->type.getsize(); i++)
+        for (int i = var->offset; i < var->offset + var->type.getstoragesize(); i++)
             memory_in_use[i] = 0;
         if (var->offset < first_available_space)
             first_available_space = var->offset;
@@ -425,9 +425,12 @@ void linker::link(block *blk)
 {
     for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
     {
-        for (unsigned int i = 0; i < (*iter)->names.size(); i++)
+        for (unsigned int i = 0; i < (*iter)->vars.size(); i++)
         {
-            vars.addvar((*iter)->names[i], (*iter)->type);
+            vardeclaration::varpair &var = (*iter)->vars[i];
+            vars.addvar(var.name, var.type);
+            if (var.type.type == type_array)
+                savelabel(var.name, vars.getvar(var.name)->address);
         }
     }
     for (std::vector<statement*>::iterator iter = blk->statements.begin(); iter != blk->statements.end(); iter++)
@@ -437,9 +440,9 @@ void linker::link(block *blk)
     // TODO: make this a simple scope pop operation.
     for (std::vector<vardeclaration*>::iterator iter = blk->declarations.begin(); iter != blk->declarations.end(); iter++)
     {
-        for (unsigned int i = 0; i < (*iter)->names.size(); i++)
+        for (unsigned int i = 0; i < (*iter)->vars.size(); i++)
         {
-            vars.remove((*iter)->names[i]);
+            vars.remove((*iter)->vars[i].name);
         }
     }
 }
@@ -555,6 +558,14 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         else if (name == "val")
         {
             return getconstaddress(evaluate_or_return_literal(args[0]).literal);
+        }
+        else if (name == "pair")
+        {
+            linkval temploc = vars.addvar("__pairtemp", type_pointer);
+            emit_copy(evaluate(args[0]), temploc);
+            emit_copy(evaluate(args[1]), temploc + 1);
+            vars.remove_on_pop("__pairtemp");
+            return temploc;
         }
         else if (name == "read" || name == "increment" || name == "decrement" ||
                  name == "shiftleft" || name == "shiftright")
@@ -748,7 +759,7 @@ linkval linker::evaluate(expression *expr)
         {
             linkval constloc = vars.addvar("__consttemp", expr->val_type);
             emit_writeconst_multiple(expr->number, constloc, expr->val_type.getsize());
-            vars.remove("__consttemp");
+            vars.remove_on_pop("__consttemp");
             return constloc;
         }
     }
@@ -757,13 +768,22 @@ linkval linker::evaluate(expression *expr)
         if (vars.exists(expr->name))
         {
             variable *var = vars.getvar(expr->name);
-            // eager evaluation of labels: we get the most recently bound lable identity,
-            // not the last one. This is what allows us to change argname meaning in different calls to a macro.
             if (var->type == type_label)
+            {
+                // eager evaluation of labels: we get the most recently bound lable identity,
+                // not the last one. This is what allows us to change argname meaning in different calls to a macro.
                 if (valtable.find(expr->name) != valtable.end())
                     return valtable[expr->name];
                 else
                     return expr->name;
+            }
+            else if (var->type.type == type_array)
+            {
+                linkval addressloc = vars.addvar("__arraytemp", type_pointer);
+                emit_writelabel(expr->name, addressloc);
+                vars.remove_on_pop("__arraytemp");
+                return addressloc;
+            }
             else
                 return vars.getvar(expr->name)->address;
         }

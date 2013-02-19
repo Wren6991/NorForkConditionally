@@ -9,7 +9,7 @@
 class parser
 {
     std::vector<token> tokens;
-    std::map <std::string, type_t> types;
+    std::map <std::string, type_enum> typestrings;
     int index;
     token t;
     token lastt;
@@ -26,6 +26,7 @@ class parser
         macrodef* getmacrodef();
     block* getblock();
     vardeclaration* getvardeclaration();
+    vardeclaration::varpair getvarname_and_type(type_enum basetype);
     statement* getstatement();
         assignment* getassignment();
         goto_stat* getgoto();

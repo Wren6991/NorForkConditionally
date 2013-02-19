@@ -31,3 +31,7 @@ Todo:
 		- Would probably be easier.
 		- Would have to check a stack to see which functions we're currently inside, to avoid collisions.
 - strings!
+- make vardict allocate from end of RAM, not start
+	- otherwise we can't load programs into the start of RAM!
+- make function definitions use vardeclaration::varpair instead of name and type. (lets us reuse getvarname_and_type() for array types)
+- array indexing and lvalues, but for constant addresses only.

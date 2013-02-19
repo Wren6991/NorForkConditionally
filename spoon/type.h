@@ -21,6 +21,7 @@ struct type_t
     type_t(type_enum _type = type_none, type_enum _second = type_none, int _count = 0) {type = _type; second = _second; count = _count;}
     bool operator== (const type_t &rhs) const;
     int getsize() const;
+    int getstoragesize() const;
     std::string getname() const;
 };
 

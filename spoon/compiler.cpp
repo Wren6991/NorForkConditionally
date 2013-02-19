@@ -237,10 +237,10 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
     for (unsigned int i = 0; i < blk->declarations.size(); i++)
     {
         vardeclaration *dec = blk->declarations[i];
-        for (unsigned int j = 0; j < dec->names.size(); j++)
+        for (unsigned int j = 0; j < dec->vars.size(); j++)
         {
-            addvar(dec->names[j], dec->type, (int)dec);
-            dec->names[j] = currentscope->get(dec->names[j]).name;      // replace the declaration with the global name of the var; makes linking easier.
+            addvar(dec->vars[j].name, dec->vars[j].type, (int)dec);
+            dec->vars[j].name = currentscope->get(dec->vars[j].name).name;      // replace the declaration with the global name of the var; makes linking easier.
         }
     }
     // scan through for labels: (because they break the forward-view scoping rule)
@@ -251,8 +251,10 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
         {
             addvar(((label*)blk->statements[i])->name, type_pointer, (int)(blk->statements[i]));
             vardeclaration *dec = new vardeclaration;
-            dec->type = type_label;
-            dec->names.push_back(currentscope->get(((label*)blk->statements[i])->name).name);
+            vardeclaration::varpair var;
+            var.type = type_label;
+            var.name = currentscope->get(((label*)blk->statements[i])->name).name;
+            dec->vars.push_back(var);
             blk->declarations.push_back(dec);
         }
     }
@@ -449,11 +451,16 @@ void compiler::gettype(expression *expr)
 bool compiler::match_types(type_t expected, type_t &received)
 {
     if (expected == received)
-        return true;
-
-    if ((expected == type_int || expected == type_pointer) && received == type_number)
+    {
+       return true;
+    }
+    else if ((expected == type_int || expected == type_pointer) && received == type_number)
     {
         received = expected;   // replace generic number with int/pointer.
+        return true;
+    }
+    else if (expected == type_pointer && received.type == type_array)
+    {
         return true;
     }
     else

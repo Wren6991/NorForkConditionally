@@ -85,8 +85,12 @@ struct macrodef: public definition
 
 struct vardeclaration
 {
-    type_t type;
-    std::vector <std::string> names;
+    struct varpair
+    {
+        std::string name;
+        type_t type;
+    };
+    std::vector <varpair> vars;
 };
 
 struct statement

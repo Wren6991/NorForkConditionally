@@ -19,12 +19,14 @@ std::string friendly_tokentype_names[] = {
     "\"if\"",
     "\"{\"",
     "\"(\"",
+    "\"[\"",
     "\"macro\"",
     "name",
     "number",
     "\"}\"",
     "\"return\"",
     "\")\"",
+    "\"]\"",
     "semicolon",
     "string",
     "type",
@@ -118,6 +120,8 @@ std::vector <token> tokenize(std::string str)
     symbols[')'] = token(t_rparen, ")");
     symbols['{'] = token(t_lbrace, "{");
     symbols['}'] = token(t_rbrace, "}");
+    symbols['['] = token(t_lsquareb, "[");
+    symbols[']'] = token(t_rsquareb, "]");
     symbols[';'] = token(t_semicolon, ";");
 
     std::vector <token> tokens;

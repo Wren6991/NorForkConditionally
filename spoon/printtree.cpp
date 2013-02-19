@@ -82,8 +82,12 @@ void printtree(block *blk, int indentation)
 
 void printtree(vardeclaration *decl, int indentation)
 {
-    indent(indentation);
-    std::cout << "declared " << decl->type.getname() << " " << decl->names[0] << "\n";
+    for (unsigned int i = 0; i < decl->vars.size(); i++)
+    {
+        indent(indentation);
+        std::cout << "declared " << decl->vars[i].type.getname() << " " << decl->vars[i].name << "\n";
+    }
+
 }
 
 void printtree(statement *stat, int indentation)

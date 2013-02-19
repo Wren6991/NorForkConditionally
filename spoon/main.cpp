@@ -59,6 +59,9 @@ int main(int argc, char **argv)
         program *prog = p.getprogram();
         compiler c;
         object *obj = c.compile(prog);
+#ifdef EBUG
+        printtree(obj->tree);
+#endif // EBUG
         linker l;
         l.add_object(obj);
         std::vector<char> machinecode = l.link();
