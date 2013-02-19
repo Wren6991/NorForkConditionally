@@ -8,13 +8,17 @@
  **************************************************************/
 
 #include "ideApp.h"
+#include <string>
 
 //(*AppHeaders
 #include "ideMain.h"
 #include <wx/image.h>
 //*)
 
+
 IMPLEMENT_APP(ideApp);
+
+std::string progfolder;
 
 bool ideApp::OnInit()
 {
@@ -28,6 +32,11 @@ bool ideApp::OnInit()
     	SetTopWindow(Frame);
     }
     //*)
-    return wxsOK;
+    std::string progpath = argv[0].ToStdString();
+    int slashpos = progpath.rfind("/");
+    if (slashpos < 0)
+        slashpos = progpath.rfind("\\");
+    progfolder = progpath.substr(0, slashpos);
 
+    return wxsOK;
 }

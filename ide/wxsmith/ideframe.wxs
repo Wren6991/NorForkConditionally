@@ -11,10 +11,19 @@
 				<object class="wxButton" name="DUMMY_SAVEAS_BUTTON" variable="Button1" member="yes">
 					<label>Label</label>
 					<size>0,0</size>
+					<hidden>1</hidden>
 					<handler function="OnSaveAsClicked" entry="EVT_BUTTON" />
 				</object>
 				<flag>wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 				<border>5</border>
+			</object>
+			<object class="sizeritem">
+				<object class="wxNotebook" name="ID_NOTEBOOK1" variable="Pages" member="yes">
+					<handler function="OnPagesPageChanged" entry="EVT_NOTEBOOK_PAGE_CHANGED" />
+				</object>
+				<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+				<border>5</border>
+				<option>1</option>
 			</object>
 		</object>
 		<object class="wxToolBar" name="ID_TOOLBAR1" variable="ToolBar1" member="yes">
@@ -38,25 +47,30 @@
 				<handler function="OnSaveClicked" entry="EVT_TOOL" />
 				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
 			</object>
+			<object class="tool" name="TOOL_CLOSE" variable="ToolBarItem4" member="yes">
+				<label>Close</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_delete.png</bitmap>
+				<handler function="OnCloseClicked" entry="EVT_TOOL" />
+			</object>
 			<object class="separator" />
-			<object class="tool" name="TOOL_RUN" variable="ToolBarItem4" member="yes">
+			<object class="tool" name="TOOL_RUN" variable="ToolBarItem5" member="yes">
 				<label>Run</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\resultset_next.png</bitmap>
 				<tooltip>Run in simulator</tooltip>
 				<handler function="OnRunClicked" entry="EVT_TOOL" />
 			</object>
-			<object class="tool" name="TOOL_CONNECT" variable="ToolBarItem5" member="yes">
+			<object class="tool" name="TOOL_CONNECT" variable="ToolBarItem6" member="yes">
 				<label>Connect</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disconnect.png</bitmap>
 				<tooltip>Connect to device</tooltip>
 			</object>
-			<object class="tool" name="TOOL_DOWNLOAD" variable="ToolBarItem6" member="yes">
+			<object class="tool" name="TOOL_DOWNLOAD" variable="ToolBarItem7" member="yes">
 				<label>Download</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\arrow_down.png</bitmap>
 				<tooltip>Download to device</tooltip>
 			</object>
 			<object class="separator" />
-			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem7" member="yes">
+			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem8" member="yes">
 				<label>About</label>
 				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\help.png</bitmap>
 				<tooltip>About this software</tooltip>
@@ -72,6 +86,12 @@
 			<message>Save As</message>
 			<wildcard>Spoon files (*.spn;*.spoon)|*.spn;*.spoon|All files (*.*)|*.*</wildcard>
 			<style>wxFD_SAVE|wxFD_OVERWRITE_PROMPT</style>
+		</object>
+		<object class="wxStatusBar" name="ID_STATUSBAR1" variable="StatusBar" member="yes">
+			<fields>2</fields>
+			<widths>-10,16</widths>
+			<styles>wxSB_NORMAL,wxSB_NORMAL</styles>
+			<style>wxST_SIZEGRIP</style>
 		</object>
 	</object>
 </wxsmith>
