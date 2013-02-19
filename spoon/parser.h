@@ -9,7 +9,7 @@
 class parser
 {
     std::vector<token> tokens;
-    std::map <std::string, type_enum> types;
+    std::map <std::string, type_t> types;
     int index;
     token t;
     token lastt;

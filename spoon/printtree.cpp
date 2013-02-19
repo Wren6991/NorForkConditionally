@@ -39,7 +39,7 @@ void printtree(program *prog, int indentation)
 void printtree(constdef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "constant " << def->valtype << " " << def->name << ": " << def->value << "\n";
+    std::cout << "constant " << def->valtype.getname() << " " << def->name << ": " << def->value << "\n";
 }
 
 void printtree(funcdef *def, int indentation)
@@ -83,7 +83,7 @@ void printtree(block *blk, int indentation)
 void printtree(vardeclaration *decl, int indentation)
 {
     indent(indentation);
-    std::cout << "declared " << decl->type << " " << decl->names[0] << "\n";
+    std::cout << "declared " << decl->type.getname() << " " << decl->names[0] << "\n";
 }
 
 void printtree(statement *stat, int indentation)

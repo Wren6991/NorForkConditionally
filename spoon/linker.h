@@ -59,7 +59,7 @@ class vardict;
 struct variable
 {
     friend vardict;
-    type_enum type;
+    type_t type;
     variable *next;     // for stack operations we can build a linked list, in case we get the same symbol twice. (Shadowing)
     linkval address;
     variable() {next = 0;}
@@ -77,8 +77,8 @@ class vardict
     void find_first_available_space(int searchstart = 0);
     std::vector<std::vector<std::string> > tempscopes;       // in an if/while test we may use multiple temp locations, and we don't want them to clobber each other, so we keep track of temps and clean up after test finished.
 public:
-    linkval addvar(std::string name, type_enum type);
-    void registervar(std::string name, type_enum type, linkval address);    // for when we want to push an existing address as a var, and the memory is already allocated. (it's removed in the same way)
+    linkval addvar(std::string name, type_t type);
+    void registervar(std::string name, type_t type, linkval address);    // for when we want to push an existing address as a var, and the memory is already allocated. (it's removed in the same way)
     void remove(std::string name);
     variable* getvar(std::string name);
     bool exists(std::string name);

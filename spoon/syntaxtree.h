@@ -4,38 +4,13 @@
 #include <vector>
 #include <string>
 
+#include "type.h"
+
 typedef enum {
     dt_constdef = 0,
     dt_funcdef,
     dt_macrodef
 } def_type;
-
-typedef enum {
-    type_none = 0,
-    type_int,
-    type_pointer,
-    type_label,
-    type_number,        // generic number type, for compiler use only.
-    n_types
-} type_enum;
-
-const int typesizes[n_types] =
-{
-    0,
-    1,
-    2,
-    0,
-    1
-};
-
-const std::string friendly_type_names[] =
-{
-    "void",
-    "int",
-    "pointer",
-    "label",
-    "number"
-};
 
 typedef enum {
     stat_call,
@@ -73,7 +48,7 @@ struct definition
 
 struct constdef: public definition
 {
-    type_enum valtype;
+    type_t valtype;
     std::string name;
     int value;                          // ought really to be an expression
     constdef() {type = dt_constdef;}
@@ -81,9 +56,9 @@ struct constdef: public definition
 
 struct argument
 {
-    type_enum type;
+    type_t type;
     std::string name;
-    argument(type_enum type_ = type_none, std::string name_ = "")
+    argument(type_t type_ = type_none, std::string name_ = "")
     {
         type = type_;
         name = name_;
@@ -92,7 +67,7 @@ struct argument
 
 struct funcdef: public definition
 {
-    type_enum return_type;
+    type_t return_type;
     std::string name;
     std::vector <argument> args;
     block *body;
@@ -110,7 +85,7 @@ struct macrodef: public definition
 
 struct vardeclaration
 {
-    type_enum type;
+    type_t type;
     std::vector <std::string> names;
 };
 
@@ -186,7 +161,7 @@ struct expression
     exp_type type;
     std::string name;
     int number;
-    type_enum val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
+    type_t val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
     std::vector<expression*> args;
     expression() {}
     expression(std::string _name) {type = exp_name; name = _name;}

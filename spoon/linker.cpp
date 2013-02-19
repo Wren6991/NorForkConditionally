@@ -6,7 +6,6 @@
 
 #include <iostream>
 
-extern const int typesizes[n_types];    // def'd syntaxtree.h
 std::string makeguid(std::string name, int ptr);
 
 
@@ -73,11 +72,11 @@ int vardict::getspace(int size)
 
 // Note: returns an offset from the heap start, you'll have to add
 // the heap bottom to this value to get a machine address.
-linkval vardict::addvar(std::string name, type_enum type)
+linkval vardict::addvar(std::string name, type_t type)
 {
     variable *var = new variable;
     var->type = type;
-    var->offset = getspace(typesizes[type]);
+    var->offset = getspace(type.getsize());
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
@@ -88,7 +87,7 @@ linkval vardict::addvar(std::string name, type_enum type)
     return var->address;
 }
 
-void vardict::registervar(std::string name, type_enum type, linkval address)
+void vardict::registervar(std::string name, type_t type, linkval address)
 {
     variable *var = new variable;
     var->type = type;
@@ -109,7 +108,7 @@ void vardict::remove(std::string name)
     // release the memory:
     if (var->offset >= 0)   // registervar() doesn't allocate memory, so it sets offset to -1.
     {
-        for (int i = var->offset; i < var->offset + typesizes[var->type]; i++)
+        for (int i = var->offset; i < var->offset + var->type.getsize(); i++)
             memory_in_use[i] = 0;
         if (var->offset < first_available_space)
             first_available_space = var->offset;
@@ -418,7 +417,7 @@ void linker::link(funcdef* fdef)
     link(fdef->body);
     savelabel(returnstat_target, index);
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
-                       JUMP_PVECTOR, typesizes[type_pointer]);
+                       JUMP_PVECTOR, type_t(type_pointer).getsize());
     emit_branchalways(JUMP_INSTRUCTION);
 }
 
@@ -527,9 +526,9 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
     for (unsigned int i = 0; i < args.size(); i++)
     {
         if (args[i]->type == exp_number)
-            emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->address, typesizes[fdef->args[i].type]);
+            emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->address, fdef->args[i].type.getsize());
         else
-            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->address, typesizes[fdef->args[i].type]);
+            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->address, fdef->args[i].type.getsize());
     }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
     std::string returnlabel = getlabel();
@@ -568,7 +567,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
                     emit_copy(args[0]->number, POINTER_READ_RESULT);
                     return POINTER_READ_RESULT;
                 }
-                emit_copy_multiple(evaluate(args[0]), POINTER_READ_PVECTOR, typesizes[type_pointer]);
+                emit_copy_multiple(evaluate(args[0]), POINTER_READ_PVECTOR, type_t(type_pointer).getsize());
             }
             else
             {
@@ -725,11 +724,11 @@ void linker::link(assignment *assg)
     linkval target = evaluate(&targetexp);
     if (assg->expr->type == exp_number)
     {
-        emit_writeconst_multiple(assg->expr->number, target, typesizes[assg->expr->val_type]);
+        emit_writeconst_multiple(assg->expr->number, target, assg->expr->val_type.getsize());
     }
     else
     {
-        emit_copy_multiple(evaluate(assg->expr), target, typesizes[assg->expr->val_type]);
+        emit_copy_multiple(evaluate(assg->expr), target, assg->expr->val_type.getsize());
     }
 
 }
@@ -748,7 +747,7 @@ linkval linker::evaluate(expression *expr)
         else
         {
             linkval constloc = vars.addvar("__consttemp", expr->val_type);
-            emit_writeconst_multiple(expr->number, constloc, typesizes[expr->val_type]);
+            emit_writeconst_multiple(expr->number, constloc, expr->val_type.getsize());
             vars.remove("__consttemp");
             return constloc;
         }

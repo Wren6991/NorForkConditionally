@@ -150,13 +150,13 @@ funcdef* parser::getfuncdef()
     expect(t_lparen);
     if (accept(t_type))
     {
-        type_enum type = types[lastt.value];
+        type_t type = types[lastt.value];
         expect(t_name);
         def.obj->args.push_back(argument(type, lastt.value));
         while (accept(t_comma))
         {
             expect(t_type);
-            type_enum type = types[lastt.value];
+            type_t type = types[lastt.value];
             expect(t_name);
             def.obj->args.push_back(argument(type, lastt.value));
         }

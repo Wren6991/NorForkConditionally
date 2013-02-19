@@ -15,14 +15,10 @@ std::string makeguid(std::string name, int ptr)
     return ss.str();
 }
 
-void throw_type_error(std::string context, type_enum expected, type_enum got)
+void throw_type_error(std::string context, type_t expected, type_t got)
 {
-    if (expected < 0 or expected >= n_types)
-        expected = type_none;
-    if (got < 0 or got >= n_types)
-        got = type_none;
-    throw (error("Error: Type mismatch in " + context + ": was expecting " + friendly_type_names[expected] +
-                 " but got " + friendly_type_names[got]));
+    throw (error("Error: Type mismatch in " + context + ": was expecting " + expected.getname() +
+                 " but got " + got.getname()));
 }
 
 // Scope definitions: //
@@ -94,7 +90,7 @@ void compiler::popscope()
 // add a new variable to the current scope: it is saved in the current scope
 // with its local name, and in the global symbol table with its global name,
 // so we can do type checking and stuff in the second pass.
-void compiler::addvar(std::string name, type_enum type, int ptr, bool isConstant, int constvalue)
+void compiler::addvar(std::string name, type_t type, int ptr, bool isConstant, int constvalue)
 {
     symbol var;
     var.name = makeguid(name, ptr);
@@ -372,7 +368,7 @@ void compiler::compile(assignment *assg)
     }
     assg->name = currentscope->get(assg->name).name;
     compile(assg->expr);
-    type_enum assg_type = globalsymboltable[assg->name].type;
+    type_t assg_type = globalsymboltable[assg->name].type;
     // Check for type mismatch:
     if (!match_types(assg_type, assg->expr->val_type))
         throw_type_error("assignment of variable " + assg->name.substr(0, assg->name.find("@")), assg_type, assg->expr->val_type);
@@ -450,7 +446,7 @@ void compiler::gettype(expression *expr)
 
 // check that received matches accepted, and refine the generic "number" type.
 // if there is no possible match, return false.
-bool compiler::match_types(type_enum expected, type_enum &received)
+bool compiler::match_types(type_t expected, type_t &received)
 {
     if (expected == received)
         return true;
