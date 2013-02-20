@@ -57,7 +57,7 @@ class compiler
     void compile(macrodef*);
     void compile(funcdef*);
     void compile(block*, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = ""); // optionally supply labels for break/continue
-    void compile(vardeclaration *dec);
+    std::vector<assignment*> compile(vardeclaration *dec);      // returns list of assignments specified by variable initializers.
     void compile(funccall*);
     void compile(goto_stat*);
     void compile(label*);

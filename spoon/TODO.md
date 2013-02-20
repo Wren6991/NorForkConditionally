@@ -29,3 +29,4 @@ Todo:
 - make function definitions use vardeclaration::varpair instead of name and type. (lets us reuse getvarname_and_type() for array types)
 - array indexing and lvalues, but for constant addresses only.
 	- name and offset, offset usually 0, resolve at link time
+- variable initializers (var int x = 5;  vs. var int x; x = 5;  (they will parse to the same thing :))

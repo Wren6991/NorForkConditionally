@@ -25,8 +25,7 @@ function pointer decrementPointer(pointer p)
 function main()
 {
     var int array[5];
-    var pointer p;
-    p = array;
+    var pointer p = array;
     write(5, p);
     p = incrementPointer(p);
     write(11, p);

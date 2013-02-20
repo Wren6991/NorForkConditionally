@@ -124,10 +124,11 @@ object* compiler::compile(program *prog)
         }
         else if (def->type == dt_vardec)
         {
-            compile((vardeclaration*)def);
+            if (compile((vardeclaration*)def).size() > 0)
+                throw(error("Error: initialization of globals not supported. (Do it in main())"));
         }
     }
-#ifdef EBUG // -DEBUG :o)
+#ifdef EBUG // gcc -DEBUG :o)
     std::cout << "\nGlobal symbol table:\n";
     std::map<std::string, symbol>::iterator iter = globalsymboltable.begin();
     for(; iter != globalsymboltable.end(); iter++)
@@ -240,8 +241,13 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
     pushscope();
     // Process variable declarations:
     for (unsigned int i = 0; i < blk->declarations.size(); i++)
-        compile(blk->declarations[i]);
-
+    {
+        std::vector<assignment*> initializations = compile(blk->declarations[i]);
+        if (initializations.size() > 0)
+        {
+            blk->statements.insert(blk->statements.begin(), initializations.begin(), initializations.end());
+        }
+    }
     // scan through for labels: (because they break the forward-view scoping rule)
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
@@ -311,13 +317,23 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
     popscope();
 }
 
-void compiler::compile(vardeclaration *dec)
+std::vector<assignment*> compiler::compile(vardeclaration *dec)
 {
+    std::vector<assignment*> assignments;
     for (unsigned int j = 0; j < dec->vars.size(); j++)
     {
-        addvar(dec->vars[j].name, dec->vars[j].type, (int)dec);
-        dec->vars[j].name = currentscope->get(dec->vars[j].name).name;      // replace the declaration with the global name of the var; makes linking easier.
+        vardeclaration::varpair &var = dec->vars[j];
+        if (var.initializer)
+        {
+            assignment *assg = new assignment;
+            assg->name = var.name;
+            assg->expr = var.initializer;
+            assignments.push_back(assg);
+        }
+        addvar(var.name, var.type, (int)dec);
+        var.name = currentscope->get(var.name).name;    // replace the declaration with the global name of the var; makes linking easier.
     }
+    return assignments;
 }
 
 // compile ALL the arguments!

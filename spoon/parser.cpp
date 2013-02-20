@@ -275,6 +275,8 @@ vardeclaration::varpair parser::getvarname_and_type(type_enum basetype)
     {
         var.type.type = basetype;
     }
+    if (accept(t_equals))
+        var.initializer = getexpression();
     return var;
 }
 
