@@ -82,7 +82,7 @@ linkval vardict::addvar(std::string name, type_t type)
     vars[name] = var;
     var->address = var->offset + HEAP_BOTTOM;
 #ifdef EBUG
-    std::cout << "adding var " << name << " " << var->offset << "\n";
+    std::cout << "adding var " << name << " 0x" << std::hex << var->offset << "\n";
 #endif
     return var->address;
 }
@@ -589,6 +589,34 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             return getconstaddress(evaluate_or_return_literal(args[0]).literal);
         }
+        else if (name == "first")
+        {
+            if (args[0]->type == exp_number)
+            {
+                return getconstaddress(args[0]->number >> 8);
+            }
+            else
+            {
+                linkval temploc = vars.addvar("__firsttemp", type_int);
+                emit_copy(evaluate(args[0]), temploc);
+                vars.remove_on_pop("__firsttemp");
+                return temploc;
+            }
+        }
+        else if (name == "second")
+        {
+            if (args[0]->type == exp_number)
+            {
+                return getconstaddress(args[0]->number & 0xff);
+            }
+            else
+            {
+                linkval temploc = vars.addvar("__secondtemp", type_int);
+                emit_copy(evaluate(args[0]) + 1, temploc);
+                vars.remove_on_pop("__secondtemp");
+                return temploc;
+            }
+        }
         else if (name == "pair")
         {
             linkval temploc = vars.addvar("__pairtemp", type_pointer);
@@ -701,6 +729,10 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             vars.remove_on_pop("__xortemp1");
             vars.remove_on_pop("__xortemp2");
             return returnloc;
+        }
+        else
+        {
+            throw(error("Linker Error: unknown builtin function " + name));
         }
         return 0;
 }
