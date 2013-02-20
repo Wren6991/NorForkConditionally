@@ -32,6 +32,9 @@ void printtree(program *prog, int indentation)
             case dt_macrodef:
                 printtree((macrodef*)(prog->defs[i]), indentation);
                 break;
+            case dt_vardec:
+                printtree((vardeclaration*)(prog->defs[i]), indentation);
+                break;
         }
     }
 }

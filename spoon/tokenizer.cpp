@@ -16,6 +16,7 @@ std::string friendly_tokentype_names[] = {
     "\"=\"",
     "\"function\"",
     "\"goto\"",
+    "\"#\"",
     "\"if\"",
     "\"{\"",
     "\"(\"",
@@ -118,6 +119,7 @@ std::vector <token> tokenize(std::string str)
     symbols[':'] = token(t_colon , ":");
     symbols[','] = token(t_comma , ",");
     symbols['='] = token(t_equals, "=");
+    symbols['#'] = token(t_hash  , "#");
     symbols['('] = token(t_lparen, "(");
     symbols[')'] = token(t_rparen, ")");
     symbols['{'] = token(t_lbrace, "{");

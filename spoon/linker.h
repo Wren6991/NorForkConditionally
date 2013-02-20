@@ -2,6 +2,7 @@
 #define LINKER_H_INCLUDED
 
 #include "object.h"
+#include "linkval.h"
 
 #include <map>
 #include <stdint.h>
@@ -25,37 +26,6 @@ const int POINTER_READ_RESULT = HEAP_TOP - 0x0f;
 const int POINTER_WRITE_VALUE = POINTER_READ_RESULT;
 const int POINTER_WRITE_CLEAR_INSTRUCTION = POINTER_READ_INSTRUCTION - 0x10;
 const int POINTER_WRITE_COPY_INSTRUCTION = POINTER_WRITE_CLEAR_INSTRUCTION + 0x8;
-
-
-typedef enum
-{
-    lv_literal = 0,
-    lv_symbol,
-    lv_expression
-} lv_type;
-
-
-// linkvals are our "Assembly language" - they let us pass symbols and expressions for machine code
-// instead of just the literal addresses, e.g. with labels where we don't know the location til we reach it.
-// They get evaluated in the final "assemble" step.
-struct linkval
-{
-    enum op_type {op_add, op_sub, op_gethigh, op_getlow};
-    lv_type type;
-    uint16_t literal;
-    std::string sym;
-    linkval *argA;
-    linkval *argB;
-    op_type operation;
-    linkval() {argA = 0; argB = 0;}
-    linkval(uint16_t lit):linkval() {type = lv_literal; literal = lit;}
-    linkval(std::string s):linkval() {type = lv_symbol; sym = s;}
-    linkval operator+(linkval rhs) const;
-    linkval operator-(linkval rhs) const;
-    bool operator==(linkval &rhs) const;
-    linkval gethighbyte() const;
-    linkval getlowbyte() const;
-};
 
 class vardict;
 
@@ -90,13 +60,6 @@ public:
     void pop_temp_scope();
     void remove_on_pop(std::string name);
     vardict();
-};
-
-struct substitution
-{
-    std::string name;
-    int nbytes;
-    substitution(std::string _name = "", int _nbytes = 0) {name = _name; nbytes = _nbytes;}
 };
 
 class linker

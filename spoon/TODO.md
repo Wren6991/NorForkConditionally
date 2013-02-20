@@ -11,13 +11,6 @@ Todo:
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
 - have a better way of handling builtins! (some sort of map to function pointers?)
-- Arrays
-	- act as const pointers, but vardict allocates the correct amount of storage at the required location.
-	- have a varname struct instead of std::string in vardecs, which has an optional array length field
-		- (like C modifiers)
-	- at compile time, check that all arrays are of type int (or put in the semantics for other arrays)
-	- give vardict::addvar an optional count parameter (default 1) which is multiplied into the type size before allocation.
-		- also need to make a note of count for deallocation.
 - Make code generator its own separate class, friend of linker.
 - Make the compiler usable as a standalone executable.
 - compile-to-RAM option
@@ -35,3 +28,4 @@ Todo:
 	- otherwise we can't load programs into the start of RAM!
 - make function definitions use vardeclaration::varpair instead of name and type. (lets us reuse getvarname_and_type() for array types)
 - array indexing and lvalues, but for constant addresses only.
+	- name and offset, offset usually 0, resolve at link time

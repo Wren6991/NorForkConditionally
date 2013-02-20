@@ -600,8 +600,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         else if (name == "write")
         {
             std::string returnlabel = getlabel();
-            emit_copy_inverted(evaluate(args[1]), POINTER_READ_RESULT);
-            linkval pointerpos = evaluate(args[0]);
+            emit_copy_inverted(evaluate(args[0]), POINTER_READ_RESULT);
+            linkval pointerpos = evaluate(args[1]);
             emit_copy_multiple(pointerpos, POINTER_WRITE_CLEAR_INSTRUCTION, type_t(type_pointer).getsize());
             emit_copy_multiple(pointerpos, POINTER_WRITE_COPY_INSTRUCTION, type_t(type_pointer).getsize());
             emit_writelabel(returnlabel, JUMP_PVECTOR);
@@ -864,7 +864,7 @@ std::vector<char> linker::assemble()
     {
         image.push_back(evaluate(*iter));
     }
-    if (image.size() > INCREMENT_START)
+    if (image.size() > (unsigned)INCREMENT_START)
         throw(error("Error: program is too big!"));
     // put constant tables into last kilobyte.
     while (image.size() < (unsigned)INCREMENT_START)
@@ -878,109 +878,6 @@ std::vector<char> linker::assemble()
     for (unsigned int i = 0; i <= 255; i++)
         image.push_back((i >> 1) & 0xff);
     return image;
-}
-
-linkval linkval::operator+(linkval rhs) const
-{
-    linkval result(0);
-    switch (type)
-    {
-    case lv_literal:
-        if (rhs.type == lv_literal)
-        {
-            result.type = lv_literal;
-            result.literal = literal + rhs.literal;
-            break;
-        }   // fall through if not:
-    case lv_symbol:
-    case lv_expression:
-        result.type = lv_expression;
-        result.operation = op_add;
-        result.argA = new linkval(0);
-        *result.argA = *this;
-        result.argB = new linkval(0);
-        *result.argB = rhs;
-        break;
-    }
-    return result;
-}
-
-linkval linkval::operator-(linkval rhs) const
-{
-    linkval result(0);
-    switch (type)
-    {
-    case lv_literal:
-        if (rhs.type == lv_literal)
-        {
-            result.type = lv_literal;
-            result.literal = literal - rhs.literal;
-            break;
-        }   // fall through if not:
-    case lv_symbol:
-    case lv_expression:
-        result.type = lv_expression;
-        result.operation = op_sub;
-        result.argA = new linkval(0);
-        *result.argA = *this;
-        result.argB = new linkval(0);
-        *result.argB = rhs;
-        break;
-    }
-    return result;
-}
-
-bool linkval::operator==(linkval &rhs) const
-{
-    if (type != rhs.type)   // this is a conservative equality: those of different types may be equal, but we assume not.
-        return false;
-    switch (type)
-    {
-    case lv_literal:
-        return literal == rhs.literal;
-    case lv_symbol:
-        return sym == rhs.sym;
-    case lv_expression:
-        return operation == rhs.operation &&
-        (argA && rhs.argA ? *argA == *rhs.argA : argA == rhs.argA) &&
-        (argB && rhs.argB ? *argB == *rhs.argB : argB == rhs.argB);     // compare by value if both non-null, else compare by reference.
-    default:
-        return false;
-    }
-}
-
-linkval linkval::gethighbyte() const
-{
-    if (type == lv_literal)
-        return literal >> 8;
-    else if (type == lv_symbol)
-        return sym + "_HI";
-    else
-    {
-        linkval lv(0);
-        lv.type = lv_expression;
-        lv.operation = op_gethigh;
-        lv.argA = new linkval(0);
-        *lv.argA = *this;
-        return lv;
-    }
-}
-
-linkval linkval::getlowbyte() const
-{
-    if (type == lv_literal)
-        return literal & 0xff;
-    else if (type == lv_symbol)
-        return sym + "_LO";
-    else
-    {
-        linkval lv(0);
-        lv.type = lv_expression;
-        lv.operation = op_getlow;
-        lv.argA = new linkval(0);
-        *lv.argA = *this;
-        return lv;
-    }
 }
 
 

@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "resourcep.h"
 
+#include <fstream>
 #include <sstream>
 
 extern std::string friendly_tokentype_names[];
@@ -92,12 +93,46 @@ program* parser::getprogram()
         {
             prog.obj->defs.push_back(getvardeclaration());
         }
+        else if (accept(t_hash))
+        {
+            expect(t_name);
+            do_preprocessor(prog.obj);
+        }
         else
         {
             throw_unexpected(t.value, t.linenumber, t_function, t.type);
         }
     }
     return prog.release();
+}
+
+void parser::do_preprocessor(program *prog)
+{
+    if (lastt.value == "include")
+    {
+        expect(t_string);
+        std::fstream includefile(lastt.value, std::ios::in | std::ios::binary);
+        if (!includefile.is_open())
+        {
+            throw(error(std::string("Error: could not open include file ") + lastt.value));
+        }
+        includefile.seekg(0, std::ios::end);
+        int sourcelength = includefile.tellg();
+        includefile.seekg(0, std::ios::beg);
+        std::vector<char> source(sourcelength);
+        includefile.read(&source[0], sourcelength);
+        source.push_back(0);
+        includefile.close();
+        std::vector<token> includetokens = tokenize(&source[0]);
+        parser p(includetokens);
+        program *includedefs = p.getprogram();
+        for (unsigned int i = 0; i < includedefs->defs.size(); i++)
+            prog->defs.push_back(includedefs->defs[i]);
+    }
+    else
+    {
+        throw(error("Error: unrecognised preprocessor directive \"" + lastt.value + "\""));
+    }
 }
 
 // sort out all the syntax stuff, return the type, name and

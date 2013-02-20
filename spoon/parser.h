@@ -20,6 +20,7 @@ class parser
     parser(std::vector<token> tokens_);
 
     program* getprogram();
+    void do_preprocessor(program *prog);
     definition *getdefinition();
         constdef* getconstdef();
         funcdef* getfuncdef();
