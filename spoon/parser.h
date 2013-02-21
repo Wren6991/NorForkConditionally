@@ -26,8 +26,8 @@ class parser
         funcdef* getfuncdef();
         macrodef* getmacrodef();
     block* getblock();
-    vardeclaration* getvardeclaration();
-    vardeclaration::varpair getvarname_and_type(type_enum basetype);
+    vardeclaration* getvardeclaration(std::vector<statement*> *statlist = 0);   // we tell the function where the statements are, so it's allowed to push assignments. (See implementation for more notes)
+    vardeclaration::varpair getvarname_and_type(type_enum basetype, std::vector<statement*> *statlist);
     statement* getstatement();
         assignment* getassignment();
         goto_stat* getgoto();

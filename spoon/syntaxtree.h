@@ -91,8 +91,6 @@ struct vardeclaration: public definition
     {
         std::string name;
         type_t type;
-        expression *initializer;
-        varpair() {initializer = 0;}
     };
     std::vector <varpair> vars;
     vardeclaration() {type = dt_vardec;}

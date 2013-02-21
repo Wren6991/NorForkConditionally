@@ -226,7 +226,7 @@ block* parser::getblock()
         {
             if (accept(t_var))
             {
-                blk.obj->declarations.push_back(getvardeclaration());
+                blk.obj->declarations.push_back(getvardeclaration(&blk.obj->statements));
             }
             else
             {
@@ -240,24 +240,27 @@ block* parser::getblock()
     return blk.release();
 }
 
-// returns the type and a list of names
-vardeclaration* parser::getvardeclaration()
+// Returns the type and a list of names
+// We tell the function where the statements are, so it's allowed to push assignments.
+// (This avoids sequencing problems with vardecs compiled at start of block, otherwise assignments
+// would all take place at start of block when vardecs are processed.)
+vardeclaration* parser::getvardeclaration(std::vector<statement*> *statlist)
 {
     resourcep <vardeclaration> vardec;
     expect(t_type);
     type_enum basetype = typestrings[lastt.value];
     expect(t_name);
-    vardec.obj->vars.push_back(getvarname_and_type(basetype));  // handles all of the array length arguments and stuff for us too :)
+    vardec.obj->vars.push_back(getvarname_and_type(basetype, statlist));  // handles all of the array length arguments and stuff for us too :)
     while (accept(t_comma))
     {
         expect(t_name);
-        vardec.obj->vars.push_back(getvarname_and_type(basetype));
+        vardec.obj->vars.push_back(getvarname_and_type(basetype, statlist));
     }
     expect(t_semicolon);
     return vardec.release();
 }
 
-vardeclaration::varpair parser::getvarname_and_type(type_enum basetype)
+vardeclaration::varpair parser::getvarname_and_type(type_enum basetype, std::vector<statement*> *statlist)
 {
     vardeclaration::varpair var;
     var.name = lastt.value;
@@ -276,7 +279,19 @@ vardeclaration::varpair parser::getvarname_and_type(type_enum basetype)
         var.type.type = basetype;
     }
     if (accept(t_equals))
-        var.initializer = getexpression();
+    {
+        if (statlist)
+        {
+            assignment *assg = new assignment;
+            assg->name = var.name;
+            assg->expr = getexpression();
+            statlist->push_back(assg);
+        }
+        else
+        {
+            throw(error("Error: initialization of globals not supported. (do it in main())"));
+        }
+    }
     return var;
 }
 

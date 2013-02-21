@@ -13,8 +13,8 @@ function pointer incrementPointer(pointer p)
 
 function main()
 {
-    var pointer p; p = "Hello, world!";
-    var char c; c = read(p);
+    var pointer p = "Hello, world!";
+    var char c = read(p);
     while (c)
     {
         output(c, debugout);
