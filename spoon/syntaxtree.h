@@ -28,7 +28,8 @@ typedef enum {
 typedef enum {
     exp_name,
     exp_number,
-    exp_funccall
+    exp_funccall,
+    exp_string
 } exp_type;
 
 

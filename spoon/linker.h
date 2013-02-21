@@ -70,6 +70,7 @@ class linker
     int index;
     std::vector<linkval> buffer;
     std::map<std::string, linkval> valtable;        // contains values for substitution
+    std::vector<std::pair<std::string, std::string> > stringvalues;   // label, contents
     void savelabel(std::string, linkval);
     void write8(linkval);
     void write16(linkval);

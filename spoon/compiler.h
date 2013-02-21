@@ -37,6 +37,7 @@ class scope
     void insert(std::string name, symbol var);
     symbol& get(std::string name);
     bool exists(std::string name);
+    bool inthisscope(std::string name);
 };
 
 

@@ -23,10 +23,9 @@ Todo:
 	- OR have a return value location for each logical operation?
 		- Would probably be easier.
 		- Would have to check a stack to see which functions we're currently inside, to avoid collisions.
-- strings!
+- #####strings!
 - make vardict allocate from end of RAM, not start
 	- otherwise we can't load programs into the start of RAM!
 - make function definitions use vardeclaration::varpair instead of name and type. (lets us reuse getvarname_and_type() for array types)
 - array indexing and lvalues, but for constant addresses only.
 	- name and offset, offset usually 0, resolve at link time
-- variable initializers (var int x = 5;  vs. var int x; x = 5;  (they will parse to the same thing :))

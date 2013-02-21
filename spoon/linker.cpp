@@ -432,6 +432,16 @@ std::vector<char> linker::link()
         if (iter->second && iter->second->type == dt_funcdef && ((funcdef*)iter->second)->name != "main")
             link((funcdef*)iter->second);
     }
+
+    // Finally, push all the strings onto the end.
+    for (unsigned int stringnum = 0; stringnum < stringvalues.size(); stringnum++)
+    {
+        std::cout << "Saving string at "  << stringvalues[stringnum].first << "\n";
+        savelabel(stringvalues[stringnum].first, index);
+        std::string &str = stringvalues[stringnum].second;
+        for (unsigned int i = 0; i <= str.size(); i++)      // <= instead of < because we want to include the terminating zero.
+            write8(str[i]);
+    }
     return assemble();
 }
 
@@ -879,6 +889,16 @@ linkval linker::evaluate(expression *expr)
                 throw(error("Error: only functions can return values (call to " + expr->name + ")"));
             return linkfunctioncall(expr->args, (funcdef*)defined_funcs[expr->name]);
         }
+    }
+    else if (expr->type == exp_string)
+    {
+        std::string stringlocation = getlabel();
+        std::cout << "IOU for string \"" << expr->name << "\" at " << stringlocation << "\n";
+        stringvalues.push_back(std::pair<std::string, std::string>(stringlocation, expr->name));    // the actual string will get linked in later, tacked onto the end of the program.
+        linkval temploc = vars.addvar("__stringloctemp", type_pointer);
+        emit_writelabel(stringlocation, temploc);
+        vars.remove_on_pop("__stringloctemp");
+        return temploc;
     }
     else
     {

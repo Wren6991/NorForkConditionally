@@ -54,6 +54,11 @@ bool scope::exists(std::string name)
         return false;
 }
 
+bool scope::inthisscope(std::string name)
+{
+    return variables.find(name) != variables.end();
+}
+
 // Compiler definitions //
 
 // set up scopes and signatures:
@@ -92,6 +97,8 @@ void compiler::popscope()
 // so we can do type checking and stuff in the second pass.
 void compiler::addvar(std::string name, type_t type, int ptr, bool isConstant, int constvalue)
 {
+    if (currentscope->inthisscope(name))
+        throw(error("Error: duplicate declaration of variable " + name));
     symbol var;
     var.name = makeguid(name, ptr);
     var.type = type;
@@ -439,7 +446,7 @@ void compiler::compile(expression *expr)
                 throw_type_error(std::string("argument ") + "" + " to function " + expr->name, sig.arg_types[i], expr->args[i]->val_type);
         }
     }
-    else if (expr->type != exp_number)
+    else if (expr->type != exp_number && expr->type != exp_string)
     {
         throw(error("Error: attempted to compile unknown expression type"));
     }
@@ -455,17 +462,20 @@ void compiler::compile(expression *expr)
 // will be known.
 void compiler::gettype(expression *expr)
 {
-    if (expr->type == exp_name)
+    switch (expr->type)
     {
+    case exp_name:
         expr->val_type = globalsymboltable[expr->name].type;
-    }
-    else if (expr->type == exp_number)
-    {
+        break;
+    case exp_number:
         expr->val_type = type_number;
-    }
-    else if (expr->type == exp_funccall)
-    {
+        break;
+    case exp_funccall:
         expr->val_type = functions[expr->name].return_type;
+        break;
+    case exp_string:
+        expr->val_type = type_t(type_array, type_int, expr->name.size() + 1);
+        break;
     }
 }
 

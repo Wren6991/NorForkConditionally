@@ -422,6 +422,11 @@ expression* parser::getexpression()
             expr.obj->type = exp_name;
         }
     }
+    else if (accept(t_string))
+    {
+        expr.obj->type = exp_string;
+        expr.obj->name = lastt.value;
+    }
     else
     {
         expr.obj->type = exp_number;
