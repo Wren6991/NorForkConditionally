@@ -1,0 +1,54 @@
+#include "stddefs"
+
+function sleep(int time)
+{
+    while (time)
+        time = decrement(time);
+}
+
+
+const int s_enable = 0x80;
+const int s_rs = 0x40;
+
+var int screensignal;
+
+// write data and pulse the clock:
+function write4bits(int data)
+{
+    screensignal = or(and(screensignal, 0xf0), data);
+    output(screensignal, debugout);
+    output(or(screensignal, s_enable), debugout);
+    output(screensignal, debugout);
+}
+
+function write8bits(int data)
+{
+    var int top = shiftright(data);
+    top = shiftright(top);
+    top = shiftright(top);
+    top = shiftright(top);
+    write4bits(top);
+    write4bits(and(data, 0x0f));
+}
+
+function main()
+{
+    screensignal = 0x00;
+    write4bits(0x3);
+    write4bits(0x3);
+    write4bits(0x3);
+    write4bits(0x2);
+    write8bits(0x28);
+    write8bits(0x0c);
+    write8bits(0x01);
+    screensignal = s_rs;
+
+    var pointer text = "Hello, world!";
+    var char c = read(text);
+    while (c)
+    {
+        write8bits(c);
+        text = incrementPointer(text);
+        c = read(text);
+    }
+}

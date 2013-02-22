@@ -544,6 +544,7 @@ void linker::link(funccall *call)
         {
             macrodef *mdef = (macrodef*)def;
             // WHAT HAPPENS IF THE SAME MACRO IS CALLED IN DIFFERENT LOCATIONS?
+            vars.push_temp_scope();
             for (unsigned int i = 0; i < mdef->args.size(); i++)
             {
                 std::string local_argname = getlabel();
@@ -554,6 +555,7 @@ void linker::link(funccall *call)
             link(mdef->body);
             for (unsigned int i = 0; i < mdef->args.size(); i++)
                 vars.remove(mdef->args[i]);
+            vars.pop_temp_scope();
         }
         else if (def->type == dt_funcdef)
         {
@@ -585,15 +587,19 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
 {
         if (name == "nfc")
         {
+            vars.push_temp_scope();
             emit_nfc2(evaluate_or_return_literal(args[0]), evaluate_or_return_literal(args[1]));
+            vars.pop_temp_scope();
         }
         else if (name == "nfc4")
         {
             padto8bytes();
+            vars.push_temp_scope();
             write16(evaluate_or_return_literal(args[0]));
             write16(evaluate_or_return_literal(args[1]));
             write16(evaluate_or_return_literal(args[2]));
             write16(evaluate_or_return_literal(args[3]));
+            vars.pop_temp_scope();
         }
         else if (name == "val")
         {
@@ -608,7 +614,9 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             else
             {
                 linkval temploc = vars.addvar("__firsttemp", type_int);
+                vars.push_temp_scope();             // The scope is pushed partly to clean up variables as soon as possible, but largely so that the evaluations take place in a valid scope to avoid internal clobbering.
                 emit_copy(evaluate(args[0]), temploc);
+                vars.pop_temp_scope();
                 vars.remove_on_pop("__firsttemp");
                 return temploc;
             }
@@ -622,7 +630,9 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             else
             {
                 linkval temploc = vars.addvar("__secondtemp", type_int);
+                vars.push_temp_scope();
                 emit_copy(evaluate(args[0]) + 1, temploc);
+                vars.pop_temp_scope();
                 vars.remove_on_pop("__secondtemp");
                 return temploc;
             }
@@ -630,16 +640,20 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         else if (name == "pair")
         {
             linkval temploc = vars.addvar("__pairtemp", type_pointer);
+            vars.push_temp_scope();
             emit_copy(evaluate(args[0]), temploc);
             emit_copy(evaluate(args[1]), temploc + 1);
+            vars.pop_temp_scope();
             vars.remove_on_pop("__pairtemp");
             return temploc;
         }
         else if (name == "write")
         {
             std::string returnlabel = getlabel();
+            vars.push_temp_scope();
             emit_copy_inverted(evaluate(args[0]), POINTER_READ_RESULT);
             linkval pointerpos = evaluate(args[1]);
+            vars.pop_temp_scope();
             emit_copy_multiple(pointerpos, POINTER_WRITE_CLEAR_INSTRUCTION, type_t(type_pointer).getsize());
             emit_copy_multiple(pointerpos, POINTER_WRITE_COPY_INSTRUCTION, type_t(type_pointer).getsize());
             emit_writelabel(returnlabel, JUMP_PVECTOR);
@@ -657,7 +671,9 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
                     emit_copy(args[0]->number, POINTER_READ_RESULT);
                     return POINTER_READ_RESULT;
                 }
+                vars.push_temp_scope();
                 emit_copy_multiple(evaluate(args[0]), POINTER_READ_PVECTOR, type_t(type_pointer).getsize());
+                vars.pop_temp_scope();
             }
             else
             {
@@ -683,9 +699,11 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         else if (name == "andnot")
         {
             linkval returnloc = vars.addvar("__andnottemp", type_int);
+            vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
             emit_nfc2(returnloc, evaluate(args[1]));
+            vars.pop_temp_scope();
             vars.remove_on_pop("__andnottemp");
             return returnloc;
         }
@@ -693,11 +711,13 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval returnloc = vars.addvar("__andreturnloc", type_int);
             linkval temploc = vars.addvar("__andtemploc", type_int);
+            vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
             emit_nfc2(temploc, getconstaddress(0xff));
             emit_nfc2(temploc, evaluate(args[1]));
             emit_nfc2(returnloc, temploc);
+            vars.pop_temp_scope();
             vars.remove_on_pop("__andreturnloc");
             vars.remove_on_pop("__andtemploc");
             return returnloc;
@@ -705,17 +725,21 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         else if (name == "not")
         {
             linkval returnloc = vars.addvar("__notreturnloc", type_int);
+            vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
+            vars.pop_temp_scope();
             vars.remove_on_pop("__notreturnloc");
             return returnloc;
         }
         else if (name == "or")
         {
             linkval returnloc = vars.addvar("__orreturnloc", type_int);
+            vars.push_temp_scope(); // For the arguments
             emit_copy(evaluate(args[0]), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             emit_nfc2(returnloc, returnloc);
+            vars.pop_temp_scope();
             vars.remove_on_pop("__orreturnloc");
             return returnloc;
         }
@@ -724,6 +748,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             linkval returnloc = vars.addvar("__xorreturnloc", type_int);
             linkval temp1 = vars.addvar("__xortemp1", type_int);
             linkval temp2 = vars.addvar("__xortemp2", type_int);
+            vars.push_temp_scope(); // For the arguments
             linkval argA = evaluate(args[0]);
             linkval argB = evaluate(args[1]);   // WATCH OUT: possibly clobber each other's memory, cause we're not passing by value
             emit_nfc2(temp1, getconstaddress(0xff));
@@ -735,6 +760,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_copy(temp1, returnloc);
             emit_nfc2(returnloc, temp2);
             emit_nfc2(returnloc, returnloc);
+            vars.pop_temp_scope();
             vars.remove_on_pop("__xorreturnloc");
             vars.remove_on_pop("__xortemp1");
             vars.remove_on_pop("__xortemp2");
