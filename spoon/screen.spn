@@ -6,6 +6,16 @@ function sleep(int time)
         time = decrement(time);
 }
 
+function pointer incrementPointer(pointer p)
+{
+    var int a, b;
+    b = increment(second(p));
+    if (b)
+        a = first(p);
+    else
+        a = increment(first(p));
+    incrementPointer = pair(a, b);
+}
 
 const int s_enable = 0x80;
 const int s_rs = 0x40;
@@ -35,12 +45,15 @@ function main()
 {
     screensignal = 0x00;
     write4bits(0x3);
+    sleep(255);
     write4bits(0x3);
+    sleep(128);
     write4bits(0x3);
     write4bits(0x2);
     write8bits(0x28);
     write8bits(0x0c);
     write8bits(0x01);
+    sleep(128);
     screensignal = s_rs;
 
     var pointer text = "Hello, world!";
