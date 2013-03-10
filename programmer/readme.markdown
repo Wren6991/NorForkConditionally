@@ -42,25 +42,25 @@ Protocol
 
 A simple protocol is defined for two-way communication between the host PC and the programmer. The first byte defines the type of instruction, and it is optionally followed by n (< 255) bytes of data, as required by the instruction.
 
-- Opcode 0x0: NULL
+- Opcode 0x0: `NULL`
 	- Does absolutely nothing
 	- As it's one byte long, you can resync the connection by sending NULLs until you get an ACK.
-- Opcode 0x1: ACK
+- Opcode 0x1: `ACK`
 	- Acknowledge.
-- Opcode 0x2: NAK
+- Opcode 0x2: `NAK`
 	- Negative acknowledge
 	- "What?"
-- Opcode 0x3: RTS
+- Opcode 0x3: `RTS`
 	- Request to send
 	- Sent by host before sending page.
-	- Response is ACK.
-- Opcode 0x4: DAT
+	- Response is `ACK`.
+- Opcode 0x4: `DAT`
 	- Sending data
 	- followed by single-byte size == n, and then n bytes of data.
-	- e.g. 0x0403abcdef would send 3 bytes of data: ab, cd and ef.
-- Opcode 0x5: NXT
+	- e.g. `0x0403abcdef` would send 3 bytes of data: `ab`, `cd` and `ef`.
+- Opcode 0x5: `NXT`
 	- Programmer to host: next page please.
-	- Host replies with and RTS, which the programmer should ACK.
-- Opcode 0x6: ERR
+	- Host replies with an `RTS`, which the programmer should `ACK`.
+- Opcode 0x6: `ERR`
 	- Programmer has encountered an error
 	- followed by size byte, then a null-terminated error string. (Double whammy...)

@@ -43,25 +43,34 @@ function write8bits(int data)
 
 function main()
 {
-    screensignal = 0x00;
-    write4bits(0x3);
-    sleep(255);
-    write4bits(0x3);
-    sleep(128);
-    write4bits(0x3);
-    write4bits(0x2);
-    write8bits(0x28);
-    write8bits(0x0c);
-    write8bits(0x01);
-    sleep(128);
-    screensignal = s_rs;
-
-    var pointer text = "Hello, world!";
-    var char c = read(text);
-    while (c)
+    while (true)
     {
-        write8bits(c);
-        text = incrementPointer(text);
-        c = read(text);
+        while (true)
+        {
+            if (read(debugin))
+                break;
+        }
+        screensignal = 0x00;
+        write4bits(0x3);
+        //sleep(255);
+        write4bits(0x3);
+        //sleep(128);
+        write4bits(0x3);
+        write4bits(0x2);
+        write8bits(0x28);
+        write8bits(0x0c);
+        write8bits(0x01);
+        //sleep(128);
+        screensignal = s_rs;
+
+        var pointer text = "Hello, world!";
+        var char c = read(text);
+        while (c)
+        {
+            write8bits(c);
+            text = incrementPointer(text);
+            c = read(text);
+        }
     }
+    while (read(debugin)) {}
 }
