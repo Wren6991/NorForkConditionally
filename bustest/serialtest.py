@@ -5,11 +5,17 @@ from time import sleep
 
 global port
 
+class ProgrammerError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
 def sopen(name):
     """returns the serial port with the given name, or false if not found."""
     for i in range(256):
         try:
-            s = serial.Serial(port = i, timeout = 0.2, baudrate = 9600)
+            s = serial.Serial(port = i, timeout = 0.1, baudrate = 9600)
             if (s.portstr == name):
                 return s
             else:
@@ -26,10 +32,12 @@ def sendaddress(address):
     
 
 def sendpage(buffer):
+    newbuffer = bytearray([x for x in buffer])
+    buffer = newbuffer
     while len(buffer) < 64:
         buffer.append(0)
     if len(buffer) > 64:
-        raise "Buffer is too long"
+        raise ProgrammerError("Buffer is too long: " + str(len(buffer)))
     parity = 0
     for i in range(64):
         if i % 8 == 0:
@@ -43,7 +51,30 @@ def sendpage(buffer):
     port.write(bytearray("    SP".encode()) + buffer)
 
 def sendwrite():
-    port.write("    SW")
+    port.write("    SW".encode())
+
+def dountilsuccess(func):
+    """Repeatedly calls func until it receives "O"; returns true if a timeout occurred while doing so."""
+    port.flushInput()
+    hastimedout = False
+    while True:
+        func()
+        response = port.read(1).decode()
+        if len(response) != 1:
+            hastimedout = True
+        if response == "O":
+            return hastimedout
+
+
+def programpage(address, buffer):
+    while True:
+        dountilsuccess(lambda: sendaddress(address))
+        if dountilsuccess(lambda: sendpage(buffer)):
+            pass    # resend address if a timeout occurred
+        port.flushInput()
+        sendwrite()
+        if port.read(1).decode() == "O":
+            break
 
     
 
@@ -53,8 +84,12 @@ print(port)
 
 
 if port:
-    sendaddress(0)
-    sendpage(bytearray("abcdefghijklmnopqrstuvwxyz".encode()))
+    programpage(0, bytearray([
+        0xbf, 0xff, 0x00, 0x18, 0x00, 0x08, 0x00, 0x08,
+        0xbf, 0xff, 0xc0, 0x01, 0x00, 0x10, 0x00, 0x10,
+        0xc0, 0x00, 0xbf, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0xff
+        ]))
     response = ""
     b = port.read(1)
     while len(b) > 0:

@@ -5,7 +5,7 @@ const uint8_t pin_f = 0x08;  //f: WE_LADDR
 const uint8_t pin_g = 0x10;  //g: OE_ROM
 const uint8_t pin_h = 0x20;  //h: WE_ROM
 
-inline void write(char value)
+inline void write(uint8_t value)
 {
   PORTD = (PORTD & 0x03) | (value & 0xfc);
   PORTC = (PORTC & 0xfc) | (value & 0x03);
@@ -27,6 +27,16 @@ inline void detach()
   DDRD &= ~0xfc;
   DDRC &= ~0x03;
   write(0);
+}
+
+inline void writeaddress(uint16_t addr)
+{
+  write(addr >> 8);
+  PORTC |= pin_e;
+  PORTC &= ~pin_e;
+  write(addr & 0xff);
+  PORTC |= pin_f;
+  PORTC &= ~pin_f;
 }
 
 inline bool odd_parity_pass(uint8_t data, uint8_t bit)
@@ -68,6 +78,7 @@ void loop()
       while (Serial.available() < 2);
       currentaddress = Serial.read() << 8;
       currentaddress |= Serial.read();
+      writeaddress(currentaddress);
       Serial.print("O");
     }
     else if (c == 'P')
@@ -99,6 +110,16 @@ void loop()
     }
     else if (c == 'W')
     {
+      attach();
+      for (uint8_t i = 0; i < 64; i++)
+      {
+        writeaddress(currentaddress + i);
+        write(pagemem[i]);
+        PORTC &= ~pin_h;
+        PORTC |= pin_h;
+      }
+      delay(10);
+      detach();
       Serial.print("O");
     }
     else
