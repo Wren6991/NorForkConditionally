@@ -67,6 +67,7 @@ def dountilsuccess(func):
 
 
 def programpage(address, buffer):
+    failurecount = 0
     while True:
         dountilsuccess(lambda: sendaddress(address))
         if dountilsuccess(lambda: sendpage(buffer)):
@@ -75,7 +76,21 @@ def programpage(address, buffer):
         sendwrite()
         if port.read(1).decode() == "O":
             break
+        else:
+            failurecount += 1
+            if failurecount > 5:
+                raise ProgrammerException("Failed to write page at address " + str(address))
 
+def programfile(filename):
+    with open(filename, "rb") as f:
+        address = 0
+        while True:
+            page = f.read(64)
+            if len(page) <= 0:
+                break
+            programpage(address, bytearray(page))
+            address += 64
+        
     
 
 port = sopen("COM3")
