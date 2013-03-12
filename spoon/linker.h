@@ -31,7 +31,7 @@ class vardict;
 
 struct variable
 {
-    friend vardict;
+    friend class vardict;
     type_t type;
     variable *next;     // for stack operations we can build a linked list, in case we get the same symbol twice. (Shadowing)
     linkval address;

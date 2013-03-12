@@ -38,6 +38,7 @@ function write8bits(int data)
     top = shiftright(top);
     top = shiftright(top);
     write4bits(top);
+    sleep(1);
     write4bits(and(data, 0x0f));
 }
 
@@ -52,15 +53,15 @@ function main()
         }
         screensignal = 0x00;
         write4bits(0x3);
-        //sleep(255);
+        sleep(255);
         write4bits(0x3);
-        //sleep(128);
+        sleep(128);
         write4bits(0x3);
         write4bits(0x2);
         write8bits(0x28);
         write8bits(0x0c);
         write8bits(0x01);
-        //sleep(128);
+        sleep(128);
         screensignal = s_rs;
 
         var pointer text = "Hello, world!";
@@ -71,6 +72,6 @@ function main()
             text = incrementPointer(text);
             c = read(text);
         }
+        while (read(debugin)) {}
     }
-    while (read(debugin)) {}
 }

@@ -10,7 +10,7 @@ class ProgrammerError(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
-    
+
 def sopen(name):
     """returns the serial port with the given name, or false if not found."""
     for i in range(256):
@@ -29,7 +29,7 @@ def sendaddress(address):
     command.append((address >> 8) & 0xff)
     command.append(address & 0xff)
     port.write(command)
-    
+
 
 def sendpage(buffer):
     newbuffer = bytearray([x for x in buffer])
@@ -60,6 +60,7 @@ def dountilsuccess(func):
     while True:
         func()
         response = port.read(1).decode()
+        print(response)
         if len(response) != 1:
             hastimedout = True
         if response == "O":
@@ -90,8 +91,8 @@ def programfile(filename):
                 break
             programpage(address, bytearray(page))
             address += 64
-        
-    
+
+
 
 port = sopen("COM3")
 
