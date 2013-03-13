@@ -359,10 +359,10 @@ void compiler::compile(goto_stat *sgoto)
     compile(sgoto->target);
 }
 
-void compiler::compile(label *lbl)
+/*void compiler::compile(label *lbl)
 {
     //... do we really need this?
-}
+}*/
 
 // we only need to compile the expression and if bodies:
 // the actual code generation and labelling happens at link time.

@@ -116,9 +116,8 @@ void vardict::remove(std::string name)
     // update the dictionary: pop or remove
     if (var->next)
     {
-        variable *old = var;
-        var = var->next;
-        delete old;
+        iter->second = var->next;
+        delete var;
     }
     else
     {
