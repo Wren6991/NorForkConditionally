@@ -1,5 +1,5 @@
 #include "stddefs"
-#include "stdarithmetic"
+#include "stdmath"
 
 function sleep(int time)
 {
@@ -141,7 +141,7 @@ function main()
 
         wakescreen();
         emptyscreenbuffer();
-        printtobuffer("What's up world!", 0);
+        printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
         dumpscreenbuffer();
 
         while (read(debugin)) {}

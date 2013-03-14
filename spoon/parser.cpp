@@ -417,6 +417,15 @@ while_stat* parser::getwhile()
     return whiles.release();
 }
 
+int intfromstring(std::string str)
+{
+    std::stringstream ss;
+    int result;
+    ss << str;
+    ss >> result;
+    return result;
+}
+
 expression* parser::getexpression()
 {
     resourcep <expression> expr;
@@ -442,13 +451,24 @@ expression* parser::getexpression()
         expr.obj->type = exp_string;
         expr.obj->name = lastt.value;
     }
+    else if (accept(t_lbrace))
+    {
+        expr.obj->type = exp_string;
+        std::vector<char> values;
+        do
+        {
+            expect(t_number);
+            values.push_back(intfromstring(lastt.value));
+        }
+        while (accept(t_comma));
+        expect(t_rbrace);
+        expr.obj->name = std::string(&(values[0]), values.size());  //std::string is not actually null-terminated, so the array can contain zeroes.
+    }
     else
     {
         expr.obj->type = exp_number;
         expect(t_number);
-        std::stringstream ss;
-        ss << lastt.value;
-        ss >> expr.obj->number;
+        expr.obj->number = intfromstring(lastt.value);
     }
     return expr.release();
 }

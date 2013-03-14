@@ -46,7 +46,9 @@ enum state_enum
     s_linecomment,
     s_streamcomment,
     s_staraccepted,
-    s_whitespace
+    s_whitespace,
+    s_charliteral,
+    s_expectingapostrophe
 };
 
 
@@ -157,6 +159,8 @@ std::vector <token> tokenize(std::string str)
                     tokens.push_back(token(symbols.find(c)->second, linenumber));
                 else if (c == '"')
                     state = s_string;
+                else if (c == '\'')
+                    state = s_charliteral;
                 else if (c)
                 {
                     std::stringstream ss;
@@ -243,11 +247,24 @@ std::vector <token> tokenize(std::string str)
                     state = s_start;
                 }
                 break;
+            case s_charliteral:
+                state = s_expectingapostrophe;
+                break;
+            case s_expectingapostrophe:
+            {
+                std::stringstream ss;
+                ss << (int)(str[index - 1]);
+                tokens.push_back(token(t_number, ss.str(), linenumber));
+                state = s_start;
+                break;
+            }
 
         }
     } while (c);
     if (state == s_string)
         throw(error("Error: expected \" to close string near EOF"));
+    else if (state == s_charliteral || state == s_expectingapostrophe)
+        throw(error("Error: expected ' to close char literal near EOF"));
     /*for (unsigned int i = 0; i < tokens.size(); i++)
         std::cout << tokens[i].type << ":\t\"" << tokens[i].value << "\"\n";*/
     return tokens;
