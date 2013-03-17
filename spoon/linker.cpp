@@ -837,6 +837,7 @@ void linker::link(while_stat *whiles)
 
 void linker::link(assignment *assg)
 {
+    vars.push_temp_scope();
     expression targetexp;
     targetexp.type = exp_name;
     targetexp.name = assg->name;
@@ -849,7 +850,7 @@ void linker::link(assignment *assg)
     {
         emit_copy_multiple(evaluate(assg->expr), target, assg->expr->val_type.getsize());
     }
-
+    vars.pop_temp_scope();
 }
 
 

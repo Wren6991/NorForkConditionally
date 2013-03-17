@@ -1,0 +1,116 @@
+/***************************************************************
+ * Name:      emulatorMain.h
+ * Purpose:   Defines Application Frame
+ * Author:    Luke Wren (wren6991@gmail.com)
+ * Created:   2013-02-21
+ * Copyright: Luke Wren (http://githhub.com/Wren6991)
+ * License:
+ **************************************************************/
+
+#ifndef EMULATORMAIN_H
+#define EMULATORMAIN_H
+
+//(*Headers(emulatorFrame)
+#include <wx/listctrl.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
+#include <wx/led.h>
+#include <wx/toolbar.h>
+#include <wx/slider.h>
+#include <wx/filedlg.h>
+#include <wx/frame.h>
+#include <wx/statusbr.h>
+//*)
+#include <vector>
+
+#include "HexView.h"
+
+class emulatorFrame: public wxFrame
+{
+    public:
+
+        emulatorFrame(wxWindow* parent,wxWindowID id = -1);
+        virtual ~emulatorFrame();
+
+    private:
+
+        std::string filename;
+        std::string filepath;
+        bool filehaschanged;
+
+        HexView *memview;
+        std::vector <uint8_t> buffer;
+
+        //(*Handlers(emulatorFrame)
+        void OnQuit(wxCommandEvent& event);
+        void OnAbout(wxCommandEvent& event);
+        void OnNewClicked(wxCommandEvent& event);
+        void OnOpenClicked(wxCommandEvent& event);
+        void OnSaveClicked(wxCommandEvent& event);
+        void OnSaveAsClicked(wxCommandEvent& event);
+        //*)
+
+        //(*Identifiers(emulatorFrame)
+        static const long ID_LISTCTRL1;
+        static const long ID_STATICTEXT1;
+        static const long ID_LED7;
+        static const long ID_LED6;
+        static const long ID_LED5;
+        static const long ID_LED4;
+        static const long ID_LED3;
+        static const long ID_LED2;
+        static const long ID_LED1;
+        static const long ID_LED0;
+        static const long ID_STATICTEXT2;
+        static const long ID_SLIDER8;
+        static const long ID_SLIDER7;
+        static const long ID_SLIDER6;
+        static const long ID_SLIDER5;
+        static const long ID_SLIDER4;
+        static const long ID_SLIDER3;
+        static const long ID_SLIDER1;
+        static const long ID_SLIDER2;
+        static const long ID_STATUSBAR1;
+        static const long TOOL_NEW;
+        static const long TOOL_OPEN;
+        static const long TOOL_SAVE;
+        static const long TOOL_ABOUT;
+        static const long ID_TOOLBAR1;
+        //*)
+
+        //(*Declarations(emulatorFrame)
+        wxSlider* Slider1;
+        wxToolBarToolBase* ToolBarItem4;
+        wxToolBar* ToolBar1;
+        wxSlider* Slider2;
+        wxLed* Led4;
+        wxToolBarToolBase* ToolBarItem3;
+        wxStaticText* StaticText2;
+        wxSlider* Slider5;
+        wxLed* Led1;
+        wxLed* Led7;
+        wxLed* Led5;
+        wxSlider* Slider3;
+        wxFileDialog* dlgOpen;
+        wxLed* Led6;
+        wxSlider* Slider7;
+        wxStaticText* StaticText1;
+        wxLed* Led0;
+        wxLed* Led3;
+        wxToolBarToolBase* ToolBarItem1;
+        wxListCtrl* lstWatches;
+        wxStatusBar* StatusBar1;
+        wxSlider* Slider4;
+        wxSlider* Slider8;
+        wxSlider* Slider6;
+        wxLed* Led2;
+        wxFileDialog* dlgSaveAs;
+        wxToolBarToolBase* ToolBarItem2;
+        //*)
+
+        void SetFileName(std::string path, bool hasbeenmodified);
+
+        DECLARE_EVENT_TABLE()
+};
+
+#endif // EMULATORMAIN_H

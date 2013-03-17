@@ -19,6 +19,8 @@ function write4bits(int data)
     screensignal = or(and(screensignal, 0xf0), data);
     output(screensignal, debugout);
     output(or(screensignal, s_enable), debugout);
+    nop();
+    nop();
     output(screensignal, debugout);
 }
 
@@ -118,6 +120,7 @@ function wakescreen()
 
 function main()
 {
+    var pointer text = "What's up world! Characters wrap properly 'cause the screen buffer's in RAM.";
     while (true)
     {
         var int blink = 0;
@@ -141,8 +144,13 @@ function main()
 
         wakescreen();
         emptyscreenbuffer();
-        printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
-        dumpscreenbuffer();
+        /*printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
+        dumpscreenbuffer();*/
+        write8bits('=');
+        write8bits(')');
+        var char c = read(text);
+        write8bits(c);
+        write8bits('#');
 
         while (read(debugin)) {}
     }

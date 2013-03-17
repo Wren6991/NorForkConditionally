@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<wxsmith>
+	<object class="wxFrame" name="emulatorFrame">
+		<size>800,600</size>
+		<bg>wxSYS_COLOUR_BTNFACE</bg>
+		<id_arg>0</id_arg>
+		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
+			<object class="sizeritem">
+				<object class="wxBoxSizer" variable="frontpanelsizer" member="no">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<object class="wxListCtrl" name="ID_LISTCTRL1" variable="lstWatches" member="yes">
+							<maxsize>-1,-1</maxsize>
+							<style>wxLC_REPORT</style>
+						</object>
+						<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<option>1</option>
+					</object>
+					<object class="sizeritem">
+						<object class="wxBoxSizer" variable="BoxSizer4" member="no">
+							<object class="sizeritem">
+								<object class="wxBoxSizer" variable="BoxSizer5" member="no">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<object class="wxStaticText" name="ID_STATICTEXT1" variable="StaticText1" member="yes">
+											<label>Debug out:</label>
+										</object>
+										<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+									</object>
+									<object class="sizeritem">
+										<object class="wxBoxSizer" variable="BoxSizer2" member="no">
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED7" variable="Led7" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED6" variable="Led6" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED5" variable="Led5" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED4" variable="Led4" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED3" variable="Led3" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED2" variable="Led2" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED1" variable="Led1" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+											<object class="sizeritem">
+												<object class="wxLed" name="ID_LED0" variable="Led0" member="yes">
+													<Disable_Colour>#000000</Disable_Colour>
+													<Enable_Colour>#00FF00</Enable_Colour>
+													<enabled>0</enabled>
+												</object>
+												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+											</object>
+										</object>
+										<flag>wxLEFT|wxRIGHT|wxEXPAND|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<option>1</option>
+									</object>
+								</object>
+								<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+							</object>
+							<object class="sizeritem">
+								<object class="wxBoxSizer" variable="BoxSizer6" member="no">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<object class="wxStaticText" name="ID_STATICTEXT2" variable="StaticText2" member="yes">
+											<label>Debug in:</label>
+										</object>
+										<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+									</object>
+									<object class="sizeritem">
+										<object class="wxBoxSizer" variable="BoxSizer3" member="no">
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER8" variable="Slider8" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER7" variable="Slider7" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER6" variable="Slider6" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER5" variable="Slider5" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER4" variable="Slider4" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER3" variable="Slider3" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER1" variable="Slider1" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+											<object class="sizeritem">
+												<object class="wxSlider" name="ID_SLIDER2" variable="Slider2" member="yes">
+													<max>1</max>
+													<tickfreq>1</tickfreq>
+													<minsize>20,40</minsize>
+													<style>wxSL_VERTICAL</style>
+												</object>
+												<flag>wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+												<border>5</border>
+												<option>1</option>
+											</object>
+										</object>
+										<flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<option>1</option>
+									</object>
+								</object>
+								<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<option>1</option>
+							</object>
+						</object>
+						<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<option>1</option>
+					</object>
+				</object>
+				<flag>wxEXPAND|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+				<border>5</border>
+				<option>1</option>
+			</object>
+		</object>
+		<object class="wxStatusBar" name="ID_STATUSBAR1" variable="StatusBar1" member="yes">
+			<fields>1</fields>
+			<widths>-1</widths>
+			<styles>wxSB_NORMAL</styles>
+		</object>
+		<object class="wxToolBar" name="ID_TOOLBAR1" variable="ToolBar1" member="yes">
+			<style>wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER</style>
+			<object class="tool" name="TOOL_NEW" variable="ToolBarItem1" member="yes">
+				<label>New</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_add.png</bitmap>
+				<tooltip>New file</tooltip>
+				<handler function="OnNewClicked" entry="EVT_TOOL" />
+			</object>
+			<object class="tool" name="TOOL_OPEN" variable="ToolBarItem2" member="yes">
+				<label>Open</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\folder_page.png</bitmap>
+				<tooltip>Open file</tooltip>
+				<handler function="OnOpenClicked" entry="EVT_TOOL" />
+			</object>
+			<object class="tool" name="TOOL_SAVE" variable="ToolBarItem3" member="yes">
+				<label>Save</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disk.png</bitmap>
+				<tooltip>Right click for save as</tooltip>
+				<handler function="OnSaveClicked" entry="EVT_TOOL" />
+				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
+			</object>
+			<object class="separator" />
+			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem4" member="yes">
+				<label>About</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\help.png</bitmap>
+				<tooltip>About this software</tooltip>
+				<handler function="OnAbout" entry="EVT_TOOL" />
+			</object>
+		</object>
+		<object class="wxFileDialog" variable="dlgOpen" member="yes">
+			<message>Open</message>
+			<wildcard>Binary files (*.bin)|*.bin|All files (*.*)|*.*</wildcard>
+			<style>wxFD_OPEN|wxFD_FILE_MUST_EXIST</style>
+		</object>
+		<object class="wxFileDialog" variable="dlgSaveAs" member="yes">
+			<message>-1</message>
+			<wildcard>Binary files (*.bin)|*.bin|All files (*.*)|*.*</wildcard>
+			<style>wxFD_SAVE|wxFD_OVERWRITE_PROMPT</style>
+		</object>
+	</object>
+</wxsmith>

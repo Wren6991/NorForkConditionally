@@ -34,3 +34,9 @@ macro output(src, dest)
     nfc(temp, src);
     nfc(dest, temp);
 }
+
+macro nop()
+{
+    var int dontcare;
+    nfc(dontcare, dontcare);
+}
