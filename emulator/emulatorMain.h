@@ -18,12 +18,15 @@
 #include <wx/toolbar.h>
 #include <wx/slider.h>
 #include <wx/filedlg.h>
+#include <wx/button.h>
 #include <wx/frame.h>
+#include <wx/timer.h>
 #include <wx/statusbr.h>
 //*)
 #include <vector>
 
 #include "HexView.h"
+#include "vm.h"
 
 class emulatorFrame: public wxFrame
 {
@@ -40,6 +43,7 @@ class emulatorFrame: public wxFrame
 
         HexView *memview;
         std::vector <uint8_t> buffer;
+        vm machine;
 
         //(*Handlers(emulatorFrame)
         void OnQuit(wxCommandEvent& event);
@@ -48,6 +52,13 @@ class emulatorFrame: public wxFrame
         void OnOpenClicked(wxCommandEvent& event);
         void OnSaveClicked(wxCommandEvent& event);
         void OnSaveAsClicked(wxCommandEvent& event);
+        void OnDebuginChange(wxScrollEvent& event);
+        void OnSlider7CmdScroll(wxScrollEvent& event);
+        void OnStepClicked(wxCommandEvent& event);
+        void OnTimer1Trigger(wxTimerEvent& event);
+        void OnTimerTickTrigger(wxTimerEvent& event);
+        void OnbtnResetClick(wxCommandEvent& event);
+        void OnbtnStartStopClick(wxCommandEvent& event);
         //*)
 
         //(*Identifiers(emulatorFrame)
@@ -62,25 +73,30 @@ class emulatorFrame: public wxFrame
         static const long ID_LED1;
         static const long ID_LED0;
         static const long ID_STATICTEXT2;
-        static const long ID_SLIDER8;
         static const long ID_SLIDER7;
         static const long ID_SLIDER6;
         static const long ID_SLIDER5;
         static const long ID_SLIDER4;
         static const long ID_SLIDER3;
-        static const long ID_SLIDER1;
         static const long ID_SLIDER2;
+        static const long ID_SLIDER1;
+        static const long ID_SLIDER0;
+        static const long ID_BUTTON1;
+        static const long ID_BUTTON2;
         static const long ID_STATUSBAR1;
         static const long TOOL_NEW;
         static const long TOOL_OPEN;
         static const long TOOL_SAVE;
+        static const long ID_TOOLBARITEM1;
         static const long TOOL_ABOUT;
         static const long ID_TOOLBAR1;
+        static const long ID_TIMER1;
         //*)
 
         //(*Declarations(emulatorFrame)
         wxSlider* Slider1;
         wxToolBarToolBase* ToolBarItem4;
+        wxTimer TimerTick;
         wxToolBar* ToolBar1;
         wxSlider* Slider2;
         wxLed* Led4;
@@ -91,6 +107,7 @@ class emulatorFrame: public wxFrame
         wxLed* Led7;
         wxLed* Led5;
         wxSlider* Slider3;
+        wxSlider* Slider0;
         wxFileDialog* dlgOpen;
         wxLed* Led6;
         wxSlider* Slider7;
@@ -99,9 +116,11 @@ class emulatorFrame: public wxFrame
         wxLed* Led3;
         wxToolBarToolBase* ToolBarItem1;
         wxListCtrl* lstWatches;
+        wxButton* btnReset;
         wxStatusBar* StatusBar1;
         wxSlider* Slider4;
-        wxSlider* Slider8;
+        wxButton* btnStartStop;
+        wxToolBarToolBase* ToolBarItem5;
         wxSlider* Slider6;
         wxLed* Led2;
         wxFileDialog* dlgSaveAs;

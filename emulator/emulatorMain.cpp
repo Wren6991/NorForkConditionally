@@ -9,6 +9,8 @@
 
 #include "emulatorMain.h"
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <wx/msgdlg.h>
 
@@ -58,20 +60,24 @@ const long emulatorFrame::ID_LED2 = wxNewId();
 const long emulatorFrame::ID_LED1 = wxNewId();
 const long emulatorFrame::ID_LED0 = wxNewId();
 const long emulatorFrame::ID_STATICTEXT2 = wxNewId();
-const long emulatorFrame::ID_SLIDER8 = wxNewId();
 const long emulatorFrame::ID_SLIDER7 = wxNewId();
 const long emulatorFrame::ID_SLIDER6 = wxNewId();
 const long emulatorFrame::ID_SLIDER5 = wxNewId();
 const long emulatorFrame::ID_SLIDER4 = wxNewId();
 const long emulatorFrame::ID_SLIDER3 = wxNewId();
-const long emulatorFrame::ID_SLIDER1 = wxNewId();
 const long emulatorFrame::ID_SLIDER2 = wxNewId();
+const long emulatorFrame::ID_SLIDER1 = wxNewId();
+const long emulatorFrame::ID_SLIDER0 = wxNewId();
+const long emulatorFrame::ID_BUTTON1 = wxNewId();
+const long emulatorFrame::ID_BUTTON2 = wxNewId();
 const long emulatorFrame::ID_STATUSBAR1 = wxNewId();
 const long emulatorFrame::TOOL_NEW = wxNewId();
 const long emulatorFrame::TOOL_OPEN = wxNewId();
 const long emulatorFrame::TOOL_SAVE = wxNewId();
+const long emulatorFrame::ID_TOOLBARITEM1 = wxNewId();
 const long emulatorFrame::TOOL_ABOUT = wxNewId();
 const long emulatorFrame::ID_TOOLBAR1 = wxNewId();
+const long emulatorFrame::ID_TIMER1 = wxNewId();
 //*)
 
 BEGIN_EVENT_TABLE(emulatorFrame,wxFrame)
@@ -81,7 +87,7 @@ END_EVENT_TABLE()
 
 emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
 {
-    while (buffer.size() < 0x10000)
+    while (buffer.size() < (unsigned)VM_MEM_SIZE)
         buffer.push_back(0);
 
 
@@ -89,6 +95,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     wxBoxSizer* BoxSizer4;
     wxBoxSizer* BoxSizer6;
     wxBoxSizer* BoxSizer5;
+    wxBoxSizer* BoxSizer7;
     wxBoxSizer* frontpanelsizer;
     wxBoxSizer* BoxSizer2;
     wxBoxSizer* BoxSizer1;
@@ -101,34 +108,34 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     frontpanelsizer = new wxBoxSizer(wxVERTICAL);
     lstWatches = new wxListCtrl(this, ID_LISTCTRL1, wxDefaultPosition, wxDefaultSize, wxLC_REPORT, wxDefaultValidator, _T("ID_LISTCTRL1"));
     lstWatches->SetMaxSize(wxSize(-1,-1));
-    frontpanelsizer->Add(lstWatches, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    frontpanelsizer->Add(lstWatches, 8, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer4 = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer5 = new wxBoxSizer(wxVERTICAL);
     StaticText1 = new wxStaticText(this, ID_STATICTEXT1, _("Debug out:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
     BoxSizer5->Add(StaticText1, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer2 = new wxBoxSizer(wxHORIZONTAL);
-    Led7 = new wxLed(this,ID_LED7,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led7 = new wxLed(this,ID_LED7,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led7->Disable();
     BoxSizer2->Add(Led7, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led6 = new wxLed(this,ID_LED6,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led6 = new wxLed(this,ID_LED6,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led6->Disable();
     BoxSizer2->Add(Led6, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led5 = new wxLed(this,ID_LED5,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led5 = new wxLed(this,ID_LED5,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led5->Disable();
     BoxSizer2->Add(Led5, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led4 = new wxLed(this,ID_LED4,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led4 = new wxLed(this,ID_LED4,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led4->Disable();
     BoxSizer2->Add(Led4, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led3 = new wxLed(this,ID_LED3,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led3 = new wxLed(this,ID_LED3,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led3->Disable();
     BoxSizer2->Add(Led3, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led2 = new wxLed(this,ID_LED2,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led2 = new wxLed(this,ID_LED2,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led2->Disable();
     BoxSizer2->Add(Led2, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led1 = new wxLed(this,ID_LED1,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led1 = new wxLed(this,ID_LED1,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led1->Disable();
     BoxSizer2->Add(Led1, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led0 = new wxLed(this,ID_LED0,wxColour(0,0,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led0 = new wxLed(this,ID_LED0,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led0->Disable();
     BoxSizer2->Add(Led0, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer5->Add(BoxSizer2, 1, wxLEFT|wxRIGHT|wxEXPAND|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
@@ -137,41 +144,47 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     StaticText2 = new wxStaticText(this, ID_STATICTEXT2, _("Debug in:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT2"));
     BoxSizer6->Add(StaticText2, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer3 = new wxBoxSizer(wxHORIZONTAL);
-    Slider8 = new wxSlider(this, ID_SLIDER8, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER8"));
-    Slider8->SetTickFreq(1);
-    Slider8->SetMinSize(wxSize(20,40));
-    BoxSizer3->Add(Slider8, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider7 = new wxSlider(this, ID_SLIDER7, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER7"));
+    Slider7 = new wxSlider(this, ID_SLIDER7, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER7"));
     Slider7->SetTickFreq(1);
     Slider7->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider7, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider6 = new wxSlider(this, ID_SLIDER6, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER6"));
+    Slider6 = new wxSlider(this, ID_SLIDER6, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER6"));
     Slider6->SetTickFreq(1);
     Slider6->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider6, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider5 = new wxSlider(this, ID_SLIDER5, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER5"));
+    Slider5 = new wxSlider(this, ID_SLIDER5, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER5"));
     Slider5->SetTickFreq(1);
     Slider5->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider5, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider4 = new wxSlider(this, ID_SLIDER4, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER4"));
+    Slider4 = new wxSlider(this, ID_SLIDER4, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER4"));
     Slider4->SetTickFreq(1);
     Slider4->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider4, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider3 = new wxSlider(this, ID_SLIDER3, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER3"));
+    Slider3 = new wxSlider(this, ID_SLIDER3, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER3"));
     Slider3->SetTickFreq(1);
     Slider3->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider3, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider1 = new wxSlider(this, ID_SLIDER1, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER1"));
-    Slider1->SetTickFreq(1);
-    Slider1->SetMinSize(wxSize(20,40));
-    BoxSizer3->Add(Slider1, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Slider2 = new wxSlider(this, ID_SLIDER2, 0, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER2"));
+    Slider2 = new wxSlider(this, ID_SLIDER2, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER2"));
     Slider2->SetTickFreq(1);
     Slider2->SetMinSize(wxSize(20,40));
     BoxSizer3->Add(Slider2, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    Slider1 = new wxSlider(this, ID_SLIDER1, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER1"));
+    Slider1->SetTickFreq(1);
+    Slider1->SetMinSize(wxSize(20,40));
+    BoxSizer3->Add(Slider1, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    Slider0 = new wxSlider(this, ID_SLIDER0, 1, 0, 1, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL, wxDefaultValidator, _T("ID_SLIDER0"));
+    Slider0->SetTickFreq(1);
+    Slider0->SetMinSize(wxSize(20,40));
+    BoxSizer3->Add(Slider0, 1, wxTOP|wxBOTTOM|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer6->Add(BoxSizer3, 1, wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer4->Add(BoxSizer6, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     frontpanelsizer->Add(BoxSizer4, 0, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    BoxSizer7 = new wxBoxSizer(wxHORIZONTAL);
+    btnStartStop = new wxButton(this, ID_BUTTON1, _("Start"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON1"));
+    BoxSizer7->Add(btnStartStop, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    btnReset = new wxButton(this, ID_BUTTON2, _("Reset"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON2"));
+    BoxSizer7->Add(btnReset, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+    frontpanelsizer->Add(BoxSizer7, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer1->Add(frontpanelsizer, 1, wxEXPAND|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     SetSizer(BoxSizer1);
     StatusBar1 = new wxStatusBar(this, ID_STATUSBAR1, 0, _T("ID_STATUSBAR1"));
@@ -185,20 +198,46 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     ToolBarItem2 = ToolBar1->AddTool(TOOL_OPEN, _("Open"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\folder_page.png"))), wxNullBitmap, wxITEM_NORMAL, _("Open file"), wxEmptyString);
     ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem4 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
+    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
+    ToolBar1->AddSeparator();
+    ToolBarItem5 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
     ToolBar1->Realize();
     SetToolBar(ToolBar1);
     dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
     dlgSaveAs = new wxFileDialog(this, _("-1"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
+    TimerTick.SetOwner(this, ID_TIMER1);
+    TimerTick.Start(50, false);
     SetSizer(BoxSizer1);
     Layout();
 
+    Connect(ID_SLIDER7,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER7,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER6,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER6,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER5,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER5,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER4,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER4,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER3,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER3,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER2,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER2,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER1,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER1,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER0,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_SLIDER0,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
+    Connect(ID_BUTTON1,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnbtnStartStopClick);
+    Connect(ID_BUTTON2,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnbtnResetClick);
     Connect(TOOL_NEW,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnNewClicked);
     Connect(TOOL_OPEN,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnOpenClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_RCLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveAsClicked);
+    Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
+    Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     //*)
+
+    TimerTick.Stop();
 
     lstWatches->InsertColumn(0, "Name");
     lstWatches->InsertColumn(1, "Address");
@@ -207,6 +246,8 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     memview = new HexView(this, &buffer);
     BoxSizer1->Prepend(memview, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer1->Fit(this);
+
+    machine.memory = &buffer;
 
     this->SetTitle("Untitled - OISC Emulator");
 
@@ -248,7 +289,7 @@ void emulatorFrame::OnOpenClicked(wxCommandEvent& event)
         for (int i = 0; i < length; i++)
             buffer.push_back(inputbuf[i]);
         delete[] inputbuf;
-        while (buffer.size() < 0x10000)
+        while (buffer.size() < (unsigned)VM_MEM_SIZE)
             buffer.push_back(0);
         memview->Refresh();
     }
@@ -291,4 +332,94 @@ void emulatorFrame::OnSaveClicked(wxCommandEvent& event)
 void emulatorFrame::OnNewClicked(wxCommandEvent& event)
 {
     //AddPage();
+}
+
+void emulatorFrame::OnDebuginChange(wxScrollEvent& event)
+{
+    uint8_t data;
+    if (Slider7->GetValue())
+        data |= 0x80;
+    if (Slider6->GetValue())
+        data |= 0x40;
+    if (Slider5->GetValue())
+        data |= 0x20;
+    if (Slider4->GetValue())
+        data |= 0x10;
+    if (Slider3->GetValue())
+        data |= 0x08;
+    if (Slider2->GetValue())
+        data |= 0x04;
+    if (Slider1->GetValue())
+        data |= 0x02;
+    if (Slider0->GetValue())
+        data |= 0x01;
+    data = ~data;
+    buffer[DEBUG_IN_POS] = data;
+    std::cout << (int)data << "\n";
+}
+
+void writevalue(wxLed* led, bool value)
+{
+    if (value)
+        led->Enable();
+    else
+        led->Disable();
+}
+
+void emulatorFrame::OnStepClicked(wxCommandEvent& event)
+{
+    machine.step();
+    if (machine.debug_written)
+    {
+        machine.debug_written = false;
+        uint8_t data = buffer[DEBUG_OUT_POS];
+        writevalue(Led7, data & 0x80);
+        writevalue(Led6, data & 0x40);
+        writevalue(Led5, data & 0x20);
+        writevalue(Led4, data & 0x10);
+        writevalue(Led3, data & 0x08);
+        writevalue(Led2, data & 0x04);
+        writevalue(Led1, data & 0x02);
+        writevalue(Led0, data & 0x01);
+        std::cout << "debug output: " << (int)data << "\n";
+    }
+    memview->Refresh();
+    std::stringstream ss;
+    ss << "PC: " << std::hex << std::setw(4) << std::setfill('0') << machine.PC;
+    StatusBar1->SetStatusText(ss.str());
+}
+
+
+void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
+{
+    for (int i = 0; i < 1023; i++)
+        machine.step();
+    wxCommandEvent evt;
+    OnStepClicked(evt);
+}
+
+void emulatorFrame::OnbtnResetClick(wxCommandEvent& event)
+{
+    machine.PC = 0;
+    if (TimerTick.IsRunning())
+        OnbtnStartStopClick(event);
+    memview->Refresh();
+    std::stringstream ss;
+    ss << "PC: " << std::hex << std::setw(4) << std::setfill('0') << machine.PC;
+    StatusBar1->SetStatusText(ss.str());
+
+}
+
+void emulatorFrame::OnbtnStartStopClick(wxCommandEvent& event)
+{
+    if (TimerTick.IsRunning())
+    {
+        TimerTick.Stop();
+        btnStartStop->SetLabel("Start");
+    }
+    else
+    {
+        TimerTick.Start();
+        btnStartStop->SetLabel("Stop");
+    }
 }

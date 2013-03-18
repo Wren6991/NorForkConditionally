@@ -45,6 +45,7 @@ HexView::HexView(wxFrame *parent, std::vector<uint8_t> *data, long id, long styl
     Connect(scrollbar_id, wxEVT_SCROLL_CHANGED,    (wxObjectEventFunction)&HexView::onScroll);
 
     CEventPropagator::registerFor(this);
+    this->SetCanFocus(true);
 }
 
 HexView::~HexView()
@@ -149,6 +150,7 @@ void HexView::mouseDown(wxMouseEvent &event)
 {
     mousedown = true;
     mouseMove(event);
+    this->SetFocus();
 }
 
 void HexView::mouseMove(wxMouseEvent &event)
