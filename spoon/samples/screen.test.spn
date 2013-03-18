@@ -1,0 +1,161 @@
+#include "stddefs"
+#include "stdmath"
+
+function sleep(int time)
+{
+    while (time)
+        time = decrement(time);
+}
+
+const int s_enable = 0x80;
+const int s_rs = 0x40;
+
+var int screensignal;
+var int screenbuffer[80];
+
+// write data and pulse the clock:
+function write4bits(int data)
+{
+    screensignal = or(and(screensignal, 0xf0), data);
+    output(screensignal, debugout);
+    output(or(screensignal, s_enable), debugout);
+    output(screensignal, debugout);
+}
+
+function write8bits(int data)
+{
+    var int top = shiftright(data);
+    top = shiftright(top);
+    top = shiftright(top);
+    top = shiftright(top);
+    write4bits(top);
+    sleep(0);
+    write4bits(and(data, 0x0f));
+}
+
+function cursorpos(int x, int y)
+{
+    screensignal = 0x00;
+    var int address;
+    if (and(y, 0x02))
+    {
+        if (and(y, 0x01))
+            address = 84;
+        else
+            address = 20;
+    }
+    else
+    {
+        if (and(y, 0x01))
+            address = 64;
+        else
+            address = 0;
+    }
+    address = add(address, x);
+    write8bits(or(address, 0x80));
+    screensignal = s_rs;
+}
+
+function dumpscreenbuffer()
+{
+    var int count = 20;
+    var pointer p = screenbuffer;
+    while(count)
+    {
+        write8bits(read(p));
+        p = incrementPointer(p);
+        count = decrement(count);
+    }
+    /*var int ycount = 4, y = 0;
+    var pointer p = screenbuffer;
+    while (ycount)
+    {
+        cursorpos(0, y);
+        var int xcount = 20;
+        while (xcount)
+        {
+            write8bits(read(p));
+            p = incrementPointer(p);
+            xcount = decrement(xcount);
+        }
+        y = increment(y);
+        ycount = decrement(ycount);
+    }*/
+}
+
+function emptyscreenbuffer()
+{
+    var pointer p = screenbuffer;
+    var int count = 80;
+    while (count)
+    {
+        write(32, p);
+        count = decrement(count);
+        p = incrementPointer(p);
+    }
+}
+
+function printtobuffer(pointer text, int pos)
+{
+    var pointer dest = screenbuffer;
+    var int c = read(text);
+    while (c)
+    {
+        write(c, dest);
+        dest = incrementPointer(dest);
+        text = incrementPointer(text);
+        c = read(text);
+
+    }
+}
+
+function wakescreen()
+{
+    screensignal = 0x00;
+    write4bits(0x3);
+    sleep(255);
+    write4bits(0x3);
+    sleep(128);
+    write4bits(0x3);
+    write4bits(0x2);
+    write8bits(0x28);
+    write8bits(0x0c);
+    write8bits(0x01);
+    sleep(128);
+    screensignal = s_rs;
+}
+
+function main()
+{
+    while (true)
+    {
+        var int blink = 0;
+        while (true)
+        {
+            if (read(debugin))
+                break;
+
+            if (blink)
+            {
+                output(val(0x20), debugout);
+                nfc(blink, blink);
+            }
+            else
+            {
+                output(val(0x00), debugout);
+                nfc(blink, blink);
+            }
+            sleep(255); sleep(255);
+        }
+
+        wakescreen();
+        emptyscreenbuffer();
+        //printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
+        //dumpscreenbuffer();
+        //write8bits('X');
+        write8bits(':');
+        write8bits('P');
+
+        while (read(debugin)) {}
+    }
+}

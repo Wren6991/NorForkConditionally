@@ -1,0 +1,24 @@
+#include "stddefs"
+
+function pointer incrementPointer(pointer p)
+{
+    var int a, b;
+    b = increment(second(p));
+    if (b)
+        a = first(p);
+    else
+        a = increment(first(p));
+    incrementPointer = pair(a, b);
+}
+
+function main()
+{
+    var pointer p = {'H', 'e', 'l', 'l', 'o', 0};
+    var char c = read(p);
+    while (c)
+    {
+        output(c, debugout);
+        p = incrementPointer(p);
+        c = read(p);
+    }
+}
