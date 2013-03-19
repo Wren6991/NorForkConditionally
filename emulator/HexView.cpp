@@ -113,7 +113,6 @@ void HexView::render(wxDC &dc)
         pos = grid2screen(wxPoint(i % n_columns, i / n_columns));
         dc.DrawText(byte2str((*buffer)[i]), pos.x, pos.y);
     }
-
 }
 
 
@@ -194,7 +193,15 @@ void HexView::keyPressed(wxKeyEvent &event)
         needtorefresh = false;
 
     if (needtorefresh)
+    {
+        int n_rows = (this->GetSize().GetY() - padding + pixels_per_row - 1) / pixels_per_row;
+        int pos = selection.y - scrollbar->GetThumbPosition();
+        if (pos < 0)
+            scrollbar->SetThumbPosition(selection.y);
+        else if (pos > n_rows - 1)
+            scrollbar->SetThumbPosition(selection.y - (n_rows - 1));
         Refresh();
+    }
 }
 
 void HexView::keyReleased(wxKeyEvent &event)

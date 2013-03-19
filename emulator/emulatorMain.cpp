@@ -7,6 +7,13 @@
  * License:
  **************************************************************/
 
+/*
+ * Todo:
+ * - Show PC cursor on hexview
+ * - variable speed
+ * - location variables for watches
+ * - code correspondence? (Link source lines->machine addresses, integrate with IDE)
+ */
 #include "emulatorMain.h"
 #include <fstream>
 #include <iomanip>

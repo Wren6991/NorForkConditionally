@@ -254,7 +254,8 @@
 						<object class="wxBoxSizer" variable="BoxSizer7" member="no">
 							<object class="sizeritem">
 								<object class="wxButton" name="ID_BUTTON1" variable="btnStartStop" member="yes">
-									<label>Label</label>
+									<label>Start</label>
+									<handler function="OnbtnStartStopClick" entry="EVT_BUTTON" />
 								</object>
 								<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 								<border>5</border>
@@ -262,7 +263,7 @@
 							</object>
 							<object class="sizeritem">
 								<object class="wxButton" name="ID_BUTTON2" variable="btnReset" member="yes">
-									<label>Label</label>
+									<label>Reset</label>
 									<handler function="OnbtnResetClick" entry="EVT_BUTTON" />
 								</object>
 								<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
