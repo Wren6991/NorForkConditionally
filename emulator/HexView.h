@@ -10,6 +10,7 @@ class HexView: public wxPanel
     std::vector<uint8_t> *buffer;
     wxFont font;
     wxFont italicfont;
+    wxBitmap *renderbuffer;
 
     wxScrollBar *scrollbar;
     long scrollbar_id;
@@ -44,10 +45,11 @@ public:
     void onSize(wxSizeEvent &event);
     void onScroll(wxScrollEvent &event);
 
-    void paintEvent(wxPaintEvent &evt);
+    void onErase(wxEraseEvent &event);
+    void paintEvent(wxPaintEvent &event);
     void paintNow();
 
-    void render(wxDC &dc);
+    void render(wxDC &targetdc);
 
     ~HexView();
 

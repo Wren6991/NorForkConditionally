@@ -343,7 +343,7 @@ void emulatorFrame::OnNewClicked(wxCommandEvent& event)
 
 void emulatorFrame::OnDebuginChange(wxScrollEvent& event)
 {
-    uint8_t data;
+    uint8_t data = 0;
     if (Slider7->GetValue())
         data |= 0x80;
     if (Slider6->GetValue())

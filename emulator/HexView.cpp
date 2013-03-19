@@ -18,6 +18,7 @@ BEGIN_EVENT_TABLE(HexView, wxPanel)
     EVT_KEY_UP(HexView::keyReleased)
     EVT_SIZE(HexView::onSize)
 
+    EVT_ERASE_BACKGROUND(HexView::onErase)
     EVT_PAINT(HexView::paintEvent)
 
 END_EVENT_TABLE()
@@ -36,6 +37,7 @@ HexView::HexView(wxFrame *parent, std::vector<uint8_t> *data, long id, long styl
     font = wxFont(11, wxTELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Courier New");
     italicfont = wxFont(11, wxTELETYPE, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL, false, "Courier New");
     SetBackgroundColour(wxColor(255, 255, 255));
+    renderbuffer = new wxBitmap(0, 0);
     mousedown = false;
 
     scrollbar_id = wxNewId();
@@ -52,9 +54,15 @@ HexView::~HexView()
 {
     scrollbar->PopEventHandler();
     delete scrollbar;
+    delete renderbuffer;
 }
 
-void HexView::paintEvent(wxPaintEvent &evt)
+void HexView::onErase(wxEraseEvent &event)
+{
+
+}
+
+void HexView::paintEvent(wxPaintEvent &event)
 {
     wxPaintDC dc(this);
     render(dc);
@@ -82,8 +90,11 @@ std::string byte2str(uint8_t x)     // absolutely no need to do this! :)
     return std::string(str);
 }
 
-void HexView::render(wxDC &dc)
+void HexView::render(wxDC &targetdc)
 {
+    wxMemoryDC dc(*renderbuffer);
+    dc.Clear();
+
     int n_rows = (dc.GetSize().GetY() - padding + pixels_per_row - 1) / pixels_per_row;
     int scroll = scrollbar->GetThumbPosition();
     wxPoint pos;
@@ -113,6 +124,7 @@ void HexView::render(wxDC &dc)
         pos = grid2screen(wxPoint(i % n_columns, i / n_columns));
         dc.DrawText(byte2str((*buffer)[i]), pos.x, pos.y);
     }
+    targetdc.Blit(0, 0, dc.GetSize().GetX(), dc.GetSize().GetY(), &dc, 0, 0);
 }
 
 
@@ -249,6 +261,8 @@ void HexView::onSize(wxSizeEvent &event)
     scrollbar->SetScrollbar(scrollbar->GetThumbPosition(), 1,
                             (buffer->size() + n_columns - 1) / n_columns - this->GetSize().GetHeight() / pixels_per_row + 1,
                             1, true);
+    delete renderbuffer;
+    renderbuffer = new wxBitmap(event.GetSize().GetWidth(), event.GetSize().GetHeight());
 }
 
 void HexView::onScroll(wxScrollEvent &event)
