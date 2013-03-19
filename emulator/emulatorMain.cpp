@@ -30,8 +30,10 @@
 //*)
 
 //helper functions
-enum wxbuildinfoformat {
-    short_f, long_f };
+enum wxbuildinfoformat
+{
+    short_f, long_f
+};
 
 wxString wxbuildinfo(wxbuildinfoformat format)
 {
@@ -56,7 +58,7 @@ wxString wxbuildinfo(wxbuildinfoformat format)
 }
 
 //(*IdInit(emulatorFrame)
-const long emulatorFrame::ID_LISTCTRL1 = wxNewId();
+const long emulatorFrame::ID_LSTWATCHES = wxNewId();
 const long emulatorFrame::ID_STATICTEXT1 = wxNewId();
 const long emulatorFrame::ID_LED7 = wxNewId();
 const long emulatorFrame::ID_LED6 = wxNewId();
@@ -85,6 +87,9 @@ const long emulatorFrame::ID_TOOLBARITEM1 = wxNewId();
 const long emulatorFrame::TOOL_ABOUT = wxNewId();
 const long emulatorFrame::ID_TOOLBAR1 = wxNewId();
 const long emulatorFrame::ID_TIMER1 = wxNewId();
+const long emulatorFrame::ID_MENUADDWATCH = wxNewId();
+const long emulatorFrame::ID_MENUCHANGEADDRESS = wxNewId();
+const long emulatorFrame::ID_MENUDELETEWATCH = wxNewId();
 //*)
 
 BEGIN_EVENT_TABLE(emulatorFrame,wxFrame)
@@ -113,7 +118,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
     BoxSizer1 = new wxBoxSizer(wxHORIZONTAL);
     frontpanelsizer = new wxBoxSizer(wxVERTICAL);
-    lstWatches = new wxListCtrl(this, ID_LISTCTRL1, wxDefaultPosition, wxDefaultSize, wxLC_REPORT, wxDefaultValidator, _T("ID_LISTCTRL1"));
+    lstWatches = new wxListCtrl(this, ID_LSTWATCHES, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_EDIT_LABELS|wxLC_SINGLE_SEL|wxLC_SORT_DESCENDING, wxDefaultValidator, _T("ID_LSTWATCHES"));
     lstWatches->SetMaxSize(wxSize(-1,-1));
     frontpanelsizer->Add(lstWatches, 8, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer4 = new wxBoxSizer(wxHORIZONTAL);
@@ -214,9 +219,17 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     dlgSaveAs = new wxFileDialog(this, _("-1"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
     TimerTick.SetOwner(this, ID_TIMER1);
     TimerTick.Start(50, false);
+    MenuItem1 = new wxMenuItem((&mnuWatch), ID_MENUADDWATCH, _("Add Watch"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem1);
+    MenuItem2 = new wxMenuItem((&mnuWatch), ID_MENUCHANGEADDRESS, _("Change Address"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem2);
+    MenuItem3 = new wxMenuItem((&mnuWatch), ID_MENUDELETEWATCH, _("Delete Watch"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem3);
     SetSizer(BoxSizer1);
     Layout();
 
+    Connect(ID_LSTWATCHES,wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK,(wxObjectEventFunction)&emulatorFrame::OnlstWatchesItemRClick);
+    Connect(ID_LSTWATCHES,wxEVT_COMMAND_LIST_COL_RIGHT_CLICK,(wxObjectEventFunction)&emulatorFrame::OnlstWatchesItemRClick);
     Connect(ID_SLIDER7,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
     Connect(ID_SLIDER7,wxEVT_SCROLL_CHANGED,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
     Connect(ID_SLIDER6,wxEVT_SCROLL_THUMBTRACK,(wxObjectEventFunction)&emulatorFrame::OnDebuginChange);
@@ -242,7 +255,11 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
+    Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
+    Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
     //*)
+
+    Connect(ID_LSTWATCHES, wxEVT_COMMAND_RIGHT_CLICK, (wxObjectEventFunction)&emulatorFrame::OnlstWatchesItemRClick);
 
     TimerTick.Stop();
 
@@ -391,6 +408,26 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
         std::cout << "debug output: " << (int)data << "\n";
     }
     memview->Refresh();
+    wxListItem item;
+    for (int i = 0; i < lstWatches->GetItemCount(); i++)
+    {
+        item.m_itemId = i;
+        item.m_col = 1;
+        item.m_mask = wxLIST_MASK_TEXT;
+        lstWatches->GetItem(item);
+        std::stringstream addressstream(item.m_text.ToStdString());
+        addressstream.seekg(0, std::ios::beg);
+        addressstream.ignore(2);
+        addressstream << std::hex;
+        int address;
+        addressstream >> address;
+        std::stringstream formatter;
+        int data = 0;
+        if (address >= 0 && address < machine.memory->size())
+            data = (*machine.memory)[address];
+        formatter << std::hex << std::setw(2) << std::setfill('0') << data;
+        lstWatches->SetItem(i, 2, formatter.str());
+    }
     std::stringstream ss;
     ss << "PC: " << std::hex << std::setw(4) << std::setfill('0') << machine.PC;
     StatusBar1->SetStatusText(ss.str());
@@ -399,8 +436,8 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
 
 void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
 {
-    for (int i = 0; i < 1023; i++)
-        machine.step();
+    /*for (int i = 0; i < 1023; i++)
+        machine.step();*/
     wxCommandEvent evt;
     OnStepClicked(evt);
 }
@@ -429,4 +466,35 @@ void emulatorFrame::OnbtnStartStopClick(wxCommandEvent& event)
         TimerTick.Start();
         btnStartStop->SetLabel("Stop");
     }
+}
+
+void emulatorFrame::OnlstWatchesItemRClick(wxListEvent& event)
+{
+    lstWatches->PopupMenu(&mnuWatch);
+}
+
+int get_hex_address()
+{
+    std::string input = wxGetTextFromUser("Enter memory address:", "Add Watch").ToStdString();
+    std::stringstream ss;
+    ss << std::hex << input;
+    int address = 0;
+    ss >> address;
+    return address;
+}
+
+void emulatorFrame::OnMenuAddWatchSelected(wxCommandEvent& event)
+{
+    long itemindex = lstWatches->InsertItem(lstWatches->GetItemCount(), "New Watch");
+    std::stringstream formatter;
+    formatter << "0x" << std::hex << std::setw(4) << std::setfill('0') << get_hex_address();
+    lstWatches->SetItem(itemindex, 1, formatter.str());
+}
+
+void emulatorFrame::OnMenuItemDeleteSelected(wxCommandEvent& event)
+{
+    int selected = lstWatches->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (selected == -1)
+        return;
+    lstWatches->DeleteItem(selected);
 }

@@ -14,8 +14,8 @@
 
 class emulatorApp : public wxApp
 {
-    public:
-        virtual bool OnInit();
+public:
+    virtual bool OnInit();
 };
 
 #endif // EMULATORAPP_H

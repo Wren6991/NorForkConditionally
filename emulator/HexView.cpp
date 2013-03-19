@@ -24,7 +24,7 @@ BEGIN_EVENT_TABLE(HexView, wxPanel)
 END_EVENT_TABLE()
 
 HexView::HexView(wxFrame *parent, std::vector<uint8_t> *data, long id, long style, wxString name)
-: wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, style | wxFULL_REPAINT_ON_RESIZE | wxWANTS_CHARS, name)
+    : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, style | wxFULL_REPAINT_ON_RESIZE | wxWANTS_CHARS, name)
 {
     padding = 8;
     n_columns = 16;
@@ -232,7 +232,7 @@ void HexView::keyReleased(wxKeyEvent &event)
     else if (c == WXK_DOWN)
         selection = selection + wxPoint(0, 1);
     else*/
-        needtorefresh = false;
+    needtorefresh = false;
 
     if (needtorefresh)
         Refresh();

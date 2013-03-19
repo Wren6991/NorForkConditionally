@@ -23,9 +23,9 @@ bool emulatorApp::OnInit()
     wxInitAllImageHandlers();
     if ( wxsOK )
     {
-    	emulatorFrame* Frame = new emulatorFrame(0);
-    	Frame->Show();
-    	SetTopWindow(Frame);
+        emulatorFrame* Frame = new emulatorFrame(0);
+        Frame->Show();
+        SetTopWindow(Frame);
     }
     //*)
     return wxsOK;

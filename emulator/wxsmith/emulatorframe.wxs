@@ -9,9 +9,11 @@
 				<object class="wxBoxSizer" variable="frontpanelsizer" member="no">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
-						<object class="wxListCtrl" name="ID_LISTCTRL1" variable="lstWatches" member="yes">
+						<object class="wxListCtrl" name="ID_LSTWATCHES" variable="lstWatches" member="yes">
 							<maxsize>-1,-1</maxsize>
-							<style>wxLC_REPORT</style>
+							<style>wxLC_REPORT|wxLC_EDIT_LABELS|wxLC_SINGLE_SEL|wxLC_SORT_DESCENDING</style>
+							<handler function="OnlstWatchesItemRClick" entry="EVT_LIST_ITEM_RIGHT_CLICK" />
+							<handler function="OnlstWatchesItemRClick" entry="EVT_LIST_COL_RIGHT_CLICK" />
 						</object>
 						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
@@ -334,6 +336,19 @@
 		<object class="wxTimer" name="ID_TIMER1" variable="TimerTick" member="yes">
 			<interval>50</interval>
 			<handler function="OnTimerTickTrigger" entry="EVT_TIMER" />
+		</object>
+		<object class="wxMenu" variable="mnuWatch" member="yes">
+			<object class="wxMenuItem" name="ID_MENUADDWATCH" variable="MenuItem1" member="yes">
+				<label>Add Watch</label>
+				<handler function="OnMenuAddWatchSelected" entry="EVT_MENU" />
+			</object>
+			<object class="wxMenuItem" name="ID_MENUCHANGEADDRESS" variable="MenuItem2" member="yes">
+				<label>Change Address</label>
+			</object>
+			<object class="wxMenuItem" name="ID_MENUDELETEWATCH" variable="MenuItem3" member="yes">
+				<label>Delete Watch</label>
+				<handler function="OnMenuItemDeleteSelected" entry="EVT_MENU" />
+			</object>
 		</object>
 	</object>
 </wxsmith>

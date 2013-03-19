@@ -16,26 +16,26 @@ BEGIN_EVENT_TABLE (wxLed, wxWindow)
 END_EVENT_TABLE ()
 
 wxLed::wxLed (wxWindow * parent, wxWindowID id, wxColour disabledColor, wxColour enableColour, const wxPoint & pos, const wxSize & size)
-:
-	wxWindow (parent, id, pos, size),
-	m_bitmap (NULL)
+    :
+    wxWindow (parent, id, pos, size),
+    m_bitmap (NULL)
 {
-	this->m_isEnabled = true ;
-	m_Disable = disabledColor;
-	m_Enable = enableColour;
-	Enable();
+    this->m_isEnabled = true ;
+    m_Disable = disabledColor;
+    m_Enable = enableColour;
+    Enable();
 }
 
 
 wxLed::~wxLed ()
 {
-	delete this->m_bitmap ;
+    delete this->m_bitmap ;
 }
 
 void wxLed::Enable (void)
 {
-	wxWindow::Enable (true) ;
-	this->SetBitmap (this->m_Enable.GetAsString( wxC2S_HTML_SYNTAX)) ;
+    wxWindow::Enable (true) ;
+    this->SetBitmap (this->m_Enable.GetAsString( wxC2S_HTML_SYNTAX)) ;
 }
 
 void wxLed::Disable( void)
@@ -46,7 +46,7 @@ void wxLed::Disable( void)
 
 void wxLed::SetColor (wxColour rgb)
 {
-	m_Enable = rgb;
+    m_Enable = rgb;
     if (this->m_isEnabled)
         this->SetBitmap (this->m_Enable.GetAsString( wxC2S_HTML_SYNTAX)) ;
 }
@@ -58,10 +58,10 @@ bool wxLed::IsEnabled( void)
 
 void wxLed::OnPaint (wxPaintEvent & WXUNUSED (event))
 {
-	wxPaintDC dc (this) ;
-	this->m_mutex.Lock () ;
-	dc.DrawBitmap (* this->m_bitmap, 0, 0, true) ;
-	this->m_mutex.Unlock () ;
+    wxPaintDC dc (this) ;
+    this->m_mutex.Lock () ;
+    dc.DrawBitmap (* this->m_bitmap, 0, 0, true) ;
+    this->m_mutex.Unlock () ;
 }
 
 #define WX_LED_WIDTH    17

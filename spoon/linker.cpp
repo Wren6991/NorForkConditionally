@@ -322,9 +322,9 @@ void linker::emit_writeconst_multiple(int value, linkval dest, int nbytes)
 void linker::emit_writelabel(std::string label, linkval dest)
 {
     emit_nfc2(dest, getconstaddress(0xff));
-    emit_nfc2(dest, linkval(DECREMENT_START) + 256 - linkval(label + "_HI"));           // 256 - x  == ~x + 1
+    emit_nfc2(dest, linkval(DECREMENT_START) + (linkval(256) - linkval(label + "_HI")).getlowbyte());            // 256 - x  == ~x + 1
     emit_nfc2(dest + 1, getconstaddress(0xff));
-    emit_nfc2(dest + 1, linkval(DECREMENT_START) + 256 - linkval(label + "_LO"));
+    emit_nfc2(dest + 1, linkval(DECREMENT_START) + (linkval(256) - linkval(label + "_LO")).getlowbyte());        // getlowbyte is equivalent to & 0xff; makes 0 -> 0 instead of 256.
 }
 
 void linker::add_object(object *obj)
