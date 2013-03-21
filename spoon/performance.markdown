@@ -166,4 +166,48 @@ Size benchmark:
 
 - 1776 bytes
 
+Fibonacci
+---------
+
+Read in 0xa from debugin, calculate the correct value of 0x37 and output to debugout.
+
+Test code:
+
+```
+#include "stddefs"
+
+function int add(int a, int b)
+{
+    var int carry, temp;
+    add = xor(a, b);
+    carry = shiftleft(and(a, b));
+    while (carry)
+    {
+        temp = add;
+        add = xor(add, carry);
+        carry = shiftleft(and(temp, carry));
+    }
+}
+
+function main()
+{
+    while (true)
+    {
+        var int a = 0, b = 1, c, count;
+        count = read(debugin);
+        while (count)
+        {
+            c = add(a, b);
+            a = b;
+            b = c;
+            count = decrement(count);
+        }
+        output(a, debugout);
+    }
+}
+```
+
+- Initial timing:
+	- 1.65 ms.
+
 

@@ -103,6 +103,18 @@ void HexView::render(wxDC &targetdc)
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(wxPoint(0, 0), wxSize(address_columns * pixels_per_column - 8, dc.GetSize().GetHeight()));
 
+    for (unsigned int i = 0; i < cursors.size(); i++)
+    {
+        cursor &cur = cursors[i];
+        dc.SetBrush(wxBrush(cur.colour));
+        int index = cur.index;
+        for (int count = 0; count < cur.size; count++)
+        {
+            if (ongrid(index2grid(index)))
+                dc.DrawRectangle(grid2screen(index2grid(index)), wxSize(pixels_per_column, pixels_per_row - 4));
+            index++;
+        }
+    }
     if (ongrid(selection))
     {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
@@ -252,6 +264,11 @@ void HexView::setSelection(wxPoint sel)
         sel = index2grid(buffer->size() - 1);
 
     selection = sel;
+}
+
+wxPoint HexView::getSelection()
+{
+    return selection;
 }
 
 void HexView::onSize(wxSizeEvent &event)

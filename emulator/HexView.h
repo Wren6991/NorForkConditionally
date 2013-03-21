@@ -7,7 +7,7 @@
 
 class HexView: public wxPanel
 {
-    std::vector<uint8_t> *buffer;
+    std::vector <uint8_t> *buffer;
     wxFont font;
     wxFont italicfont;
     wxBitmap *renderbuffer;
@@ -28,11 +28,22 @@ class HexView: public wxPanel
 
 public:
 
+    struct cursor
+    {
+        wxColor colour;
+        int index;
+        int size;
+        cursor(wxColor _colour, int _index, int _size) {colour = _colour; index = _index; size = _size;}
+    };
+
+
+
     int padding;
     int n_columns;
     int pixels_per_column;
     int pixels_per_row;
     int address_columns;
+    std::vector <cursor> cursors;
 
     HexView(wxFrame *parent, std::vector<uint8_t> *data, long id = wxID_ANY,
             long style = 0, wxString name = wxPanelNameStr);
@@ -50,6 +61,8 @@ public:
     void paintNow();
 
     void render(wxDC &targetdc);
+
+    wxPoint getSelection();
 
     ~HexView();
 

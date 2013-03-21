@@ -31,7 +31,7 @@ function write8bits(int data)
     top = shiftright(top);
     top = shiftright(top);
     write4bits(top);
-    //sleep(0);
+    sleep(0);
     write4bits(and(data, 0x0f));
 }
 
@@ -106,21 +106,20 @@ function wakescreen()
 {
     screensignal = 0x00;
     write4bits(0x3);
-    //sleep(255);
+    sleep(255);
     write4bits(0x3);
-    //sleep(128);
+    sleep(128);
     write4bits(0x3);
     write4bits(0x2);
     write8bits(0x28);
     write8bits(0x0c);
     write8bits(0x01);
-    //sleep(128);
+    sleep (128);
     screensignal = s_rs;
 }
 
 function main()
 {
-    var pointer text = "What's up world! Characters wrap properly 'cause the screen buffer's in RAM.";
     while (true)
     {
         var int blink = 0;
@@ -139,18 +138,13 @@ function main()
                 output(val(0x00), debugout);
                 nfc(blink, blink);
             }
-            //sleep(255); //sleep(255);
+            sleep(255); sleep(255);
         }
 
         wakescreen();
         emptyscreenbuffer();
-        /*printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
-        dumpscreenbuffer();*/
-        write8bits('=');
-        write8bits(')');
-        var char c = read(text);
-        write8bits(c);
-        write8bits('#');
+        printtobuffer("What's up world! Characters wrap properly 'cause the screen buffer's in RAM.", 0);
+        dumpscreenbuffer();
 
         while (read(debugin)) {}
     }

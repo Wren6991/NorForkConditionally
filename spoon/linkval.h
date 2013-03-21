@@ -32,6 +32,7 @@ struct linkval
     bool operator==(linkval &rhs) const;
     linkval gethighbyte() const;
     linkval getlowbyte() const;
+    std::string tostring() const;
 };
 
 #endif // LINKVAL_H_INCLUDED

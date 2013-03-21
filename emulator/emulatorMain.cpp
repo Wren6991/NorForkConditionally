@@ -268,6 +268,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     lstWatches->InsertColumn(2, "Value");
 
     memview = new HexView(this, &buffer);
+    memview->cursors.push_back(HexView::cursor(wxColor(224, 255, 255), 0, 8));
     BoxSizer1->Prepend(memview, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer1->Fit(this);
 
@@ -390,23 +391,38 @@ void writevalue(wxLed* led, bool value)
         led->Disable();
 }
 
-void emulatorFrame::OnStepClicked(wxCommandEvent& event)
+bool emulatorFrame::TakeStep()
 {
+    bool result = false;
     machine.step();
     if (machine.debug_written)
     {
+        result = true;
         machine.debug_written = false;
         uint8_t data = buffer[DEBUG_OUT_POS];
-        writevalue(Led7, data & 0x80);
-        writevalue(Led6, data & 0x40);
-        writevalue(Led5, data & 0x20);
-        writevalue(Led4, data & 0x10);
-        writevalue(Led3, data & 0x08);
-        writevalue(Led2, data & 0x04);
-        writevalue(Led1, data & 0x02);
-        writevalue(Led0, data & 0x01);
-        std::cout << "debug output: " << (int)data << "\n";
+        std::cout << "debug output: " << std::hex << (int)data << "\n";
     }
+    memview->cursors[0].index = machine.PC;
+    return result;
+}
+
+void emulatorFrame::UpdateDisplay()
+{
+    uint8_t data = buffer[DEBUG_OUT_POS];
+    writevalue(Led7, data & 0x80);
+    writevalue(Led6, data & 0x40);
+    writevalue(Led5, data & 0x20);
+    writevalue(Led4, data & 0x10);
+    writevalue(Led3, data & 0x08);
+    writevalue(Led2, data & 0x04);
+    writevalue(Led1, data & 0x02);
+    writevalue(Led0, data & 0x01);
+}
+
+void emulatorFrame::OnStepClicked(wxCommandEvent& event)
+{
+    if (TakeStep())
+        UpdateDisplay();
     memview->Refresh();
     wxListItem item;
     for (int i = 0; i < lstWatches->GetItemCount(); i++)
@@ -423,7 +439,7 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
         addressstream >> address;
         std::stringstream formatter;
         int data = 0;
-        if (address >= 0 && address < machine.memory->size())
+        if (address >= 0 && address < (signed)machine.memory->size())
             data = (*machine.memory)[address];
         formatter << std::hex << std::setw(2) << std::setfill('0') << data;
         lstWatches->SetItem(i, 2, formatter.str());
@@ -436,8 +452,12 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
 
 void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
 {
-    /*for (int i = 0; i < 1023; i++)
-        machine.step();*/
+    bool debug_updated = false;
+    for (int i = 0; i < 2047; i++)
+        if (TakeStep())
+            debug_updated = true;
+    if (debug_updated)
+        UpdateDisplay();
     wxCommandEvent evt;
     OnStepClicked(evt);
 }

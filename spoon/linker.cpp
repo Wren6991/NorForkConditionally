@@ -247,7 +247,10 @@ void linker::emit_nfc2(linkval x, linkval y)
 // clear temp; set temp to not(x);  invert temp and branch on result.
 void linker::emit_branchifzero(linkval testloc, linkval dest)
 {
+    std::cout << "  Linking if:\n";
     linkval temploc = vars.addvar("__brztemp", type_int);
+    std::cout << testloc.tostring() << "\n";
+    std::cout << temploc.tostring() << "\n";
     emit_nfc2(temploc, getconstaddress(0xff));
     emit_nfc2(temploc, testloc);
     uint16_t next = index + 8;
@@ -286,9 +289,15 @@ void linker::emit_branchalways(linkval dest, bool always_emit)
 
 void linker::emit_copy(linkval src, linkval dest)
 {
+    // Copy to self is destructive! (As destination is cleared before copy... x = x; would otherwise set x to 0)
+    // Note however that linkval inequality will compare false in some cases such as labels vs. literals, so don't trust it.
+    if (src == dest)
+        return;
+    // Note that this also protects against __brztemp being in the same place as a temporary function return loc.
     emit_nfc2(dest, getconstaddress(0xff));
     emit_nfc2(dest, src);
     emit_nfc2(dest, dest);
+
 }
 
 void linker::emit_copy_inverted(linkval src, linkval dest)
@@ -801,7 +810,7 @@ void linker::link(if_stat* ifs)
     if (ifs->elseblock)
     {
         // finished the if clause: nonconditional jump past else clause.
-        emit_branchalways(linkval(endlabel));
+        emit_branchalways(linkval(endlabel), true);
         savelabel(elselabel, index);
         link(ifs->elseblock);
     }

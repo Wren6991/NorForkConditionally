@@ -1,4 +1,6 @@
 #include "linkval.h"
+#include <iostream>
+#include <sstream>
 
 // If they're both literals, just add their values
 // Otherwise, return an expression with pointers to the two arguments.
@@ -110,4 +112,16 @@ linkval linkval::getlowbyte() const
         *lv.argA = *this;
         return lv;
     }
+}
+
+std::string linkval::tostring() const
+{
+    std::stringstream ss;
+    if (type == lv_literal)
+        ss << "literal: " << std::hex << literal;
+    else if (type == lv_symbol)
+        ss << "symbol: " << sym;
+    else
+        ss << "expression: (" << ")";
+    return ss.str();
 }

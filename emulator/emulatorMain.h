@@ -139,6 +139,8 @@ private:
     //*)
 
     void SetFileName(std::string path, bool hasbeenmodified);
+    bool TakeStep();
+    void UpdateDisplay();
 
     DECLARE_EVENT_TABLE()
 };
