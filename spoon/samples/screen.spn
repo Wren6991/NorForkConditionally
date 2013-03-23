@@ -13,6 +13,44 @@ const int s_rs = 0x40;
 var int screensignal;
 var int screenbuffer[80];
 
+// non-zero if a < b:
+// if the top bit is different and only true for b, a must be < b.
+function int lessthan(int a, int b)
+{
+    lessthan = 0;
+    var int difference = xor(a, b);
+    while (difference)
+    {
+        if (and(difference, 0x80))
+        {
+            lessthan = and(b, 0x80);
+            return;
+        }
+        difference = shiftleft(difference);
+        a = shiftleft(a);
+        b = shiftleft(b);
+    }
+}
+
+function pointer addPointer(pointer p, int offset)
+{
+    var int bottom;
+    bottom = add(second(p), offset);
+    if (lessthan(bottom, second(p)))
+        addPointer = pair(increment(first(p)), bottom);
+    else
+        addPointer = pair(first(p), bottom);
+}
+
+function pointer int2hexstr(int x)
+{
+    var int buffer[3];
+    buffer[0] = 'C';
+    buffer[1] = '5';
+    buffer[2] = 0;
+    int2hexstr = buffer;
+}
+
 // write data and pulse the clock:
 function write4bits(int data)
 {
@@ -91,7 +129,7 @@ function emptyscreenbuffer()
 
 function printtobuffer(pointer text, int pos)
 {
-    var pointer dest = screenbuffer;
+    var pointer dest = addPointer(screenbuffer, pos);
     var int c = read(text);
     while (c)
     {

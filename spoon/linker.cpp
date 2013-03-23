@@ -850,6 +850,11 @@ void linker::link(assignment *assg)
     expression targetexp;
     targetexp.type = exp_name;
     targetexp.name = assg->name;
+    if (assg->indexed)
+    {
+        targetexp.indexed = true;
+        targetexp.number = assg->index;
+    }
     linkval target = evaluate(&targetexp);
     if (assg->expr->type == exp_number)
     {
@@ -857,7 +862,12 @@ void linker::link(assignment *assg)
     }
     else
     {
-        emit_copy_multiple(evaluate(assg->expr), target, assg->expr->val_type.getsize());
+        type_t type;
+        if (assg->expr->indexed)
+            type = assg->expr->val_type.second;
+        else
+            type = assg->expr->val_type;
+        emit_copy_multiple(evaluate(assg->expr), target, type.getsize());
     }
     vars.pop_temp_scope();
 }
@@ -897,13 +907,15 @@ linkval linker::evaluate(expression *expr)
             }
             else if (var->type.type == type_array)
             {
+                if (expr->indexed)
+                    return var->address + expr->number;
                 linkval addressloc = vars.addvar("__arraytemp", type_pointer);
                 emit_writelabel(expr->name, addressloc);
                 vars.remove_on_pop("__arraytemp");
                 return addressloc;
             }
             else
-                return vars.getvar(expr->name)->address;
+                return var->address;
         }
         else
         {

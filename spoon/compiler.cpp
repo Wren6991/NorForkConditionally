@@ -321,7 +321,6 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
 
 void compiler::compile(vardeclaration *dec)
 {
-    std::vector<assignment*> assignments;
     for (unsigned int j = 0; j < dec->vars.size(); j++)
     {
         vardeclaration::varpair &var = dec->vars[j];
@@ -389,8 +388,16 @@ void compiler::compile(assignment *assg)
     assg->name = currentscope->get(assg->name).name;
     compile(assg->expr);
     type_t assg_type = globalsymboltable[assg->name].type;
+    if (assg->indexed)
+    {
+        if (assg_type.type != type_array)
+            throw(error("Error: attempt to index non-array type."));
+        assg_type.type = assg_type.second;    // match expression against content type, not type_array.
+    }
     // Check for type mismatch:
-    if (!match_types(assg_type, assg->expr->val_type))
+    type_t secondtype = assg->expr->val_type.second;
+    if (!match_types(assg_type, assg->expr->val_type) &&
+        !(assg->expr->indexed && match_types(assg_type, secondtype)))
         throw_type_error("assignment of variable " + assg->name.substr(0, assg->name.find("@")), assg_type, assg->expr->val_type);
 }
 

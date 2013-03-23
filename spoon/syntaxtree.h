@@ -117,8 +117,10 @@ struct goto_stat: public statement
 struct assignment: public statement
 {
     std::string name;
+    bool indexed;
+    int index;
     expression *expr;
-    assignment() {type = stat_assignment;}
+    assignment() {type = stat_assignment; indexed = false;}
 };
 
 struct label: public statement
@@ -168,10 +170,11 @@ struct expression
     exp_type type;
     std::string name;
     int number;
+    bool indexed;
     type_t val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
     std::vector<expression*> args;
-    expression() {}
-    expression(std::string _name) {type = exp_name; name = _name;}
+    expression() {indexed = false;}
+    expression(std::string _name) {type = exp_name; name = _name; indexed = false;}
 };
 
 

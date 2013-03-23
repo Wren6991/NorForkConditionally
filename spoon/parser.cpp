@@ -18,6 +18,15 @@ void throw_unexpected(std::string value, int linenumber = 0, token_type_enum exp
     throw(error(ss.str()));
 }
 
+int intfromstring(std::string str)
+{
+    std::stringstream ss;
+    int result;
+    ss << str;
+    ss >> result;
+    return result;
+}
+
 
 // Set up the type dicts and the state vars
 parser::parser(std::vector<token> tokens_)
@@ -331,11 +340,7 @@ statement* parser::getstatement()
     else
     {
         expect(t_name);
-        if (t.type == t_equals)
-        {
-            return getassignment();
-        }
-        else if (t.type == t_lparen)
+        if (t.type == t_lparen)
         {
             return getfunccall();
         }
@@ -345,8 +350,7 @@ statement* parser::getstatement()
         }
         else
         {
-            expect(t_lparen);
-            return new statement;
+            return getassignment();
         }
     }
 }
@@ -355,6 +359,13 @@ assignment* parser::getassignment()
 {
     resourcep <assignment> assg;
     assg.obj->name = lastt.value;
+    if (accept(t_lsquareb))
+    {
+        expect(t_number);
+        assg.obj->indexed = true;
+        assg.obj->index = intfromstring(lastt.value);
+        expect(t_rsquareb);
+    }
     expect(t_equals);
     assg.obj->expr = getexpression();
     expect(t_semicolon);
@@ -417,15 +428,6 @@ while_stat* parser::getwhile()
     return whiles.release();
 }
 
-int intfromstring(std::string str)
-{
-    std::stringstream ss;
-    int result;
-    ss << str;
-    ss >> result;
-    return result;
-}
-
 expression* parser::getexpression()
 {
     resourcep <expression> expr;
@@ -444,6 +446,13 @@ expression* parser::getexpression()
         else
         {
             expr.obj->type = exp_name;
+            if (accept(t_lsquareb))
+            {
+                expect(t_number);
+                expr.obj->indexed = true;
+                expr.obj->number = intfromstring(lastt.value);
+                expect(t_rsquareb);
+            }
         }
     }
     else if (accept(t_string))

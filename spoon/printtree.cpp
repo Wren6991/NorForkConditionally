@@ -139,6 +139,13 @@ void printtree(statement *stat, int indentation)
         std::cout << " Do\n";
         printtree(((while_stat*)stat)->blk, indentation);
     }
+    else if (stat->type == stat_assignment)
+    {
+        assignment *assg = (assignment*)stat;
+        std::cout << "Setting " << assg->name << " to ";
+        printtree(assg->expr);
+        std::cout << "\n";
+    }
 
 
 }

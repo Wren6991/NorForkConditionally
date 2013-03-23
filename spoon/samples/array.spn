@@ -1,6 +1,6 @@
 #include "stddefs"
 
-function pointer incrementPointer(pointer p)
+/*function pointer incrementPointer(pointer p)
 {
     var int a, b;
     b = increment(second(p));
@@ -28,7 +28,7 @@ function main()
     var pointer p = array;
     write(5, p);
     p = incrementPointer(p);
-    write(11, p);
+    array[1] = 11;
     while (true)
     {
         output(read(p), debugout);
@@ -36,4 +36,10 @@ function main()
         output(read(p), debugout);
         p = incrementPointer(p);
     }
+}*/
+
+function main()
+{
+    var int array[5];
+    array[2] = array[3];
 }
