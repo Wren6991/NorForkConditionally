@@ -209,5 +209,7 @@ function main()
 
 - Initial timing:
 	- 1.65 ms.
+- Initial size: 0x5f8
+	
 
 

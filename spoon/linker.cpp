@@ -247,28 +247,35 @@ void linker::emit_nfc2(linkval x, linkval y)
 // clear temp; set temp to not(x);  invert temp and branch on result.
 void linker::emit_branchifzero(linkval testloc, linkval dest)
 {
-    std::cout << "  Linking if:\n";
-    linkval temploc = vars.addvar("__brztemp", type_int);
-    std::cout << testloc.tostring() << "\n";
-    std::cout << temploc.tostring() << "\n";
-    emit_nfc2(temploc, getconstaddress(0xff));
-    emit_nfc2(temploc, testloc);
-    uint16_t next = index + 8;
-    write16(temploc);
-    write16(temploc);
-    write16(next);
-    write16(dest);
-    vars.remove("__brztemp");
+    padto8bytes();
+    // if the last instruction wrote to the testloc and it's not using its skip fields for anything, we can use
+    // that instruction to perform the branch (as the testloc value will already be in the ALU)
+    if (false && last_instruction_points_to_this_one() && buffer[index - 8] == testloc.gethighbyte() && buffer[index - 7] == testloc.getlowbyte())
+    {
+        buffer[index - 2] = dest.gethighbyte();
+        buffer[index - 1] = dest.getlowbyte();
+    }
+    else
+    {
+        linkval temploc = vars.addvar("__brztemp", type_int);
+        emit_nfc2(temploc, getconstaddress(0xff));
+        emit_nfc2(temploc, testloc);
+        uint16_t next = index + 8;
+        write16(temploc);
+        write16(temploc);
+        write16(next);
+        write16(dest);
+        vars.remove("__brztemp");
+    }
+
 }
 
 void linker::emit_branchalways(linkval dest, bool always_emit)
 {
     padto8bytes();
     // check if the last instruction points at this one:
-    if (!always_emit &&
-        buffer[index - 4] == buffer[index  - 2] && buffer[index - 3] == buffer[index - 1] &&
-        buffer[index - 4].type == lv_literal && buffer[index - 4].literal == index >> 8 &&
-        buffer[index - 3].type == lv_literal && buffer[index - 3].literal == (index & 0xff))
+    if (!always_emit && last_instruction_points_to_this_one())
+
     {
         buffer[index - 4] = dest.gethighbyte();
         buffer[index - 3] = dest.getlowbyte();
@@ -302,6 +309,8 @@ void linker::emit_copy(linkval src, linkval dest)
 
 void linker::emit_copy_inverted(linkval src, linkval dest)
 {
+    if (src == dest)
+        return;
     emit_nfc2(dest, getconstaddress(0xff));
     emit_nfc2(dest, src);
 }
@@ -309,7 +318,8 @@ void linker::emit_copy_inverted(linkval src, linkval dest)
 void linker::emit_writeconst(uint8_t val, linkval dest)
 {
     emit_nfc2(dest, getconstaddress(0xff));
-    emit_nfc2(dest, getconstaddress(~val));
+    if (val)    // no need to do this if 0, as already cleared.
+        emit_nfc2(dest, getconstaddress(~val));
 }
 
 void linker::emit_copy_multiple(linkval src, linkval dest, int nbytes)
@@ -334,6 +344,15 @@ void linker::emit_writelabel(std::string label, linkval dest)
     emit_nfc2(dest, linkval(DECREMENT_START) + (linkval(256) - linkval(label + "_HI")).getlowbyte());            // 256 - x  == ~x + 1
     emit_nfc2(dest + 1, getconstaddress(0xff));
     emit_nfc2(dest + 1, linkval(DECREMENT_START) + (linkval(256) - linkval(label + "_LO")).getlowbyte());        // getlowbyte is equivalent to & 0xff; makes 0 -> 0 instead of 256.
+}
+
+bool linker::last_instruction_points_to_this_one()
+{
+    // true if both skip fields match, and each pair equals the current index.
+    return
+        buffer[index - 4] == buffer[index  - 2] && buffer[index - 3] == buffer[index - 1] &&
+        buffer[index - 4].type == lv_literal && buffer[index - 4].literal == index >> 8 &&
+        buffer[index - 3].type == lv_literal && buffer[index - 3].literal == (index & 0xff);
 }
 
 void linker::add_object(object *obj)
@@ -532,7 +551,6 @@ linkval linker::evaluate_or_return_literal(expression *expr)
         return evaluate(expr);
 }
 
-// TODO: make this work properly for macros! (symbol problems)
 void linker::link(funccall *call)
 {
     if (defined_funcs.find(call->name) == defined_funcs.end())
@@ -581,7 +599,11 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
         if (args[i]->type == exp_number)
             emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->address, fdef->args[i].type.getsize());
         else
-            emit_copy_multiple(evaluate(args[i]), vars.getvar(fdef->args[i].name)->address, fdef->args[i].type.getsize());
+        {
+            linkval argloc = vars.getvar(fdef->args[i].name)->address;
+            // no copy gets emitted if argloc is successfully used as preferred location:
+            emit_copy_multiple(evaluate(args[i], true, argloc), argloc, fdef->args[i].type.getsize());
+        }
     }
     // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
     std::string returnlabel = getlabel();
@@ -591,7 +613,7 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
     return vars.getvar(fdef->name + ":__returnval")->address;
 }
 
-linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string name)
+linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string name, bool givenpreferred, linkval preferred)
 {
         if (name == "nfc")
         {
@@ -649,8 +671,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval temploc = vars.addvar("__pairtemp", type_pointer);
             vars.push_temp_scope();
-            emit_copy(evaluate(args[0]), temploc);
-            emit_copy(evaluate(args[1]), temploc + 1);
+            emit_copy(evaluate(args[0], true, temploc), temploc);
+            emit_copy(evaluate(args[1], true, temploc + 1), temploc + 1);
             vars.pop_temp_scope();
             vars.remove_on_pop("__pairtemp");
             return temploc;
@@ -659,8 +681,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             std::string returnlabel = getlabel();
             vars.push_temp_scope();
-            emit_copy_inverted(evaluate(args[0]), POINTER_READ_RESULT);
-            linkval pointerpos = evaluate(args[1]);
+            emit_copy_inverted(evaluate(args[0], true, POINTER_WRITE_VALUE), POINTER_WRITE_VALUE);
+            linkval pointerpos = evaluate(args[1], true, POINTER_WRITE_CLEAR_INSTRUCTION);
             vars.pop_temp_scope();
             emit_copy_multiple(pointerpos, POINTER_WRITE_CLEAR_INSTRUCTION, type_t(type_pointer).getsize());
             emit_copy_multiple(pointerpos, POINTER_WRITE_COPY_INSTRUCTION, type_t(type_pointer).getsize());
@@ -676,11 +698,19 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             {
                 if (args[0]->type == exp_number)
                 {
-                    emit_copy(args[0]->number, POINTER_READ_RESULT);
-                    return POINTER_READ_RESULT;
+                    if (givenpreferred)
+                    {
+                        emit_copy(args[0]->number, preferred);
+                        return preferred;
+                    }
+                    else
+                    {
+                        emit_copy(args[0]->number, POINTER_READ_RESULT);
+                        return POINTER_READ_RESULT;
+                    }
                 }
                 vars.push_temp_scope();
-                emit_copy_multiple(evaluate(args[0]), POINTER_READ_PVECTOR, type_t(type_pointer).getsize());
+                emit_copy_multiple(evaluate(args[0], true, POINTER_READ_PVECTOR), POINTER_READ_PVECTOR, type_t(type_pointer).getsize());
                 vars.pop_temp_scope();
             }
             else
@@ -696,28 +726,37 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
                 if (args[0]->type == exp_number)
                     emit_writeconst(args[0]->number, POINTER_READ_PVECTOR + 1);
                 else
-                    emit_copy(evaluate(args[0]), POINTER_READ_PVECTOR + 1);
+                    emit_copy(evaluate(args[0], true, POINTER_READ_PVECTOR + 1), POINTER_READ_PVECTOR + 1);
             }
             emit_writelabel(returnlabel, JUMP_PVECTOR);
             emit_branchalways(POINTER_READ_INSTRUCTION);
             savelabel(returnlabel, index);
-            emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
-            return POINTER_READ_RESULT;                             // Careful of collisions.
+            if (givenpreferred)
+            {
+                emit_copy_inverted(POINTER_READ_RESULT, preferred);
+                return preferred;
+            }
+            else
+            {
+                emit_nfc2(POINTER_READ_RESULT, POINTER_READ_RESULT);    // NB multiple functions are returning here!
+                return POINTER_READ_RESULT;                             // Careful of collisions.
+            }
         }
         else if (name == "andnot")
         {
-            linkval returnloc = vars.addvar("__andnottemp", type_int);
+            linkval returnloc = givenpreferred ? preferred : vars.addvar("__andnottemp", type_int);
             vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
             emit_nfc2(returnloc, evaluate(args[1]));
             vars.pop_temp_scope();
-            vars.remove_on_pop("__andnottemp");
+            if (!givenpreferred)
+                vars.remove_on_pop("__andnottemp");
             return returnloc;
         }
         else if (name == "and")
         {
-            linkval returnloc = vars.addvar("__andreturnloc", type_int);
+            linkval returnloc = givenpreferred ? preferred : vars.addvar("__andreturnloc", type_int);
             linkval temploc = vars.addvar("__andtemploc", type_int);
             vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
@@ -726,39 +765,42 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_nfc2(temploc, evaluate(args[1]));
             emit_nfc2(returnloc, temploc);
             vars.pop_temp_scope();
-            vars.remove_on_pop("__andreturnloc");
+            if (!givenpreferred)
+                vars.remove_on_pop("__andreturnloc");
             vars.remove_on_pop("__andtemploc");
             return returnloc;
         }
         else if (name == "not")
         {
-            linkval returnloc = vars.addvar("__notreturnloc", type_int);
+            linkval returnloc = givenpreferred ? preferred : vars.addvar("__notreturnloc", type_int);
             vars.push_temp_scope(); // For the arguments
             emit_nfc2(returnloc, getconstaddress(0xff));
             emit_nfc2(returnloc, evaluate(args[0]));
             vars.pop_temp_scope();
-            vars.remove_on_pop("__notreturnloc");
+            if (!givenpreferred)
+                vars.remove_on_pop("__notreturnloc");
             return returnloc;
         }
         else if (name == "or")
         {
-            linkval returnloc = vars.addvar("__orreturnloc", type_int);
+            linkval returnloc = givenpreferred ? preferred : vars.addvar("__orreturnloc", type_int);
             vars.push_temp_scope(); // For the arguments
-            emit_copy(evaluate(args[0]), returnloc);
+            emit_copy(evaluate(args[0], true, returnloc), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             emit_nfc2(returnloc, returnloc);
             vars.pop_temp_scope();
-            vars.remove_on_pop("__orreturnloc");
+            if (!givenpreferred)
+                vars.remove_on_pop("__orreturnloc");
             return returnloc;
         }
         else if (name == "xor")
         {
-            linkval returnloc = vars.addvar("__xorreturnloc", type_int);
+            linkval returnloc = givenpreferred ? preferred : vars.addvar("__xorreturnloc", type_int);
             linkval temp1 = vars.addvar("__xortemp1", type_int);
             linkval temp2 = vars.addvar("__xortemp2", type_int);
             vars.push_temp_scope(); // For the arguments
             linkval argA = evaluate(args[0]);
-            linkval argB = evaluate(args[1]);   // WATCH OUT: possibly clobber each other's memory, cause we're not passing by value
+            linkval argB = evaluate(args[1]);
             emit_nfc2(temp1, getconstaddress(0xff));
             emit_nfc2(temp1, argA);
             emit_nfc2(temp1, argB);
@@ -769,7 +811,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_nfc2(returnloc, temp2);
             emit_nfc2(returnloc, returnloc);
             vars.pop_temp_scope();
-            vars.remove_on_pop("__xorreturnloc");
+            if (!givenpreferred)
+                vars.remove_on_pop("__xorreturnloc");
             vars.remove_on_pop("__xortemp1");
             vars.remove_on_pop("__xortemp2");
             return returnloc;
@@ -867,7 +910,8 @@ void linker::link(assignment *assg)
             type = assg->expr->val_type.second;
         else
             type = assg->expr->val_type;
-        emit_copy_multiple(evaluate(assg->expr), target, type.getsize());
+        // Pass in the target as the preferred location: if resultloc and target match, no actual copy will be emitted.
+        emit_copy_multiple(evaluate(assg->expr, true, target), target, type.getsize());
     }
     vars.pop_temp_scope();
 }
@@ -877,7 +921,8 @@ void linker::link(assignment *assg)
 // (think of a symbol as an "IOU" for an actual address: e.g. for labels we don't know the address til we reach them.)
 // Always returns an address: if we need code to calculate the value (e.g. a function call) then this function emits that code
 // and then returns the location where the value will be found.
-linkval linker::evaluate(expression *expr)
+// Caller can pass in a "preferred" destination, e.g. when performing assignments - if possible, result will end up there.
+linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferred)
 {
     if (expr->type == exp_number)
     {
@@ -928,7 +973,7 @@ linkval linker::evaluate(expression *expr)
     {
         if (!defined_funcs[expr->name])
         {
-            return linkbuiltinfunction(expr->args, expr->name);
+            return linkbuiltinfunction(expr->args, expr->name, givenpreferred, preferred);
         }
         else
         {

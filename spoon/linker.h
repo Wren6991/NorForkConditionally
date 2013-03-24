@@ -86,18 +86,19 @@ class linker
     void emit_copy_multiple(linkval src, linkval dest, int nbytes);
     void emit_writeconst_multiple(int value, linkval dest, int nbytes);
     void emit_writelabel(std::string label, linkval dest);
+    bool last_instruction_points_to_this_one();
 // Tree traversal:
     void link(funcdef*);
     void link(block*);
     void link(statement*);
     void link(funccall*);
     linkval linkfunctioncall(std::vector<expression*>&, funcdef*);
-    linkval linkbuiltinfunction(std::vector<expression*>&, std::string);
+    linkval linkbuiltinfunction(std::vector<expression*>&, std::string, bool givenpreferred = false, linkval preferred = 0);
     void link(goto_stat*);
     void link(if_stat*);
     void link(while_stat*);
     void link(assignment*);
-    linkval evaluate(expression*);
+    linkval evaluate(expression*, bool givenpreferred = false, linkval preferred = 0);
     uint16_t evaluate(linkval);
     std::vector<char> assemble();
     void allocatefunctionstorage();

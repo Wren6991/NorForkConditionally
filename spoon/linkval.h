@@ -29,7 +29,7 @@ struct linkval
     linkval(std::string s):linkval() {type = lv_symbol; sym = s;}
     linkval operator+(linkval rhs) const;
     linkval operator-(linkval rhs) const;
-    bool operator==(linkval &rhs) const;
+    bool operator==(linkval rhs) const;
     linkval gethighbyte() const;
     linkval getlowbyte() const;
     std::string tostring() const;

@@ -59,7 +59,7 @@ linkval linkval::operator-(linkval rhs) const
 // if they're different types, they're not equal.
 // otherwise, check whether their values are equal.
 // symbols don't get looked up, just directly compared.
-bool linkval::operator==(linkval &rhs) const
+bool linkval::operator==(linkval rhs) const
 {
     if (type != rhs.type)   // this is a conservative equality: those of different types may be equal, but we assume not.
         return false;

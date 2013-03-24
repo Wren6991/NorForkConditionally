@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     catch (error e)
     {
         std::cout << e.errstring << "\n";
-        return -1;
+        return 1;
     }
     return 0;
 }
