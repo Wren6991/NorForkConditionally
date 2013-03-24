@@ -1,0 +1,21 @@
+function memset(pointer dest, int value, int count)
+{
+    while (count)
+    {
+        write(value, dest);
+        count = decrement(count);
+        dest = incrementPointer(dest);
+    }
+}
+
+function memcpy(pointer dest, pointer src, int count)
+{
+    while (count)
+    {
+        var int x = read(src);
+        write(x, dest);
+        dest = incrementPointer(dest);
+        src = incrementPointer(src);
+        count = decrement(count);
+    }
+}
