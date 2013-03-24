@@ -40,3 +40,9 @@ macro nop()
     var int dontcare;
     nfc(dontcare, dontcare);
 }
+
+function sleep(int time)
+{
+    while (time)
+        time = decrement(time);
+}

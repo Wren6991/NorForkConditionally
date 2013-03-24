@@ -1,6 +1,10 @@
 #include "error.h"
 #include "linker.h"
 
+
+// REMOVE:
+#include "printtree.h"
+
 #include <set>
 #include <sstream>
 
@@ -452,6 +456,7 @@ std::vector<char> linker::link()
     emit_branchalways(index, true);
 
     // Link in the rest of the functions afterwards.
+    removeunusedfunctions();
     for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
     {
         if (!iter->second)  // skip it if it's hardcoded! (largely 'cause we don't want null dereferencing.)
@@ -988,7 +993,6 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
     else if (expr->type == exp_string)
     {
         std::string stringlocation = getlabel();
-        std::cout << "IOU for string \"" << expr->name << "\" at " << stringlocation << "\n";
         stringvalues.push_back(std::pair<std::string, std::string>(stringlocation, expr->name));    // the actual string will get linked in later, tacked onto the end of the program.
         linkval temploc = vars.addvar("__stringloctemp", type_pointer);
         emit_writelabel(stringlocation, temploc);
@@ -1054,6 +1058,45 @@ void linker::allocatefunctionstorage()
     }
 }
 
+void linker::removeunusedfunctions()
+{
+    markusedfunctions("main");
+    std::map<std::string, definition*>::iterator fiter;
+    for (fiter = defined_funcs.begin(); fiter != defined_funcs.end(); fiter++)
+    {
+        funcdef *def = (funcdef*)fiter->second;
+        if (!def || def->type != dt_funcdef)
+            continue;   // ignore the builtin functions.
+        if (!def->is_used)
+        {
+#ifdef EBUG
+            std::cout << "erasing function " << fiter->first << "\n";
+#endif // EBUG
+            defined_funcs.erase(fiter++);
+        }
+
+    }
+}
+
+void linker::markusedfunctions(std::string rootfunc)
+{
+    //std::cout << "Finding dependencies for " << root << "\n";
+    funcdef *rootdef = (funcdef*)defined_funcs[rootfunc];
+    rootdef->is_used = true;
+    std::set<std::string> &dependencies = rootdef->dependson;
+    for (std::set<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++)
+    {
+        funcdef *def = (funcdef*)defined_funcs[*i];
+        if (!def || def->type != dt_funcdef)
+            continue;
+        if (!def->is_used)
+        {
+            def->is_used = true;
+            markusedfunctions(*i);
+        }
+    }
+
+}
 uint16_t linker::evaluate(linkval lv)
 {
     switch (lv.type)

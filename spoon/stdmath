@@ -19,7 +19,7 @@ function int subtract(int a, int b)
     subtract = add(a, b);
 }
 
-/*function int multiply(a, b)
+function int multiply(int a, int b)
 {
     multiply = 0;
     while (b)
@@ -27,7 +27,34 @@ function int subtract(int a, int b)
         multiply = add(multiply, a);
         b = decrement(b);
     }
-}*/
+}
+
+// non-zero if a < b:
+// if the top bit is different and only true for b, a must be < b.
+function int lessthan(int a, int b)
+{
+    lessthan = 0;
+    var int difference = xor(a, b);
+    while (difference)
+    {
+        if (and(difference, 0x80))
+        {
+            lessthan = and(b, 0x80);
+            return;
+        }
+        difference = shiftleft(difference);
+        a = shiftleft(a);
+        b = shiftleft(b);
+    }
+}
+
+function int equal(int a, int b)
+{
+    if (xor(a, b))
+        equal = 0;
+    else
+        equal = 1;
+}
 
 // 16 bit
 
@@ -40,4 +67,25 @@ function pointer incrementPointer(pointer p)
     else
         a = increment(first(p));
     incrementPointer = pair(a, b);
+}
+
+function pointer decrementPointer(pointer p)
+{
+    var int a, b;
+    if (second(p))
+        a = first(p);
+    else
+        a = decrement(first(p));
+    b = decrement(second(p));
+    decrementPointer = pair(a, b);
+}
+
+function pointer addPointer(pointer p, int offset)
+{
+    var int bottom;
+    bottom = add(second(p), offset);
+    if (lessthan(bottom, second(p)))
+        addPointer = pair(increment(first(p)), bottom);
+    else
+        addPointer = pair(first(p), bottom);
 }

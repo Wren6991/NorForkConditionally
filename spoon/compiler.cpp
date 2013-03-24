@@ -78,6 +78,7 @@ compiler::compiler()
     val_sig.return_type = type_pointer;
     val_sig.arg_types.push_back(type_int);
     functions["val"] = val_sig;
+    currentfuncdef = 0;
 }
 
 void compiler::pushscope()
@@ -127,7 +128,10 @@ object* compiler::compile(program *prog)
         }
         else if (def->type == dt_funcdef)
         {
-            compile((funcdef*)def);
+            funcdef *previousfuncdef = currentfuncdef;
+            currentfuncdef = (funcdef*)def;
+            compile(currentfuncdef);
+            currentfuncdef = previousfuncdef;
         }
         else if (def->type == dt_vardec)
         {
@@ -338,6 +342,11 @@ void compiler::compile(funccall *fcall)
         ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
         throw(error(ss.str()));
     }
+    if (currentfuncdef)
+    {
+        std::cout << "adding dependency to function " << currentfuncdef->name << ": " << fcall->name << "\n";
+        currentfuncdef->dependson.insert(fcall->name);
+    }
     func_signature &sig = functions[fcall->name];
     if (fcall->args.size() < sig.arg_types.size())
         throw(error("Error: not enough arguments to function " + fcall->name));
@@ -429,6 +438,11 @@ void compiler::compile(expression *expr)
     {
 
         func_signature &sig = functions[expr->name];
+        if (currentfuncdef)
+        {
+            std::cout << "adding dependency to function " << currentfuncdef->name << ": " << expr->name << "\n";
+            currentfuncdef->dependson.insert(expr->name);
+        }
         if (expr->args.size() < sig.arg_types.size())
             throw(error("Error: not enough arguments to function " + expr->name));
         else if (expr->args.size() > sig.arg_types.size())

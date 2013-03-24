@@ -50,6 +50,7 @@ class compiler
     std::map<std::string, symbol> globalsymboltable;
     std::set<std::string> defined_funcs;
     std::map<std::string, func_signature> functions;
+    funcdef *currentfuncdef;
     void pushscope();
     void popscope();
     public:

@@ -19,3 +19,16 @@ function memcpy(pointer dest, pointer src, int count)
         count = decrement(count);
     }
 }
+
+function strcpy(pointer dest, pointer src)
+{
+    var char c;
+    c = read(src);
+    while (c)
+    {
+        write(c, dest);
+        dest = incrementPointer(dest);
+        src = incrementPointer(src);
+        c = read(src);
+    }
+}

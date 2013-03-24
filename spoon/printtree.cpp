@@ -21,21 +21,26 @@ void printtree(program *prog, int indentation)
 {
     for (unsigned int i = 0; i < prog->defs.size(); i++)
     {
-        switch(prog->defs[i]->type)
-        {
-            case dt_constdef:
-                printtree((constdef*)(prog->defs[i]), indentation);
-                break;
-            case dt_funcdef:
-                printtree((funcdef*)(prog->defs[i]), indentation);
-                break;
-            case dt_macrodef:
-                printtree((macrodef*)(prog->defs[i]), indentation);
-                break;
-            case dt_vardec:
-                printtree((vardeclaration*)(prog->defs[i]), indentation);
-                break;
-        }
+        printtree(prog->defs[i], 0);
+    }
+}
+
+void printtree(definition *def, int indentation)
+{
+    switch(def->type)
+    {
+        case dt_constdef:
+            printtree((constdef*)def, indentation);
+            break;
+        case dt_funcdef:
+            printtree((funcdef*)def, indentation);
+            break;
+        case dt_macrodef:
+            printtree((macrodef*)def, indentation);
+            break;
+        case dt_vardec:
+            printtree((vardeclaration*)def, indentation);
+            break;
     }
 }
 
@@ -49,6 +54,13 @@ void printtree(funcdef *def, int indentation)
 {
     indent(indentation);
     std::cout << "\nDefinition of function " << def->name << ":\n";
+    indent(indentation);
+    std::cout << " Depends on:\n";
+    for (std::set<std::string>::iterator iter = def->dependson.begin(); iter != def->dependson.end(); iter++)
+    {
+        indent(indentation);
+        std::cout << "  " << (*iter) << "\n";
+    }
     if (def->defined)
     {
         printtree(def->body, indentation);

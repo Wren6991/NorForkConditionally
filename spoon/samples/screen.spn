@@ -2,46 +2,11 @@
 #include "stdmath"
 #include "stdmem"
 
-function sleep(int time)
-{
-    while (time)
-        time = decrement(time);
-}
-
 const int s_enable = 0x80;
 const int s_rs = 0x40;
 
 var int screensignal;
 var int screenbuffer[80];
-
-// non-zero if a < b:
-// if the top bit is different and only true for b, a must be < b.
-function int lessthan(int a, int b)
-{
-    lessthan = 0;
-    var int difference = xor(a, b);
-    while (difference)
-    {
-        if (and(difference, 0x80))
-        {
-            lessthan = and(b, 0x80);
-            return;
-        }
-        difference = shiftleft(difference);
-        a = shiftleft(a);
-        b = shiftleft(b);
-    }
-}
-
-function pointer addPointer(pointer p, int offset)
-{
-    var int bottom;
-    bottom = add(second(p), offset);
-    if (lessthan(bottom, second(p)))
-        addPointer = pair(increment(first(p)), bottom);
-    else
-        addPointer = pair(first(p), bottom);
-}
 
 function pointer int2hexstr(int x)
 {

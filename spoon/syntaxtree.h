@@ -1,8 +1,9 @@
 #ifndef SYNTAXTREE_H_INCLUDED
 #define SYNTAXTREE_H_INCLUDED
 
-#include <vector>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "type.h"
 
@@ -74,7 +75,10 @@ struct funcdef: public definition
     std::vector <argument> args;
     block *body;
     bool defined;       // vs. merely declared
-    funcdef() {type = dt_funcdef; defined = false;}
+    // Only used by compiler and linker:
+    std::set<std::string> dependson;
+    bool is_used;   // For mark and sweep of functions by linker
+    funcdef() {type = dt_funcdef; defined = false; is_used = false;}
 };
 
 struct macrodef: public definition
