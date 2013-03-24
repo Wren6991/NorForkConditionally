@@ -78,6 +78,11 @@ bool linkval::operator==(linkval rhs) const
     }
 }
 
+bool linkval::operator!=(linkval rhs) const
+{
+    return !(operator==(rhs));
+}
+
 // Shift it, append a "_HI", or return an expression.
 linkval linkval::gethighbyte() const
 {

@@ -209,7 +209,27 @@ function main()
 
 - Initial timing:
 	- 1.65 ms.
-- Initial size: 0x5f8
+- Initial size:
+	- 0x5f8
+
+Added the "preferred target" thing.
+
+- New timing:
+	- 1.41 ms
+- New size:
+	0x530
 	
 
+Screen test
+-----------
+
+Version of code:
+(https://github.com/Wren6991/NorForkConditionally/blob/b30ba520a1d9c13c1fbdd4a703a8ee707e8a7a9f/spoon/samples/screen.spn)screen.spn
+
+- Before optimization:
+	- size: 0x27b8
+- Preferred location information:
+	- size: 0x24f0
+- Preferred location information for multi-byte constant temps (e.g. string addresses)
+	- size: 0x23a0
 

@@ -785,7 +785,8 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval returnloc = givenpreferred ? preferred : vars.addvar("__orreturnloc", type_int);
             vars.push_temp_scope(); // For the arguments
-            emit_copy(evaluate(args[0], true, returnloc), returnloc);
+            // Only make it preferred if it's not going to modify the return address (this would effectively the same as a self-copy, i.e. destructive.)
+            emit_copy(evaluate(args[0], returnloc != preferred, returnloc), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             emit_nfc2(returnloc, returnloc);
             vars.pop_temp_scope();
@@ -930,9 +931,10 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
             return getconstaddress(expr->number);       // NOT the literal itself. If you want the actual literal (e.g. with NFC) then fetch it directly, as this is an oddball case. (SEE evaluate_or_return_literal())
         else
         {
-            linkval constloc = vars.addvar("__consttemp", expr->val_type);
+            linkval constloc = givenpreferred? preferred : vars.addvar("__consttemp", expr->val_type);
             emit_writeconst_multiple(expr->number, constloc, expr->val_type.getsize());
-            vars.remove_on_pop("__consttemp");
+            if (!givenpreferred)
+                vars.remove_on_pop("__consttemp");
             return constloc;
         }
     }
@@ -954,9 +956,10 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
             {
                 if (expr->indexed)
                     return var->address + expr->number;
-                linkval addressloc = vars.addvar("__arraytemp", type_pointer);
+                linkval addressloc = givenpreferred? preferred : vars.addvar("__arraytemp", type_pointer);
                 emit_writelabel(expr->name, addressloc);
-                vars.remove_on_pop("__arraytemp");
+                if (!givenpreferred)
+                    vars.remove_on_pop("__arraytemp");
                 return addressloc;
             }
             else
