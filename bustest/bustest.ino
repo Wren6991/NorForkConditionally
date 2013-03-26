@@ -6,16 +6,16 @@ const uint8_t pin_g = 0x10;  //g: OE_ROM
 const uint8_t pin_h = 0x20;  //h: WE_ROM
 
 #define ROM_BASE 0x00
-#define ROM_SIZE 0x2638
-
-/*const char rombuffer[] = {
+//#define ROM_SIZE 0x2638
+#define ROM_SIZE 25;
+const char rombuffer[] = {
 0xbf, 0xff, 0x00, 0x18, 0x00, 0x08, 0x00, 0x08,
 0xbf, 0xff, 0xc0, 0x01, 0x00, 0x10, 0x00, 0x10,
 0xc0, 0x00, 0xbf, 0xff, 0x00, 0x00, 0x00, 0x00,
 0xff
-};*/
+};
 
-const char rombuffer[] PROGMEM = 
+/*const char rombuffer[] PROGMEM = 
 {
 0xbf, 0xc2, 0x7d, 0x00, 0x00, 0x08, 0x00, 0x08,
 0xbf, 0xc2, 0x7d, 0x83, 0x00, 0x10, 0x00, 0x10,
@@ -1240,7 +1240,7 @@ const char rombuffer[] PROGMEM =
 0x6e, 0x74, 0x65, 0x72, 0x20, 0x63, 0x68, 0x61,
 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x73, 0x3a,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+};*/
 
 inline void write(char value)
 {
@@ -1274,24 +1274,33 @@ void setup()
   detach();
 }
 
+void writeaddress(uint16_t address)
+{
+}
+
 bool programbyte(uint8_t data, uint8_t *readback, bool hasalreadyfailed = false)
 {
-  PORTC |= pin_h;
+  if (hasalreadyfailed)
+    delay(50);
+  PORTC |= pin_h | pin_g;
   write(data);
   delayMicroseconds(50);
   PORTC &= ~pin_h;
   delayMicroseconds(100);
-  PORTC |= pin_h;
-  detach();
-  delay(2);
-  if (hasalreadyfailed)
-    delay(3);
-  PORTC &= ~pin_g;
-  delay(5);
   if (hasalreadyfailed)
     delay(5);
+  PORTC |= pin_h;
+  detach();
+  delay(5);
+  if (hasalreadyfailed)
+    delay(10);
+  PORTC &= ~pin_g;
+  delay(2);
+  if (hasalreadyfailed)
+    delay(50);
   *readback = read();
   return data == *readback;
+  PORTC |= pin_g;
 }
 
 
@@ -1380,6 +1389,7 @@ void loop()
   }
   else if (c == 'R')
   {
+    tryagain:
     Serial.println("Programming EEPROM...");
     bool failed = false;
     detach();
@@ -1401,7 +1411,7 @@ void loop()
       PORTC |= pin_f;
       PORTC &= ~pin_f;
       
-      uint8_t failcount = 50;
+      uint8_t failcount = 10;
       if (!programbyte(value, &readback))
       {
         while (failcount)
@@ -1430,6 +1440,7 @@ void loop()
     {
       Serial.println("Write successful.");
     }
+    else goto tryagain;
   }
   else if (c == 'P')
   {
