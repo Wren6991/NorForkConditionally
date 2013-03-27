@@ -7,8 +7,8 @@ const uint8_t pin_h = 0x20;  //h: WE_ROM
 
 #define ROM_BASE 0x00
 //#define ROM_SIZE 0x2638
-#define ROM_SIZE 25;
-const char rombuffer[] = {
+#define ROM_SIZE 25
+const char rombuffer[] PROGMEM = {
 0xbf, 0xff, 0x00, 0x18, 0x00, 0x08, 0x00, 0x08,
 0xbf, 0xff, 0xc0, 0x01, 0x00, 0x10, 0x00, 0x10,
 0xc0, 0x00, 0xbf, 0xff, 0x00, 0x00, 0x00, 0x00,
@@ -1266,23 +1266,53 @@ inline void detach()
   write(0);
 }
 
-void setup()
+void writeaddress(uint16_t address)
 {
-  Serial.begin(9600);
-  PORTC = 0x3c;
-  DDRC = 0x3c;    // bit outputs only
+  attach();
+  write((address >> 8) & 0xff);
+  PORTC |= pin_e;
+  PORTC &= ~pin_e;
+  write(address & 0xff);
+  PORTC |= pin_f;
+  PORTC &= ~pin_f;
   detach();
 }
 
-void writeaddress(uint16_t address)
+void writebigaddress(uint32_t address)
 {
+  writeaddress(address & 0xffff);
+  DDRB |= 0x7;
+  PORTB = (PORTB & ~0x07) | ((address >> 16) & 0x07);
 }
+
+void writeflashcommand(uint32_t address, uint8_t command)
+{
+  PORTC |= pin_g | pin_h;
+  writebigaddress(address);
+  attach();
+  write(command);
+  PORTC &= ~pin_h;
+  PORTC |= pin_h; 
+  detach();
+  delayMicroseconds(50);
+}
+
+void programflashbyte(uint16_t address, uint8_t data)
+{
+  writeflashcommand(0x555, 0xaa);
+  writeflashcommand(0x2aa, 0x555);
+  writeflashcommand(0x555, 0x90);
+  writeflashcommand(address, data);
+}
+  
+ 
 
 bool programbyte(uint8_t data, uint8_t *readback, bool hasalreadyfailed = false)
 {
   if (hasalreadyfailed)
     delay(50);
   PORTC |= pin_h | pin_g;
+  attach();
   write(data);
   delayMicroseconds(50);
   PORTC &= ~pin_h;
@@ -1305,6 +1335,16 @@ bool programbyte(uint8_t data, uint8_t *readback, bool hasalreadyfailed = false)
 
 
 char val;
+
+void setup()
+{
+  Serial.begin(9600);
+  PORTC = 0x3c;
+  DDRC = 0x3c;    // bit outputs only
+  detach();
+  
+  writebigaddress(0x555);
+}
 
 void loop()
 {
@@ -1373,14 +1413,7 @@ void loop()
     for (int i = 0; i < ROM_SIZE; i++)
     {
       Serial.println(i);
-      attach();
-      write((i >> 8) & 0xff);
-      PORTC |= pin_e;
-      PORTC &= ~pin_e;
-      write(i & 0xff);
-      PORTC |= pin_f;
-      PORTC &= ~pin_f;
-      detach();
+      writeaddress(i);
       PORTC &= ~pin_g;
       Serial.print("0x");
       Serial.println((uint8_t)read(), HEX);
@@ -1402,16 +1435,9 @@ void loop()
         Serial.println("%");
       }
       uint8_t value = pgm_read_byte(&(rombuffer[i - ROM_BASE])); 
-      uint8_t readback;
-      attach();
-      write((i >> 8) & 0xff);
-      PORTC |= pin_e;
-      PORTC &= ~pin_e;
-      write(i & 0xff);
-      PORTC |= pin_f;
-      PORTC &= ~pin_f;
-      
-      uint8_t failcount = 10;
+      /*uint8_t readback;
+      writeaddress(i);
+      uint8_t failcount = 1;
       if (!programbyte(value, &readback))
       {
         while (failcount)
@@ -1434,13 +1460,14 @@ void loop()
         failed = true;
         break;
       }
-      PORTC |= pin_g;
+      PORTC |= pin_g;*/
+      programflashbyte(i, value);
     }
     if (!failed)
     {
       Serial.println("Write successful.");
     }
-    else goto tryagain;
+    //else goto tryagain;
   }
   else if (c == 'P')
   {
