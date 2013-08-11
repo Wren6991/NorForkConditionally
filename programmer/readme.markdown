@@ -1,6 +1,8 @@
 USB Programmer
 ==============
 
+<img src="http://i.imgur.com/08vBQ4q.jpg">
+
 Hardware
 --------
 
