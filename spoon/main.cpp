@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
     std::string ifilename, ofilename;
     bool have_ifilename, have_ofilename;
-    bool strip_unused_functions = true;
+    bool strip_unused_functions = false;
     try
     {
         for (int i = 1; i < argc; i++)

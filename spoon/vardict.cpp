@@ -7,7 +7,7 @@
 
 void vardict::find_first_available_space(int searchstart)
 {
-    for (int i = searchstart; i < HEAP_SIZE; i++)
+    for (int i = HEAP_SIZE - 1; i >= 0; i--)
     {
         if (!memory_in_use[i])
         {
@@ -23,29 +23,30 @@ void vardict::find_first_available_space(int searchstart)
 // If we find it, block it out and return the start.
 int vardict::getspace(int size)
 {
-    int start = first_available_space;
-    while (start < HEAP_SIZE)
+    int pos = first_available_space;
+    while (pos >= 0)
     {
+        int start = pos;
         bool enoughSpace = true;
-        for (int i = start; i < start + size; i++)
+        for (; pos > start - size && enoughSpace; pos--)
         {
-            if (memory_in_use[i])
+            if (memory_in_use[pos])
             {
                 enoughSpace = false;
-                start = i + 1;          // start checking again at the next unchecked location
-                break;
+                pos--;          // start checking again at the next unchecked location
             }
         }
         if (enoughSpace)
         {
-            for (int i = start; i < start + size; i++)
+            for (int i = start; i > start - size; i--)
             {
                 memory_in_use[i] = true;
                 has_been_used[i] = true;
             }
+            int bottom = start - size + 1;
             if (start == first_available_space)
                 find_first_available_space(first_available_space);       // if we've covered the first known free space, find a new one.
-            return start;
+            return bottom;
         }
     }
     throw(error("Error: no more free space in heap!"));
@@ -160,8 +161,8 @@ void vardict::remove_on_pop(std::string name)
 
 vardict::vardict()
 {
-    first_available_space = 0;
-    for (int i = 0; i < (HEAP_TOP - HEAP_BOTTOM); i++)
+    first_available_space = HEAP_TOP - HEAP_BOTTOM;
+    for (int i = 0; i < HEAP_SIZE; i++)
     {
         memory_in_use.push_back(0);
         has_been_used.push_back(0);
