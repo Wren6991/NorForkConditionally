@@ -8,6 +8,7 @@
 
 class parser
 {
+    std::string filename;
     std::vector<token> tokens;
     std::map <std::string, type_enum> typestrings;
     int index;
@@ -17,10 +18,11 @@ class parser
     bool accept(token_type_enum type);
     void expect(token_type_enum type);
     public:
-    parser(std::vector<token> tokens_);
+    parser(std::vector<token> tokens_, std::string _filename = "file");
 
     program* getprogram();
     void do_preprocessor(program *prog);
+    void throw_unexpected(std::string value, int linenumber = 0, token_type_enum expected = t_eof, token_type_enum got = t_eof);
     definition *getdefinition();
         constdef* getconstdef();
         funcdef* getfuncdef();

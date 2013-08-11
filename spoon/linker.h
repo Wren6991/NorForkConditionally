@@ -108,6 +108,7 @@ public:
     linker();
     void add_object(object* obj);
     std::vector<char> link();
+    bool strip_unused_functions;
 };
 
 #endif // LINKER_H_INCLUDED

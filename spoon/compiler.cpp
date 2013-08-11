@@ -344,7 +344,6 @@ void compiler::compile(funccall *fcall)
     }
     if (currentfuncdef)
     {
-        std::cout << "adding dependency to function " << currentfuncdef->name << ": " << fcall->name << "\n";
         currentfuncdef->dependson.insert(fcall->name);
     }
     func_signature &sig = functions[fcall->name];
@@ -436,11 +435,11 @@ void compiler::compile(expression *expr)
     }
     else if (expr->type == exp_funccall)
     {
-
+        if (functions.find(expr->name) == functions.end())
+            throw(error("Error: no such function: " + expr->name));
         func_signature &sig = functions[expr->name];
         if (currentfuncdef)
         {
-            std::cout << "adding dependency to function " << currentfuncdef->name << ": " << expr->name << "\n";
             currentfuncdef->dependson.insert(expr->name);
         }
         if (expr->args.size() < sig.arg_types.size())

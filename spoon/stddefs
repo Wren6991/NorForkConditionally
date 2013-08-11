@@ -1,7 +1,6 @@
 // stddefs
 // Standard Spoon definitions header
-// Luke Wren 2013
-
+// Luke Wren 2013
 
 const pointer debugout = 0xc000;
 const pointer debugin = 0xc001;
@@ -15,16 +14,14 @@ function pointer pair(int a, int b);
 
 function void write(int value, pointer dest);
 function int read(pointer src);
-
-function int increment(int x);
-function int decrement(int x);
-function int shiftleft(int x);
-function int shiftright(int x);
-
-function int andnot(int a, int b);
-function int and(int a, int b);
-function int not(int x);
-function int or(int a, int b);
+function int increment(int x);
+function int decrement(int x);
+function int shiftleft(int x);
+function int shiftright(int x);
+function int andnot(int a, int b);
+function int and(int a, int b);
+function int not(int x);
+function int or(int a, int b);
 function int xor(int a, int b);
 
 macro output(src, dest)

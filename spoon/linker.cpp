@@ -208,6 +208,7 @@ linker::linker()
     defined_funcs["shiftright"] = 0;
 
     index = 0;
+    strip_unused_functions = false;
     buffer.reserve(ROM_SIZE);
 }
 
@@ -422,11 +423,11 @@ std::vector<char> linker::link()
     }
 
     // set up pointer read/write instructions:
-    // bfc0:    qqqq 'ff  bfc8 bfc8
-    // bfc8:    qqqq bff0 bfe0 bfe0
-    // bfd0:    bff0 'ff  bfd8 bfd8
-    // bfd8:    bff0 pppp bfe0 bfe0
-    // bfe0:    bff1 'ff  xxxx rrrr
+    // bfc0:    qqqq 'ff  bfc8 bfc8     ; clear target location q (q field written by caller)
+    // bfc8:    qqqq bff0 bfe0 bfe0     ; q = ~ bff0 (bff0 previously set to ~x; q must be set here again.) Skip to jump instruction.
+    // bfd0:    bff0 'ff  bfd8 bfd8     ; clear bff0
+    // bfd8:    bff0 pppp bfe0 bfe0     ; set bff0 to ~p (p field written by caller)
+    // bfe0:    bff1 'ff  xxxx rrrr     ; jump to rrrr
     // To write:
     // we write ~val to bff0, jump to RAM.
     // in RAM we clear dest, write ~(~val) to dest, and then jump back to ROM using the same return instruction as for reads.
@@ -456,7 +457,9 @@ std::vector<char> linker::link()
     emit_branchalways(index, true);
 
     // Link in the rest of the functions afterwards.
-    removeunusedfunctions();
+    if (strip_unused_functions)
+        removeunusedfunctions();
+
     for(std::map<std::string, definition*>::iterator iter = defined_funcs.begin(); iter != defined_funcs.end(); iter++)
     {
         if (!iter->second)  // skip it if it's hardcoded! (largely 'cause we don't want null dereferencing.)
@@ -474,6 +477,10 @@ std::vector<char> linker::link()
         for (unsigned int i = 0; i <= str.size(); i++)      // <= instead of < because we want to include the terminating zero.
             write8(str[i]);
     }
+#ifdef EBUG
+    std::cout << "Executable size: " << index << " bytes.\n";
+#endif // EBUG
+
     return assemble();
 }
 
@@ -599,6 +606,7 @@ void linker::link(funccall *call)
 // returns: the location of the function returnval register.
 linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
 {
+    // For each argument: if it is a constant then emit a constant copy, else evaluate the expression and copy the result to the argloc.
     for (unsigned int i = 0; i < args.size(); i++)
     {
         if (args[i]->type == exp_number)
@@ -606,12 +614,15 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
         else
         {
             linkval argloc = vars.getvar(fdef->args[i].name)->address;
-            // no copy gets emitted if argloc is successfully used as preferred location:
-            emit_copy_multiple(evaluate(args[i], true, argloc), argloc, fdef->args[i].type.getsize());
+            // Pass argloc as the preferred location, store the value in arg_val_loc: if argloc is successfully used then these linkvals are the same and emit_copy_multiple() is a no-op.
+            linkval arg_val_loc = evaluate(args[i], true, argloc);
+            emit_copy_multiple(arg_val_loc, argloc, fdef->args[i].type.getsize());
         }
     }
-    // return location: number of instructions taken to write the pointer + 1 instruction for the function jump.
+    // Create a label name which refers to the first instruction after the call: pass this to the call-writing code. Once the call code is written we then save the actual location that label refers to.
+    // (Avoids trying to guess the number of instructions: unique label acts as an "IOU" for the location)
     std::string returnlabel = getlabel();
+    // We write the location of the label to the function's return vector (even if we don't know it yet - this gets sorted out at the final assembly), then jump into the function.
     emit_writelabel(returnlabel, vars.getvar(fdef->name + ":__returnvector")->address);
     emit_branchalways(linkval(fdef->name + ":__startvector"));
     savelabel(returnlabel, index);
@@ -1073,17 +1084,22 @@ void linker::removeunusedfunctions()
             std::cout << "erasing function " << fiter->first << "\n";
 #endif // EBUG
             defined_funcs.erase(fiter++);
+            fiter--;
         }
-
     }
 }
 
 void linker::markusedfunctions(std::string rootfunc)
 {
-    //std::cout << "Finding dependencies for " << root << "\n";
+    std::cout << "Finding dependencies for " << rootfunc << "\n";
     funcdef *rootdef = (funcdef*)defined_funcs[rootfunc];
     rootdef->is_used = true;
     std::set<std::string> &dependencies = rootdef->dependson;
+    std::cout << " - Depends on";
+    for (std::set<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++)
+        std::cout << " " << *i;
+    std::cout << ".\n";
+
     for (std::set<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++)
     {
         funcdef *def = (funcdef*)defined_funcs[*i];
@@ -1091,8 +1107,7 @@ void linker::markusedfunctions(std::string rootfunc)
             continue;
         if (!def->is_used)
         {
-            def->is_used = true;
-            markusedfunctions(*i);
+            markusedfunctions(def->name);
         }
     }
 

@@ -7,10 +7,10 @@
 extern std::string friendly_tokentype_names[];
 
 // Throw a preformatted error that we've received an unexpected token.
-void throw_unexpected(std::string value, int linenumber = 0, token_type_enum expected = t_eof, token_type_enum got = t_eof)
+void parser::throw_unexpected(std::string value, int linenumber, token_type_enum expected, token_type_enum got)
 {
     std::stringstream ss;
-    ss << "Error: unexpected token near \"" << value << "\"";
+    ss << "Error in " << filename << ": unexpected token near \"" << value << "\"";
     if (linenumber)
         ss << " on line " << linenumber;
     if (expected)
@@ -29,8 +29,9 @@ int intfromstring(std::string str)
 
 
 // Set up the type dicts and the state vars
-parser::parser(std::vector<token> tokens_)
+parser::parser(std::vector<token> tokens_, std::string _filename)
 {
+    filename = _filename;
     typestrings["char"] = type_int;
     typestrings["int"] = type_int;
     typestrings["pointer"] = type_pointer;
@@ -133,7 +134,7 @@ void parser::do_preprocessor(program *prog)
         source.push_back(0);
         includefile.close();
         std::vector<token> includetokens = tokenize(&source[0]);
-        parser p(includetokens);
+        parser p(includetokens, lastt.value);
         program *includedefs = p.getprogram();
         for (unsigned int i = 0; i < includedefs->defs.size(); i++)
             prog->defs.push_back(includedefs->defs[i]);

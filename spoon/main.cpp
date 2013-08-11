@@ -36,16 +36,50 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
 
 int main(int argc, char **argv)
 {
-    if (argc != 3)
+    std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
+    std::string ifilename, ofilename;
+    bool have_ifilename, have_ofilename;
+    bool strip_unused_functions = true;
+    try
     {
-        std::cout << "Usage: spoon (inputfile) (outputfile)\n";
-    }
-    else try
-    {
-        std::fstream sourcefile(argv[1], std::ios::in | std::ios::binary);
+        for (int i = 1; i < argc; i++)
+        {
+            if (argv[i][0] == '-')
+            {
+                switch (argv[i][1])
+                {
+                case 's':
+                    std::cout << "received option strip\n";
+                    strip_unused_functions = true;
+                    break;
+                default:
+                    throw(error(usage));
+                }
+            }
+            else
+            {
+                if (!have_ifilename)
+                {
+                    ifilename = argv[i];
+                    have_ifilename = true;
+                }
+                else if (!have_ofilename)
+                {
+                    ofilename = argv[i];
+                    have_ofilename = true;
+                }
+                else
+                {
+                    throw(error(usage));
+                }
+            }
+        }
+        if (!(have_ifilename && have_ofilename))
+            throw(error(usage));
+        std::fstream sourcefile(ifilename, std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
-            throw(error(std::string("Error: could not open file ") + argv[1]));
+            throw(error(std::string("Error: could not open file ") + ifilename));
         }
         sourcefile.seekg(0, std::ios::end);
         int sourcelength = sourcefile.tellg();
@@ -55,7 +89,7 @@ int main(int argc, char **argv)
         source.push_back(0);
         sourcefile.close();
         std::vector<token> tokens = tokenize(&source[0]);
-        parser p(tokens);
+        parser p(tokens, ifilename);
         program *prog = p.getprogram();
         compiler c;
         object *obj = c.compile(prog);
@@ -63,14 +97,15 @@ int main(int argc, char **argv)
         printtree(obj->tree);
 #endif // EBUG
         linker l;
+        l.strip_unused_functions = strip_unused_functions;
         l.add_object(obj);
         std::vector<char> machinecode = l.link();
 #ifdef EBUG
-        printout(machinecode);
+        //printout(machinecode);
 #endif
-        std::fstream outfile(argv[2], std::ios::out | std::ios::binary);
+        std::fstream outfile(ofilename, std::ios::out | std::ios::binary);
         if (!outfile.is_open())
-            throw(error(std::string("Error: could not open file ") + argv[2]));
+            throw(error(std::string("Error: could not open file ") + ofilename));
         for (unsigned int i = 0; i < machinecode.size(); i++)
             outfile.put(machinecode[i]);
         outfile.close();
