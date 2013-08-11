@@ -2,10 +2,6 @@ Todo:
 -----
 
 - bulk out the standard library
-- if we assign from a function result, pass the assignment target into the function link routine.
-	- this way we can write straight to the assignment target
-	- perhaps save this for after everything's working?
-	- still probably better for function return location to be decided by caller, more convenient that way
 - Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
 - line numbers for syntax errors

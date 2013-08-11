@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="spoon" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/spoon" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters=" samples/screen.spn samples/screen.out " />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/spoon" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++11" />
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="builtins.h" />
+		<Unit filename="compiler.cpp" />
+		<Unit filename="compiler.h" />
+		<Unit filename="error.cpp" />
+		<Unit filename="error.h" />
+		<Unit filename="linker.cpp" />
+		<Unit filename="linker.h" />
+		<Unit filename="linkval.cpp" />
+		<Unit filename="linkval.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="object.h" />
+		<Unit filename="parser.cpp" />
+		<Unit filename="parser.h" />
+		<Unit filename="printtree.cpp" />
+		<Unit filename="printtree.h" />
+		<Unit filename="resourcep.h" />
+		<Unit filename="stddefs" />
+		<Unit filename="stdmath" />
+		<Unit filename="stdmem" />
+		<Unit filename="syntaxtree.h" />
+		<Unit filename="tokenizer.cpp" />
+		<Unit filename="tokenizer.h" />
+		<Unit filename="type.cpp" />
+		<Unit filename="type.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
