@@ -1,6 +1,9 @@
 Nor and Fork Conditionally
 ==========================
 <img src="http://i.imgur.com/VmuX0j7.jpg">
+*computer*
+<img src="http://i.imgur.com/0p53ZI2.png">
+*emulator*
 
 Inspired by Jack Eisenman's DUO Compact CPU - ostracodfiles.com
 
