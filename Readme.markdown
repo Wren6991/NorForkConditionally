@@ -1,5 +1,6 @@
 Nor and Fork Conditionally
 ==========================
+<img src="http://i.imgur.com/VmuX0j7.jpg">
 
 Inspired by Jack Eisenman's DUO Compact CPU - ostracodfiles.com
 
