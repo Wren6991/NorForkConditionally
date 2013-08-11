@@ -315,9 +315,14 @@ void linker::emit_copy(linkval src, linkval dest)
 void linker::emit_copy_inverted(linkval src, linkval dest)
 {
     if (src == dest)
-        return;
-    emit_nfc2(dest, getconstaddress(0xff));
-    emit_nfc2(dest, src);
+    {
+        emit_nfc2(dest, dest);  // just invert, no copy (so it still does what we expect)
+    }
+    else
+    {
+        emit_nfc2(dest, getconstaddress(0xff));
+        emit_nfc2(dest, src);
+    }
 }
 
 void linker::emit_writeconst(uint8_t val, linkval dest)
@@ -477,9 +482,9 @@ std::vector<char> linker::link()
         for (unsigned int i = 0; i <= str.size(); i++)      // <= instead of < because we want to include the terminating zero.
             write8(str[i]);
     }
-#ifdef EBUG
-    std::cout << "Executable size: " << index << " bytes.\n";
-#endif // EBUG
+//#ifdef EBUG
+    std::cout << "Executable size: " << std::dec << index - 1 << std::hex << " bytes.\n";
+//#endif // EBUG
 
     return assemble();
 }
@@ -713,18 +718,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             if (name == "read")
             {
                 if (args[0]->type == exp_number)
-                {
-                    if (givenpreferred)
-                    {
-                        emit_copy(args[0]->number, preferred);
-                        return preferred;
-                    }
-                    else
-                    {
-                        emit_copy(args[0]->number, POINTER_READ_RESULT);
-                        return POINTER_READ_RESULT;
-                    }
-                }
+                    return args[0]->number; // this should ONLY get reached with a call such as read(debugin). In this case, no need to worry about timing or clobbering!
                 vars.push_temp_scope();
                 emit_copy_multiple(evaluate(args[0], true, POINTER_READ_PVECTOR), POINTER_READ_PVECTOR, type_t(type_pointer).getsize());
                 vars.pop_temp_scope();
@@ -762,23 +756,20 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval returnloc = givenpreferred ? preferred : vars.addvar("__andnottemp", type_int);
             vars.push_temp_scope(); // For the arguments
-            emit_nfc2(returnloc, getconstaddress(0xff));
-            emit_nfc2(returnloc, evaluate(args[0]));
+            emit_copy_inverted(evaluate(args[0], true, returnloc), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             vars.pop_temp_scope();
             if (!givenpreferred)
                 vars.remove_on_pop("__andnottemp");
             return returnloc;
         }
-        else if (name == "and")
+        else if (name == "and")     // the problem occurs when the argument starts off in the finish location: it is destroyed by the invcopy to self (destructive).
         {
             linkval returnloc = givenpreferred ? preferred : vars.addvar("__andreturnloc", type_int);
-            linkval temploc = vars.addvar("__andtemploc", type_int);
             vars.push_temp_scope(); // For the arguments
-            emit_nfc2(returnloc, getconstaddress(0xff));
-            emit_nfc2(returnloc, evaluate(args[0]));
-            emit_nfc2(temploc, getconstaddress(0xff));
-            emit_nfc2(temploc, evaluate(args[1]));
+            linkval temploc = vars.addvar("__andtemploc", type_int);
+            emit_copy_inverted(evaluate(args[0], true, returnloc), returnloc);
+            emit_copy_inverted(evaluate(args[1]), temploc);
             emit_nfc2(returnloc, temploc);
             vars.pop_temp_scope();
             if (!givenpreferred)
@@ -790,8 +781,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval returnloc = givenpreferred ? preferred : vars.addvar("__notreturnloc", type_int);
             vars.push_temp_scope(); // For the arguments
-            emit_nfc2(returnloc, getconstaddress(0xff));
-            emit_nfc2(returnloc, evaluate(args[0]));
+            emit_copy_inverted(evaluate(args[0], true, returnloc), returnloc);
             vars.pop_temp_scope();
             if (!givenpreferred)
                 vars.remove_on_pop("__notreturnloc");
@@ -801,8 +791,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
         {
             linkval returnloc = givenpreferred ? preferred : vars.addvar("__orreturnloc", type_int);
             vars.push_temp_scope(); // For the arguments
-            // Only make it preferred if it's not going to modify the return address (this would effectively the same as a self-copy, i.e. destructive.)
-            emit_copy(evaluate(args[0], returnloc != preferred, returnloc), returnloc);
+            emit_copy(evaluate(args[0], true, returnloc), returnloc);
             emit_nfc2(returnloc, evaluate(args[1]));
             emit_nfc2(returnloc, returnloc);
             vars.pop_temp_scope();
@@ -816,15 +805,13 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             linkval temp1 = vars.addvar("__xortemp1", type_int);
             linkval temp2 = vars.addvar("__xortemp2", type_int);
             vars.push_temp_scope(); // For the arguments
-            linkval argA = evaluate(args[0]);
-            linkval argB = evaluate(args[1]);
-            emit_nfc2(temp1, getconstaddress(0xff));
-            emit_nfc2(temp1, argA);
+            linkval argA = evaluate(args[0], true, temp1);
+            linkval argB = evaluate(args[1], true, temp2);
+            emit_copy_inverted(argA, temp1);
             emit_nfc2(temp1, argB);
-            emit_nfc2(temp2, getconstaddress(0xff));
-            emit_nfc2(temp2, argB);
+            emit_copy_inverted(argB, temp2);
             emit_nfc2(temp2, argA);
-            emit_copy(temp1, returnloc);
+            emit_copy(temp1, returnloc);   // we can't do away with temp1 because if the second argument is the same loc as the preferred return, writing ~the first argument to returnloc would have side effects on the second argument.
             emit_nfc2(returnloc, temp2);
             emit_nfc2(returnloc, returnloc);
             vars.pop_temp_scope();
@@ -843,7 +830,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
 
 void linker::link(goto_stat *sgoto)
 {
-    linkval temploc = vars.addvar("temp", type_int) + HEAP_BOTTOM;
+    linkval temploc = vars.addvar("temp", type_int);
     write16(temploc);
     write16(temploc);
     linkval target = evaluate(sgoto->target);
@@ -961,7 +948,7 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
             variable *var = vars.getvar(expr->name);
             if (var->type == type_label)
             {
-                // eager evaluation of labels: we get the most recently bound lable identity,
+                // eager evaluation of labels: we get the most recently bound label identity,
                 // not the last one. This is what allows us to change argname meaning in different calls to a macro.
                 if (valtable.find(expr->name) != valtable.end())
                     return valtable[expr->name];
@@ -1005,10 +992,18 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
     {
         std::string stringlocation = getlabel();
         stringvalues.push_back(std::pair<std::string, std::string>(stringlocation, expr->name));    // the actual string will get linked in later, tacked onto the end of the program.
-        linkval temploc = vars.addvar("__stringloctemp", type_pointer);
-        emit_writelabel(stringlocation, temploc);
-        vars.remove_on_pop("__stringloctemp");
-        return temploc;
+        if (givenpreferred)
+        {
+            emit_writelabel(stringlocation, preferred);
+            return preferred;
+        }
+        else
+        {
+            linkval temploc = vars.addvar("__stringloctemp", type_pointer);
+            emit_writelabel(stringlocation, temploc);
+            vars.remove_on_pop("__stringloctemp");
+            return temploc;
+        }
     }
     else
     {

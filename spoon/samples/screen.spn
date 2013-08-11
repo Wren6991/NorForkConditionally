@@ -57,8 +57,7 @@ function cursorpos(int x, int y)
         else
             address = 0;
     }
-    address = add(address, x);
-    write8bits(or(address, 0x80));
+    write8bits(or(add(address, x), 0x80));
     screensignal = s_rs;
 }
 
@@ -153,8 +152,7 @@ function main()
                     break;
             }
         }
-        var char c = and(read(debugin), 0x7f);
-        write(c, cursorp);
+        write(and(read(debugin), 0x7f), cursorp);
         dumpscreenbuffer();
         cursorp = incrementPointer(cursorp);
 

@@ -1,5 +1,5 @@
     tokenizer ->  parser ->    compiler ->  linker ->  assembler
-text   ->   tokens  -> syntax tree -> object -> program -> machine code
+text   ->   tokens  -> syntax tree -> object ->  program  ->  machine code
 
 Tokenizer:
 ----------
@@ -17,7 +17,7 @@ Compiler:
 Reads in the tree, produces an object.
 Includes:
 - assigning GUIDs to each variable instance
-- uses these to produce local links, resolved to machine address links by linker.
+- uses these to produce symbolic links, resolved to machine address links by linker.
 - Produces an object for the file.
 - object contains a list of vars declared, a list of statements, a list of required symbols, a list of defined symbols.
 - object can contain more objects. ?
