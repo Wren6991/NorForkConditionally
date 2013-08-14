@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters=" samples/screen.spn samples/screen.out " />
+				<Option parameters="samples/fibonacci.spn samples/fibonacci.bin " />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />
@@ -59,11 +59,22 @@
 		<Unit filename="tokenizer.h" />
 		<Unit filename="type.cpp" />
 		<Unit filename="type.h" />
+		<Unit filename="vardict.cpp" />
+		<Unit filename="vardict.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

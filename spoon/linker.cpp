@@ -291,9 +291,9 @@ std::vector<char> linker::link()
 #ifdef EBUG
     std::cout << "Linking main\n";
 #endif
-    vars.addvar(makeguid("__return", (int)defined_funcs["main"]), type_label);
+    vars.addvar(makeguid("__return", (long)defined_funcs["main"]), type_label);
     link(((funcdef*)defined_funcs["main"])->body);
-    savelabel(makeguid("__return", (int)defined_funcs["main"]), index);
+    savelabel(makeguid("__return", (long)defined_funcs["main"]), index);
 
     // generate halt instruction:
     emit_branchalways(index, true);
@@ -320,7 +320,7 @@ std::vector<char> linker::link()
             write8(str[i]);
     }
 //#ifdef EBUG
-    std::cout << "Executable size: " << std::dec << index - 1 << std::hex << " bytes.\n";
+    std::cout << "Executable size: " << std::dec << index << std::hex << " (0x" << index << ") bytes.\n";
 //#endif // EBUG
 
     return assemble();
@@ -332,7 +332,7 @@ void linker::link(funcdef* fdef)
     std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
 #endif
     vars.push_function_scope();
-    std::string returnstat_target = makeguid("__return", (int)fdef);
+    std::string returnstat_target = makeguid("__return", (long)fdef);
     vars.addvar(returnstat_target, type_label);
     savelabel(fdef->name + ":__startvector", index);
     link(fdef->body);
@@ -713,8 +713,8 @@ void linker::link(if_stat* ifs)
 void linker::link(while_stat *whiles)
 {
     vars.push_temp_scope();
-    std::string toplabel = makeguid("__top", (int)whiles->blk);
-    std::string exitlabel = makeguid("__exit", (int)whiles->blk);
+    std::string toplabel = makeguid("__top", (long)whiles->blk);
+    std::string exitlabel = makeguid("__exit", (long)whiles->blk);
     vars.addvar(toplabel, type_label);
     vars.addvar(exitlabel, type_label);
     savelabel(toplabel, index);

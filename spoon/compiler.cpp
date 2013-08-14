@@ -120,7 +120,7 @@ object* compiler::compile(program *prog)
         if (def->type == dt_constdef)
         {
             constdef *cdef = (constdef*)def;
-            addvar(cdef->name, cdef->valtype, (int)cdef, true, cdef->value);
+            addvar(cdef->name, cdef->valtype, (long)cdef, true, cdef->value);
         }
         else if (def->type == dt_macrodef)
         {
@@ -167,14 +167,14 @@ object* compiler::compile(program *prog)
 
 void compiler::compile(macrodef *mdef)
 {
-    //std::string guid = makeguid(mdef->name, (int)mdef);
+    //std::string guid = makeguid(mdef->name, (long)mdef);
     pushscope();
     func_signature sig;
     sig.args_must_match = false;
     sig.return_type = type_none;
     for (unsigned int i = 0; i < mdef->args.size(); i++)
     {
-        addvar(mdef->args[i], type_label, (int)&(mdef->args[i]));
+        addvar(mdef->args[i], type_label, (long)&(mdef->args[i]));
         mdef->args[i] = currentscope->get(mdef->args[i]).name;
         sig.arg_types.push_back(type_none);
     }
@@ -201,7 +201,7 @@ void compiler::compile(funcdef *fdef)
     for (unsigned int i = 0; i < fdef->args.size(); i++)
     {
         argument *arg = &(fdef->args[i]);
-        addvar(arg->name, arg->type, (int)arg);
+        addvar(arg->name, arg->type, (long)arg);
         arg->name = currentscope->get(arg->name).name;
         sig.arg_types.push_back(arg->type);
     }
@@ -227,7 +227,7 @@ void compiler::compile(funcdef *fdef)
             retsym.name = fdef->name + ":__returnval";
             currentscope->insert(fdef->name, retsym);
             globalsymboltable[retsym.name] = retsym;
-            compile(fdef->body, "", "", makeguid("__return", (int)fdef));
+            compile(fdef->body, "", "", makeguid("__return", (long)fdef));
             defined_funcs.insert(fdef->name);
         }
     }
@@ -260,7 +260,7 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
         // NOTE: we put a label in the declarations, but put a pointer variable in the current scope. Compiler thinks pointer, linker knows label.
         if (blk->statements[i]->type == stat_label)
         {
-            addvar(((label*)blk->statements[i])->name, type_pointer, (int)(blk->statements[i]));
+            addvar(((label*)blk->statements[i])->name, type_pointer, (long)(blk->statements[i]));
             vardeclaration *dec = new vardeclaration;
             vardeclaration::varpair var;
             var.type = type_label;
@@ -328,7 +328,7 @@ void compiler::compile(vardeclaration *dec)
     for (unsigned int j = 0; j < dec->vars.size(); j++)
     {
         vardeclaration::varpair &var = dec->vars[j];
-        addvar(var.name, var.type, (int)dec);
+        addvar(var.name, var.type, (long)dec);
         var.name = currentscope->get(var.name).name;    // replace the declaration with the global name of the var; makes linking easier.
     }
 }
@@ -384,7 +384,7 @@ void compiler::compile(if_stat *ifs, std::string exitlabel, std::string toplabel
 void compiler::compile(while_stat *whiles, std::string returnlabel)
 {
     compile(whiles->expr);
-    compile(whiles->blk, makeguid("__exit", (int)whiles->blk), makeguid("__top", (int)whiles->blk), returnlabel);
+    compile(whiles->blk, makeguid("__exit", (long)whiles->blk), makeguid("__top", (long)whiles->blk), returnlabel);
 }
 
 void compiler::compile(assignment *assg)
