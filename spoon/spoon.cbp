@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="samples/fibonacci.spn samples/fibonacci.bin " />
+				<Option parameters="-s samples/screen.spn samples/screen.bin " />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />
@@ -51,6 +51,17 @@
 		<Unit filename="printtree.cpp" />
 		<Unit filename="printtree.h" />
 		<Unit filename="resourcep.h" />
+		<Unit filename="samples/add.spn" />
+		<Unit filename="samples/array.spn" />
+		<Unit filename="samples/beep.spn" />
+		<Unit filename="samples/empty.spn" />
+		<Unit filename="samples/equal.spn" />
+		<Unit filename="samples/fibonacci.spn" />
+		<Unit filename="samples/new.spn" />
+		<Unit filename="samples/screen.spn" />
+		<Unit filename="samples/screen.test.spn" />
+		<Unit filename="samples/string.spn" />
+		<Unit filename="samples/test.spn" />
 		<Unit filename="stddefs" />
 		<Unit filename="stdmath" />
 		<Unit filename="stdmem" />

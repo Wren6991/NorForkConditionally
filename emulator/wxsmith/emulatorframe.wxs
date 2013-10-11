@@ -292,19 +292,19 @@
 			<style>wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER</style>
 			<object class="tool" name="TOOL_NEW" variable="ToolBarItem1" member="yes">
 				<label>New</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_add.png</bitmap>
+				<bitmap>icons/page_add.png</bitmap>
 				<tooltip>New file</tooltip>
 				<handler function="OnNewClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_OPEN" variable="ToolBarItem2" member="yes">
 				<label>Open</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\folder_page.png</bitmap>
+				<bitmap>icons\folder_page.png</bitmap>
 				<tooltip>Open file</tooltip>
 				<handler function="OnOpenClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_SAVE" variable="ToolBarItem3" member="yes">
 				<label>Save</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disk.png</bitmap>
+				<bitmap>icons\disk.png</bitmap>
 				<tooltip>Right click for save as</tooltip>
 				<handler function="OnSaveClicked" entry="EVT_TOOL" />
 				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
@@ -312,13 +312,19 @@
 			<object class="separator" />
 			<object class="tool" name="ID_TOOLBARITEM1" variable="ToolBarItem4" member="yes">
 				<label>Step</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\resultset_next.png</bitmap>
+				<bitmap>icons\resultset_next.png</bitmap>
 				<handler function="OnStepClicked" entry="EVT_TOOL" />
 			</object>
+			<object class="tool" name="TOOL_LCD" variable="ToolBarItem5" member="yes">
+				<label>LCD</label>
+				<bitmap>icons/monitor.png</bitmap>
+				<tooltip>Show LCD</tooltip>
+				<handler function="OnLCDClicked" entry="EVT_TOOL" />
+			</object>
 			<object class="separator" />
-			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem5" member="yes">
+			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem6" member="yes">
 				<label>About</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\help.png</bitmap>
+				<bitmap>icons\help.png</bitmap>
 				<tooltip>About this software</tooltip>
 				<handler function="OnAbout" entry="EVT_TOOL" />
 			</object>

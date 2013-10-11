@@ -8,7 +8,7 @@ function memset(pointer dest, int value, int count)
     }
 }
 
-function memcpy(pointer dest, pointer src, int count)
+function pointer memcpy(pointer dest, pointer src, int count)
 {
     while (count)
     {
@@ -18,9 +18,11 @@ function memcpy(pointer dest, pointer src, int count)
         src = incrementPointer(src);
         count = decrement(count);
     }
+    memcpy = dest;
 }
 
-function strcpy(pointer dest, pointer src)
+// Copies a null-terminated string to dest, and returns the location of the byte after the last one written.
+function pointer strcpy(pointer dest, pointer src)
 {
     var char c;
     c = read(src);
@@ -31,4 +33,5 @@ function strcpy(pointer dest, pointer src)
         src = incrementPointer(src);
         c = read(src);
     }
+    strcpy = dest;
 }

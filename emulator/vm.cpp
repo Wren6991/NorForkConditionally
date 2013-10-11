@@ -45,6 +45,10 @@ void vm::write(uint16_t location, uint8_t data)
     if (!isWriteable(location))
         return;
     (*memory)[location] = data;
-    if (location == DEBUG_OUT_POS)
+    if (location == DEBUG_OUT_POS)  // or any other peripheral...
+    {
         debug_written = true;
+        for (unsigned int i = 0; i < peripherals.size(); i++)
+            peripherals[i]->write(location, data);
+    }
 }

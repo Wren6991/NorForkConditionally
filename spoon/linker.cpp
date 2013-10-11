@@ -905,8 +905,14 @@ void linker::removeunusedfunctions()
 {
     markusedfunctions("main");
     std::map<std::string, definition*>::iterator fiter;
+    bool noincrement = false;
     for (fiter = defined_funcs.begin(); fiter != defined_funcs.end(); fiter++)
     {
+        if (noincrement)
+        {
+            fiter--;
+            noincrement = false;
+        }
         funcdef *def = (funcdef*)fiter->second;
         if (!def || def->type != dt_funcdef)
             continue;   // ignore the builtin functions.
@@ -916,8 +922,13 @@ void linker::removeunusedfunctions()
             std::cout << "erasing function " << fiter->first << "\n";
 #endif // EBUG
             defined_funcs.erase(fiter++);
-            fiter--;
+            if (fiter == defined_funcs.begin())
+                noincrement = true;
+            else
+                fiter--;
         }
+        else
+            std::cout << "function " << fiter->first << " is used\n";
     }
 }
 

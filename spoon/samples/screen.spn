@@ -8,11 +8,13 @@ const int s_rs = 0x40;
 var int screensignal;
 var int screenbuffer[80];
 
+
 function pointer int2hexstr(int x)
 {
+    var pointer hexchars = "0123456789ABCDEF";
     var int buffer[3];
-    buffer[0] = 'C';
-    buffer[1] = '5';
+    buffer[0] = read(addPointer(hexchars, shiftrightn(x, 4)));
+    buffer[1] = read(addPointer(hexchars, and(x, 0x0f)));
     buffer[2] = 0;
     int2hexstr = buffer;
 }
@@ -30,11 +32,7 @@ function write4bits(int data)
 
 function write8bits(int data)
 {
-    var int top = shiftright(data);
-    top = shiftright(top);
-    top = shiftright(top);
-    top = shiftright(top);
-    write4bits(top);
+    write4bits(shiftrightn(data, 4));
     sleep(0);
     write4bits(and(data, 0x0f));
 }
@@ -128,21 +126,19 @@ function wakescreen()
 
 function main()
 {
-    sleep(255);
     wakescreen();
     emptyscreenbuffer();
 
-    printline("Welcome to Fork OS!");
-    printline("(c) Luke Wren 2013");
-    printline("Enter characters:");
-    scrollscreen();
+    printline("Hex string test");
+    printline("Press x80 to display");
+    printline("the next 8 bytes.");
     dumpscreenbuffer();
 
-    var pointer cursorp = addPointer(screenbuffer, 60);
+    var pointer datap = 0x0000;
 
     while (true)
     {
-        var int blink = 0;
+        // wait for input:
         while (true)
         {
             if (and(read(debugin), 0x80))
@@ -152,10 +148,16 @@ function main()
                     break;
             }
         }
-        write(and(read(debugin), 0x7f), cursorp);
+        scrollscreen();
+        var int count = 8;
+        var pointer cursorp = addPointer(screenbuffer, 60);
+        while (count)
+        {
+            cursorp = strcpy(cursorp, int2hexstr(read(datap)));
+            datap = incrementPointer(datap);
+            count = decrement(count);
+        }
         dumpscreenbuffer();
-        cursorp = incrementPointer(cursorp);
-
         while (and(read(debugin), 0x80)) {}
     }
 }

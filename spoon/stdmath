@@ -79,6 +79,16 @@ function int equal(int a, int b)
         equal = 1;
 }
 
+function int shiftrightn(int a, int n)
+{
+    while (n)
+    {
+        a = shiftright(a);
+        n = decrement(n);
+    }
+    shiftrightn = a;
+}
+
 // 16 bit
 
 function pointer incrementPointer(pointer p)

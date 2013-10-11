@@ -35,28 +35,6 @@ enum wxbuildinfoformat
     short_f, long_f
 };
 
-wxString wxbuildinfo(wxbuildinfoformat format)
-{
-    wxString wxbuild(wxVERSION_STRING);
-
-    if (format == long_f )
-    {
-#if defined(__WXMSW__)
-        wxbuild << _T("-Windows");
-#elif defined(__UNIX__)
-        wxbuild << _T("-Linux");
-#endif
-
-#if wxUSE_UNICODE
-        wxbuild << _T("-Unicode build");
-#else
-        wxbuild << _T("-ANSI build");
-#endif // wxUSE_UNICODE
-    }
-
-    return wxbuild;
-}
-
 //(*IdInit(emulatorFrame)
 const long emulatorFrame::ID_LSTWATCHES = wxNewId();
 const long emulatorFrame::ID_STATICTEXT1 = wxNewId();
@@ -84,6 +62,7 @@ const long emulatorFrame::TOOL_NEW = wxNewId();
 const long emulatorFrame::TOOL_OPEN = wxNewId();
 const long emulatorFrame::TOOL_SAVE = wxNewId();
 const long emulatorFrame::ID_TOOLBARITEM1 = wxNewId();
+const long emulatorFrame::TOOL_LCD = wxNewId();
 const long emulatorFrame::TOOL_ABOUT = wxNewId();
 const long emulatorFrame::ID_TOOLBAR1 = wxNewId();
 const long emulatorFrame::ID_TIMER1 = wxNewId();
@@ -206,13 +185,14 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     StatusBar1->SetStatusStyles(1,__wxStatusBarStyles_1);
     SetStatusBar(StatusBar1);
     ToolBar1 = new wxToolBar(this, ID_TOOLBAR1, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER, _T("ID_TOOLBAR1"));
-    ToolBarItem1 = ToolBar1->AddTool(TOOL_NEW, _("New"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\page_add.png"))), wxNullBitmap, wxITEM_NORMAL, _("New file"), wxEmptyString);
-    ToolBarItem2 = ToolBar1->AddTool(TOOL_OPEN, _("Open"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\folder_page.png"))), wxNullBitmap, wxITEM_NORMAL, _("Open file"), wxEmptyString);
-    ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
+    ToolBarItem1 = ToolBar1->AddTool(TOOL_NEW, _("New"), wxBitmap(wxImage(_T("icons/page_add.png"))), wxNullBitmap, wxITEM_NORMAL, _("New file"), wxEmptyString);
+    ToolBarItem2 = ToolBar1->AddTool(TOOL_OPEN, _("Open"), wxBitmap(wxImage(_T("icons\\folder_page.png"))), wxNullBitmap, wxITEM_NORMAL, _("Open file"), wxEmptyString);
+    ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
+    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
+    ToolBarItem5 = ToolBar1->AddTool(TOOL_LCD, _("LCD"), wxBitmap(wxImage(_T("icons/monitor.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show LCD"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem5 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\norforkconditionally\\ide\\icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
+    ToolBarItem6 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
     ToolBar1->Realize();
     SetToolBar(ToolBar1);
     dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
@@ -253,6 +233,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_RCLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveAsClicked);
     Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
+    Connect(TOOL_LCD,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnLCDClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
@@ -276,6 +257,9 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
 
     this->SetTitle("Untitled - OISC Emulator");
 
+    lcd = new LCDDialog(this);
+    machine.peripherals.push_back(lcd);
+
     filename = "Untitled";
     filehaschanged = false;
 }
@@ -293,8 +277,11 @@ void emulatorFrame::OnQuit(wxCommandEvent& event)
 
 void emulatorFrame::OnAbout(wxCommandEvent& event)
 {
-    wxString msg = wxbuildinfo(long_f);
-    wxMessageBox(msg, _("Welcome to..."));
+    wxMessageBox(_("NFC Emulator\n"
+                   "(c) Luke Wren 2013\n"
+                   "Thanks to:\n"
+                   "Thomas Monjalon - LED Components"
+                   ), _("About This Software"));
 }
 
 void emulatorFrame::OnOpenClicked(wxCommandEvent& event)
@@ -335,14 +322,14 @@ void emulatorFrame::OnSaveAsClicked(wxCommandEvent& event)
 {
     if (dlgSaveAs->ShowModal() == wxID_OK)
     {
-        /*Text->SaveFile(dlgSaveAs->GetPath());
-        SetFileName(dlgSaveAs->GetPath().ToStdString());*/
+        //Text->SaveFile(dlgSaveAs->GetPath());
+        SetFileName(dlgSaveAs->GetPath().ToStdString());
     }
 }
 
 void emulatorFrame::OnSaveClicked(wxCommandEvent& event)
 {
-    /*if (filename == "Untitled")
+    if (filename == "Untitled")
     {
         wxCommandEvent evt;
         OnSaveAsClicked(evt);
@@ -350,8 +337,8 @@ void emulatorFrame::OnSaveClicked(wxCommandEvent& event)
     else if (filehaschanged)
     {
         SetFileName(filepath);
-        Text->SaveFile(filepath);
-    }*/
+        //Text->SaveFile(filepath);
+    }
 }
 
 void emulatorFrame::OnNewClicked(wxCommandEvent& event)
@@ -400,7 +387,7 @@ bool emulatorFrame::TakeStep()
         result = true;
         machine.debug_written = false;
         uint8_t data = buffer[DEBUG_OUT_POS];
-        std::cout << "debug output: " << std::hex << (int)data << "\n";
+        //std::cout << "debug output: " << std::hex << (int)data << "\n";
     }
     memview->cursors[0].index = machine.PC;
     return result;
@@ -517,4 +504,9 @@ void emulatorFrame::OnMenuItemDeleteSelected(wxCommandEvent& event)
     if (selected == -1)
         return;
     lstWatches->DeleteItem(selected);
+}
+
+void emulatorFrame::OnLCDClicked(wxCommandEvent& event)
+{
+    lcd->Show();
 }

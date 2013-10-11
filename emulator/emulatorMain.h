@@ -15,7 +15,6 @@
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/menu.h>
-#include <wx/led.h>
 #include <wx/toolbar.h>
 #include <wx/slider.h>
 #include <wx/filedlg.h>
@@ -27,6 +26,8 @@
 #include <vector>
 
 #include "HexView.h"
+#include "LCDDialog.h"
+#include "led.h"
 #include "vm.h"
 
 class emulatorFrame: public wxFrame
@@ -43,6 +44,7 @@ private:
     bool filehaschanged;
 
     HexView *memview;
+    LCDDialog *lcd;
     std::vector <uint8_t> buffer;
     vm machine;
 
@@ -63,6 +65,7 @@ private:
     void OnlstWatchesItemRClick(wxListEvent& event);
     void OnMenuAddWatchSelected(wxCommandEvent& event);
     void OnMenuItemDeleteSelected(wxCommandEvent& event);
+    void OnLCDClicked(wxCommandEvent& event);
     //*)
 
     //(*Identifiers(emulatorFrame)
@@ -92,6 +95,7 @@ private:
     static const long TOOL_OPEN;
     static const long TOOL_SAVE;
     static const long ID_TOOLBARITEM1;
+    static const long TOOL_LCD;
     static const long TOOL_ABOUT;
     static const long ID_TOOLBAR1;
     static const long ID_TIMER1;
@@ -124,6 +128,7 @@ private:
     wxStaticText* StaticText1;
     wxLed* Led0;
     wxLed* Led3;
+    wxToolBarToolBase* ToolBarItem6;
     wxToolBarToolBase* ToolBarItem1;
     wxMenuItem* MenuItem3;
     wxListCtrl* lstWatches;
@@ -138,7 +143,7 @@ private:
     wxToolBarToolBase* ToolBarItem2;
     //*)
 
-    void SetFileName(std::string path, bool hasbeenmodified);
+    void SetFileName(std::string path, bool hasbeenmodified = false);
     bool TakeStep();
     void UpdateDisplay();
 
