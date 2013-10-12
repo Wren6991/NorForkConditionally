@@ -12,7 +12,7 @@ var int screenbuffer[80];
 function pointer int2hexstr(int x)
 {
     var pointer hexchars = "0123456789ABCDEF";
-    var int buffer[3];
+    var char buffer[3];
     buffer[0] = read(addPointer(hexchars, shiftrightn(x, 4)));
     buffer[1] = read(addPointer(hexchars, and(x, 0x0f)));
     buffer[2] = 0;
@@ -134,7 +134,13 @@ function main()
     printline("the next 8 bytes.");
     dumpscreenbuffer();
 
-    var pointer datap = 0x0000;
+    /*var pointer datap = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+                         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+                         0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+                         0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+                         'H',  'e',  'l',  'l',  'o',  '!'
+                         };*/
+    var pointer datap = 0;
 
     while (true)
     {

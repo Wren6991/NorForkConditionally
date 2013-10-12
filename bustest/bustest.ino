@@ -1639,6 +1639,41 @@ void loop()
     if (!failed)
       Serial.println("Verification passed.");
   } 
+  else if (c == 'x') // program constant table
+  {
+    Serial.println("Writing constant table...");
+    uint16_t address = 0x7c00;
+    uint8_t readback;
+    bool failed = false;
+    for (uint16_t i = 0; i < 256; i++)
+    {
+      writeaddress(address);
+      failed |= !programbyte(i + 1, &readback);
+      address++;
+    }  
+    for (uint16_t i = 0; i < 256; i++)
+    {
+      writeaddress(address);
+      failed |= !programbyte(i - 1, &readback);
+      address++;
+    }  
+    for (uint16_t i = 0; i < 256; i++)
+    {
+      writeaddress(address);
+      failed |= !programbyte(i << 1, &readback);
+      address++;
+    }  
+    for (uint16_t i = 0; i < 256; i++)
+    {
+      writeaddress(address);
+      failed |= !programbyte(i >> 1, &readback);
+      address++;
+    }  
+    if (failed)
+      Serial.println("Failed.");
+    else
+      Serial.println("Success.");
+  }
   else if (c != '\n' && c != ' ')
   {
     Serial.println("Usage:");

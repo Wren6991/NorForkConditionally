@@ -440,7 +440,7 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
 void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
 {
     bool debug_updated = false;
-    for (int i = 0; i < 2047; i++)
+    for (int i = 0; i < 4096; i++)
         if (TakeStep())
             debug_updated = true;
     if (debug_updated)
