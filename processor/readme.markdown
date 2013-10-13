@@ -3,32 +3,48 @@ Fork Machine: OISC Processor
 
 <img src="processor.png">
 
-Execution Steps
----------------
+Machine
+-------
 
-The machine has a clock frequency of 8MHz, or eight million operations per second.
+I built an 8-bit CPU on 6 breadboards, with around 30 chips - mostly simple CMOS logic chips, plus a few other components like RAM. I'm still working on the software side of things (check out the samples for my compiler in the spoon directory!) but the hardware is essentially in a finished state.
 
-The execution of a single instruction takes 10 clocks, giving a throughput of 0.8 MIPS.
+Hardware features:
 
-Steps are as follows:
+- Custom CPU, with only one instruction (but that's *plenty*)
+- Clockspeed of 8MHz
+- 32KiB of ROM for system calls and the bootstrap program
+- 16KiB of RAM for data and programs
+- More input and output than you can shake a stick at!
+- Half a megabyte (!) of flash storage for programs and documents
 
-1.  fetch bytes (we should fetch first byte last, so its location is still in the latch for writing
-	-  A <= (PC & ~0x07 | 0x02)
-	-  Y <= (A)
-	-  A <= (PC & ~0x07 | 0x00)
-	-  X <= (A)
+A 20x4 character LCD provides text output for a simple console interface - a keyboard is the only thing that I still intend to add. 
+
+Execution
+----------
+
+The machine has a clock frequency of 8MHz, or eight million operations per second - however, the execution of a single instruction takes 10 steps, yielding a final throughput of 0.8 MIPS.
+
+The steps are as follows:
+
+1.  Fetch bytes (we fetch the first byte last, so its location is still in the latch for the writeback)
+	-  `^A` <= (`PC` & ~0x7 | 0x2)
+	-  `_A` <= (`PC` & ~0x7 | 0x3)
+	-  `Y` <= (`A`)
+	-  `^A` <= (`PC` & ~0x7 | 0x0)
+	-  `_A` <= (`PC` & ~0x7 | 0x1)
+	-  `X` <= (`A`)
 2.  NOR them, store in first location
-	- (A) <= [ALU]
-3.  conditionally branch to 3rd or 4th address
-	- ^A <= (A & ~0b111 | 0b0Z0)
-	- _A <= (A & ~0b111 | 0b0Z1)
-	- PC <= A
+	- (`A`) <= `[ALU]`
+3.  Conditionally branch to 3rd or 4th address
+	- `^A` <= (`PC` & ~0b111 | 0b0Z0)
+	- `_A` <= (`PC` & ~0b111 | 0b0Z1)
+	- `PC` <= `A`
 
-`A` (address) is a 16-bit register but is loaded 8 bits at a time via the data bus, meaning it takes 2 clocks to load it from memory.
+`A` (the address latch) is a 16-bit register but is loaded 8 bits at a time via the data bus, meaning it takes 2 clocks to load it from memory.
 
-Giving the machine a symmetrical 16-bit data bus and memory to match the address bus would therefore reduce clocks per instruction (MHz/MIPS) by 30 percent! It would also make the wiring much more error-prone, and speed really wasn't the goal here. Performance-wise this would be the electronic equivalent of polishing a turd.
+Giving the machine a symmetrical 16-bit data bus and memory to match the address bus would therefore reduce clocks per instruction (MHz/MIPS) by 30 percent! It would also make the wiring much more error-prone, and speed really wasn't the goal here. Performance-wise this would be polishing the turd.
 
-The control unit can modify the last 3 bits of an address to load the appropriate byte of an 8-byte instruction (I used C-style bit manipulations to show this).
+The control unit can modify the last 3 bits of an address to load the appropriate byte of an 8-byte instruction (I showed this above with the C-style bit operations).
 
 Microcode Format
 ----------------
@@ -162,14 +178,19 @@ During the "tock" phase of the clock, the control bus is not driven, and is pull
 Microcode address signals uA1 and uA3 (values 2, 8) are connected to a diode-resistor AND gate:
 
 ```
-    ^
+    Vcc
     |  10k resistor
-   [r]
-rst-|-|>|- uA1    (  -|>|-  is a schottky diode  )
-    |-|>|- uA2
+   [ ]
+   [ ]
+    |
+    |--|>|-- uA1    (  -|>|-  is a schottky diode  )
+rst-|
+    |--|>|-- uA3
 ```
 
-Which is then connected to the counter's reset pin. The address changes while the clock is low, meaning the counter is reset during the quiescent "tock" phase. Previously there was an 11th ucode word that had a reset signal, but this causes two problems: If the last word is all 0s + a reset signal, part of the first ucycle will be spent on the reset operation, increasing that cycle's minimum timespan. As all cycles are the same length, this new critical path will slow down the entire CPU! If the last word is equal to the first word + a reset signal, you can avoid this problem - however, you still have the problem that any bit skew of the microcode address as it changes to 0 then the wrong word will be momentarily asserted, which can cause all sorts of fun bugs.
+Which is then connected to the counter's reset pin. The address changes while the clock is low, meaning the counter is reset during the quiescent "tock" phase.
+
+Previously there was an 11th ucode word that had a reset signal, but this causes two problems: If the last word is all 0s + a reset signal, part of the first ucycle will be spent on the reset operation, increasing that cycle's minimum timespan. As all cycles are the same length, this new critical path will slow down the entire CPU! If the last word is equal to the first word + a reset signal, you can avoid this problem - however, you still have the problem that any bit skew of the microcode address as it changes to 0 then the wrong word will be momentarily asserted, which can cause all sorts of fun bugs.
 
 The only feedback from the rest of the computer to the control unit is the Z_DETECT line from the ALU - this feeds into the top bit of the microcode address, causing two different sequences of operations to be performed based on the result of the last ALU operation.
 
@@ -182,7 +203,9 @@ Not much to see here!
 
 The ROM and RAM chip are connected to the data bus and the address bus - 15 bits of the address bus go to the ROM (32KiB) and 14 bits to the RAM (16KiB). ROM, RAM and IO devices are memory mapped in a single 16-bit address space.
 
-The top 2 bits of the address bus go to demultiplexers, which are activated by the general OE/WE signals, and select devices with a resolution of 16KiB (four segments).
+ROM contains the bootstrap program and code for all the library/system calls used by user programs. RAM stores data, and one user program at a time.
+
+The top 2 bits of the address bus go to 1->4 demultiplexers, which are activated by the general OE/WE signals, and select devices with a resolution of 16KiB (four segments).
 
 The ROM is not writable (at least not by software!) so its #WE pin is held high by a 100k pullup (see the document on programming). WE for segments 2 and 3 (`8000`->`bfff`, `c000`->`ffff`) are routed to RAM and the IO board, respectively.
 
@@ -199,11 +222,6 @@ The address latches load from the data bus, and output to something I call the i
 
 The program counter loads from and outputs to the immediate address bus - during an instruction cycle it is loaded in a single 16-bit transfer from the address latch.
 
-There is only one other chip on this board, and this chip accounts for the need for the immediate address bus: a multiplexer, called the suffix selector, selects the source of the least significant 3 bits of the outside address bus.
-
-Why is this needed? When reading/writing to the location of the address latch, the suffix selector receives select signal 0: the immediate address provides the last 3 bits. In other words, the address of the RAM/ROM location, IO device or whatever is the same as the program counter / address latch. It's a non-operation.
-
-When the select signal is 1, the *microcode* provides the last 3 bits of the address. This is important, because the instructions are 8 (2 ** 3) instructions long.
 
 ```
                         |OE
@@ -216,6 +234,13 @@ data-->|ADDRESS LATCH|----->|                        |
        +-------------+      |                        |
          premodified address^             address bus^
 ```
+
+
+There is only one other chip on this board, and this chip accounts for the need for the immediate address bus: a multiplexer, called the suffix selector, selects the source of the least significant 3 bits of the outside address bus.
+
+Why is this needed? When reading/writing to the location of the address latch, the suffix selector receives select signal 0: the immediate address provides the last 3 bits. In other words, the address of the RAM/ROM location, IO device or whatever is the same as the program counter / address latch. It's a non-operation.
+
+When the select signal is 1, the *microcode* provides the last 3 bits of the address. This is important, because the instructions are 8 (2 ** 3) instructions long.
 
 As a result, the microcode can select which of the 8 bytes that form the instruction it would like to address, relative to the current PC value.
 
@@ -239,9 +264,9 @@ The speed of the NOR gates themselves is actually not very important, as the ope
 ```
 |  +---+              +---------------+
 |->| X |   +-----\    |               v
-|  +---+-->\      \   |  +-------+ +------+
-|           > NOR  )o-+->|ALUBUFF| |NORall|
-|  +---+-->/      /      +-------+ +------+
+|  +---+-->\      \   |  +-------+ +-------+
+|           > NOR  )o-+->|ALUBUFF| |NOR_all|
+|  +---+-->/      /      +-------+ +-------+
 |->| Y |   +-----/           |         |
 |  +---+                     v         +-> Z_DETECT 
 +--------------------------------+
@@ -273,12 +298,12 @@ The terms *input* and *output* are used relative to the computer, i.e. *out* den
     - Ought really to be on the flash board but there wasn't quite space. There used to be a piezo transducer in this position, I need to find a smaller one to squeeze in.
     - Bits 2->0 form the most significant 3 bits of the flash address (512KiB so 19 bits)
     - Bit 7 is flash WE
-    - Bit 6 is #OE for the flash chip; it is also inverted by an NPN transistor to give #OE for the flash input register (0 = flash->out, 1 = in->flash.) They're complementary to avoid contention. More of that later!
+    - Bit 6 is #OE for the flash chip; it is also inverted by an NPN transistor to give #OE for the flash input register (0: flash->`OUT`, 1: `IN`->flash.) They're complementary to avoid contention. More of that later!
 
 Flash board
 -----------
 
-This board contains a half-megabyte A29040B-70F (soon to be SST39SF040-70A, for 4k sectors instead of 64k) flash chip, and the input and output registers to control it.
+This board contains a half-megabyte A29040B (soon to be SST39SF040, for 4k sectors instead of 64k) flash chip, and the input and output registers to control it.
 
 Hardware-wise there's nothing particularly complicated going on - it's the software that works the magic on this board.
 
