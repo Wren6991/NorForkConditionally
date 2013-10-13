@@ -3,6 +3,20 @@ Fork Machine: OISC Processor
 
 <img src="processor.png">
 
+Contents:
+
+- [Machine](#machine)
+- [Execution](#execution)
+- [Microcode Format](#microcode-format)
+- [Breadboard Layout](#breadboard-layout)
+- [Control Unit](#control-unit)
+- [Memory Board](#memory-board)
+- [PC/ADDR Board](#pcaddr-board)
+- [ALU Board](#alu-board)
+- [IO Board](#io-board)
+- [Flash Board](#flash-board)
+
+
 Machine
 -------
 
@@ -99,9 +113,9 @@ Same listing in hex:
 Or, if Z:             ''                  6e10, 6f10,     ''
 ```
 
-I ended up programming the uROMs by hand. By the time I got to breadboard stage the
+I ended up programming the uROMs by hand, although a simple Arduino sketch wouldn't have been much effort. By the time I got to the breadboard stage the design was fairly mature, so I thankfully haven't had to change them!
 
-Breadboard layout:
+Breadboard Layout:
 ------------------
 
 ```
@@ -156,7 +170,7 @@ LO      |74HC373
 MID     |   ''
 ```
 
-Control unit
+Control Unit
 ------------
 
 The control unit consists of:
@@ -196,7 +210,7 @@ The only feedback from the rest of the computer to the control unit is the Z_DET
 
 The second half of the counter chip (two four-bit counters on a chip) divides the 8MHz clock down to 4->2->1->0.5 MHz, which can be selected with a short jumper wire, although the system is now (fingers crossed) stable at 8MHz provided a reasonable power supply.
 
-Memory board
+Memory Board
 ------------
 
 Not much to see here!
@@ -213,7 +227,7 @@ ROM spans two segments, so another schottky diode-resistor AND gate is used as a
 
 The top segment signals (`c000`->`ffff`) are routed to the IO board - read on for details.
 
-PC/ADDR board
+PC/ADDR Board
 -------------
 
 This board contains the program counter, which is a single 16-bit register containing the address of the current instruction, and the address latch, which has 2 8-bit inputs and one 16-bit output, and addresses a byte to be read from memory.
@@ -248,7 +262,7 @@ The more signicant 13 bits of the IAB are connected directly to the address bus.
 
 The address bus doesn't have any pulldowns, as it's driven every clock cycle.
 
-ALU board
+ALU Board
 ---------
 
 The ALU is very simple - it provides only one operation, bitwise NOR. The other chips store operands, interface with the data bus, and inform the control unit as to whether the last result was a zero.
@@ -275,10 +289,10 @@ The speed of the NOR gates themselves is actually not very important, as the ope
 *ASCII diagrams like it's 1979*
 
 
-IO board
+IO Board
 --------
 
-Again, not much to see!
+Again, not much to see.
 
 The board mostly consists of memory-mapped latches which are written to and read from by software - the memory mapping is performed by a pair of 1->8 demultiplexers.
 
@@ -300,7 +314,7 @@ The terms *input* and *output* are used relative to the computer, i.e. *out* den
     - Bit 7 is flash WE
     - Bit 6 is #OE for the flash chip; it is also inverted by an NPN transistor to give #OE for the flash input register (0: flash->`OUT`, 1: `IN`->flash.) They're complementary to avoid contention. More of that later!
 
-Flash board
+Flash Board
 -----------
 
 This board contains a half-megabyte A29040B (soon to be SST39SF040, for 4k sectors instead of 64k) flash chip, and the input and output registers to control it.
