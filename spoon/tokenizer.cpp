@@ -7,6 +7,7 @@
 
 std::string friendly_tokentype_names[] = {
     "EOF",
+    "\"&&\"",
     "\"break\"",
     "colon",
     "comma",
@@ -23,7 +24,9 @@ std::string friendly_tokentype_names[] = {
     "\"[\"",
     "\"macro\"",
     "name",
+    "\"!\"",
     "number",
+    "\"||\!"
     "\"}\"",
     "\"return\"",
     "\")\"",
@@ -90,7 +93,8 @@ inline bool is_hex_digit(char c)
 inline bool allowed_in_name(char c)
 {
     // uppercase, lowercase, digit or underscore:
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
+            c == '&' || c == '|' || c == '!' || c == '+' || c == '-' || c == '*';
 }
 
 inline bool is_whitespace(char c)
@@ -100,7 +104,12 @@ inline bool is_whitespace(char c)
 
 std::vector <token> tokenize(std::string str)
 {
+    std::cout << "////////////////\\\\\\\\\\\\//////////\\\\\\\\\n";
+    std::cout << str;
     std::map<std::string, token_type_enum> keywords;
+    keywords["!"] = t_not;
+    keywords["&&"] = t_and;
+    keywords["||"] = t_or;
     keywords["break"] = t_break;
     keywords["char"] = t_type;
     keywords["const"] = t_const;

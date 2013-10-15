@@ -44,6 +44,7 @@ class parser
         continue_stat* getcontinue();
         return_stat* getreturn();
     expression* getexpression();
+    expression* getsinglevalue();
 };
 
 #endif // _PARSER_H_INCLUDED_

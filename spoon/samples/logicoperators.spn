@@ -1,0 +1,18 @@
+#include "stddefs"
+
+function main()
+{
+    var int a = 1, b = 0;
+    if (a || b)
+        output(1, dbgout); // true
+    if (a && b)
+        output(2, dbgout); // false
+    if (a && !b)
+        output(3, dbgout); // true
+    if (!a || b)
+        output(4, dbgout); // false
+    if (!b || a)
+        output(5, dbgout); //true
+    if (!(b || a))
+        output(6, dbgout); // false
+}

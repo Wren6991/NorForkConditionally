@@ -1,4 +1,4 @@
-<program> ::= {<constdef>|<funcdef>|<macrodef>}
+<program> ::= {<constdef>|<funcdef>|<macrodef>|<vardecl>}
 
 <constdef> ::= `const` <type> <name> `=` <expression> `;`
 
@@ -6,12 +6,14 @@
 
 <type> ::= `int`|`pointer`|`void`
 
-<macrodef> ::= `macro` <name> `(` <name> {`,` <name>} `)`
+<macrodef> ::= `macro` <name> `(` <name> {`,` <name>} `)` <block>
 
 <block> ::=  <statement>
          |   `{` {<vardecl>} {<statement>} `}`
 
-<vardecl> ::= <type> <name> {`,` <name>} `;`
+<vardecl> ::= <type> <varname> {`,` <varname>} `;`
+
+<varname> ::= <name> [`[` <number> `]`] [`=` <expression>]
 
 <statement> ::=  <name> `(` <expression> {`,` <expression>} `)` `;`
              |   <name> `=` <expression> `;`
@@ -22,8 +24,18 @@
            
 
 
-<expression> ::= <name> | <number>		// for now!
+<expression> ::= <value> [(`&&` | `||`) <expression>]
 
+<value> ::= `!`<value>
+         |  `(`<expression>`)`
+         |  <name>
+         |  <name> `(`<expression> {`,` <expression>}`)`
+         |  <name> `[`<number>`]`
+         |  <string>
+         |  `{`<number> {`,` <number>} `}`
+         |  <number>
 
 <name> ::= [a-zA-Z_][a-zA-Z0-9_]*		// this isn't strictly BNF but...
+
 <number> ::= (0x[0-9a-fA-F]+)|([0-9]+)
+          |  `'`<char>`'`

@@ -11,9 +11,12 @@ struct resourcep
 {
     T *obj;
 
-    resourcep()
+    resourcep(T *_obj = 0)
     {
-        obj = new T();
+        if (_obj)
+            obj = _obj;
+        else
+            obj = new T();
     }
     ~resourcep()
     {

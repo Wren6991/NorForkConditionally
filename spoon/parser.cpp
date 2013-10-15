@@ -438,8 +438,35 @@ while_stat* parser::getwhile()
 
 expression* parser::getexpression()
 {
-    resourcep <expression> expr;
-    if (accept(t_name))
+    resourcep <expression> expr = getsinglevalue();
+
+    if (accept(t_and) || accept(t_or))
+    {
+        expression *temp = expr.obj;
+        expr.obj = new expression;
+        expr.obj->type = (lastt.type == t_and) ? exp_and : exp_or;
+        expr.obj->args.push_back(temp);
+        expr.obj->args.push_back(getexpression());
+    }
+    return expr.release();
+}
+
+expression* parser::getsinglevalue()
+{
+   resourcep <expression> expr;
+
+    if (accept(t_not))
+    {
+        expr.obj->type = exp_not;
+        expr.obj->args.push_back(getsinglevalue());
+    }
+    else if (accept(t_lparen))
+    {
+        resourcep<expression> innerexpr(getexpression());
+        expect(t_rparen);
+        return innerexpr.release();
+    }
+    else if (accept(t_name))
     {
         expr.obj->name = lastt.value;
         if (accept(t_lparen))

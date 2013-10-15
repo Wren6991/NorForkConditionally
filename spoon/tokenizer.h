@@ -10,6 +10,7 @@
 
 typedef enum {
     t_eof = 0,  //end of file
+    t_and,
     t_break,
     t_colon,
     t_comma,
@@ -26,7 +27,9 @@ typedef enum {
     t_lsquareb,
     t_macro,
     t_name,
+    t_not,
     t_number,
+    t_or,
     t_rbrace,
     t_return,
     t_rparen,

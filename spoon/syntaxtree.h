@@ -30,7 +30,10 @@ typedef enum {
     exp_name,
     exp_number,
     exp_funccall,
-    exp_string
+    exp_string,
+    exp_and,
+    exp_not,
+    exp_or
 } exp_type;
 
 

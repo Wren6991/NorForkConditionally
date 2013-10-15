@@ -1,6 +1,9 @@
 Todo:
 -----
 
+- Expressions: add (), &&, ||, !
+	- these are *control* operators, so they're suitable to add to the language (as opposed to arithmetic)
+	- && and || have short-circuit behaviour, which can't otherwise be implemented without a bunch of ifs.
 - Make characters such as +, -, &, | acceptable for symbols
 	- This means they can be used for function names! &(x, 0xf)
 - Add a #name directive
