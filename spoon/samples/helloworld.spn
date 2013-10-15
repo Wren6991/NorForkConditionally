@@ -1,0 +1,9 @@
+#include "stdscreen"
+
+function main()
+{
+    wakescreen();
+    emptyscreenbuffer();
+    printline("Hello world!");
+    dumpscreenbuffer();
+}

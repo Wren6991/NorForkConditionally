@@ -34,6 +34,7 @@ parser::parser(std::vector<token> tokens_, std::string _filename)
     filename = _filename;
     typestrings["char"] = type_int;
     typestrings["int"] = type_int;
+    typestrings["int16"] = type_pointer;
     typestrings["pointer"] = type_pointer;
     typestrings["void"] = type_none;
     tokens = tokens_;
@@ -121,6 +122,10 @@ void parser::do_preprocessor(program *prog)
     if (lastt.value == "include")
     {
         expect(t_string);
+        // Files do not get included twice:
+        if (includedfiles.find(lastt.value) != includedfiles.end())
+            return;
+        includedfiles.insert(lastt.value);
         std::fstream includefile(lastt.value, std::ios::in | std::ios::binary);
         if (!includefile.is_open())
         {
@@ -135,7 +140,9 @@ void parser::do_preprocessor(program *prog)
         includefile.close();
         std::vector<token> includetokens = tokenize(&source[0]);
         parser p(includetokens, lastt.value);
+        p.includedfiles = includedfiles;
         program *includedefs = p.getprogram();
+        includedfiles = p.includedfiles;
         for (unsigned int i = 0; i < includedefs->defs.size(); i++)
             prog->defs.push_back(includedefs->defs[i]);
     }

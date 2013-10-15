@@ -1,128 +1,7 @@
 #include "stddefs"
 #include "stdmath"
 #include "stdmem"
-
-const int s_enable = 0x80;
-const int s_rs = 0x40;
-
-var int screensignal;
-var int screenbuffer[80];
-
-
-function pointer int2hexstr(int x)
-{
-    var pointer hexchars = "0123456789ABCDEF";
-    var char buffer[3];
-    buffer[0] = read(addPointer(hexchars, shiftrightn(x, 4)));
-    buffer[1] = read(addPointer(hexchars, and(x, 0x0f)));
-    buffer[2] = 0;
-    int2hexstr = buffer;
-}
-
-// write data and pulse the clock:
-function write4bits(int data)
-{
-    screensignal = or(and(screensignal, 0xf0), data);
-    output(screensignal, debugout);
-    output(or(screensignal, s_enable), debugout);
-    nop();
-    nop();
-    output(screensignal, debugout);
-}
-
-function write8bits(int data)
-{
-    write4bits(shiftrightn(data, 4));
-    sleep(0);
-    write4bits(and(data, 0x0f));
-}
-
-function cursorpos(int x, int y)
-{
-    screensignal = 0x00;
-    var int address;
-    if (and(y, 0x02))
-    {
-        if (and(y, 0x01))
-            address = 84;
-        else
-            address = 20;
-    }
-    else
-    {
-        if (and(y, 0x01))
-            address = 64;
-        else
-            address = 0;
-    }
-    write8bits(or(add(address, x), 0x80));
-    screensignal = s_rs;
-}
-
-function dumpscreenbuffer()
-{
-    var int ycount = 4, y = 0;
-    var pointer p = screenbuffer;
-    while (ycount)
-    {
-        cursorpos(0, y);
-        var int xcount = 20;
-        while (xcount)
-        {
-            write8bits(read(p));
-            p = incrementPointer(p);
-            xcount = decrement(xcount);
-        }
-        y = increment(y);
-        ycount = decrement(ycount);
-    }
-}
-
-function emptyscreenbuffer()
-{
-    memset(screenbuffer, ' ', 80);
-}
-
-function scrollscreen()
-{
-    memcpy(screenbuffer, addPointer(screenbuffer, 20), 60);
-    memset(addPointer(screenbuffer, 60), ' ', 20);
-}
-
-function printtobuffer(pointer text, int pos)
-{
-    var pointer dest = addPointer(screenbuffer, pos);
-    var int c = read(text);
-    while (c)
-    {
-        write(c, dest);
-        text = incrementPointer(text);
-        c = read(text);
-        dest = incrementPointer(dest);
-    }
-}
-
-function printline(pointer text)
-{
-    scrollscreen();
-    printtobuffer(text, 60);
-}
-
-function wakescreen()
-{
-    screensignal = 0x00;
-    write4bits(0x3);
-    sleep(255);
-    write4bits(0x3);
-    sleep(128);
-    write4bits(0x3);
-    write4bits(0x2);
-    write8bits(0x28);
-    write8bits(0x0c);
-    write8bits(0x01);
-    sleep (128);
-    screensignal = s_rs;
-}
+#include "stdscreen"
 
 function main()
 {
@@ -134,12 +13,6 @@ function main()
     printline("the next 8 bytes.");
     dumpscreenbuffer();
 
-    /*var pointer datap = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-                         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-                         0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
-                         0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
-                         'H',  'e',  'l',  'l',  'o',  '!'
-                         };*/
     var pointer datap = 0;
 
     while (true)

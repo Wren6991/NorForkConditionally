@@ -1,3 +1,9 @@
+// stdmem
+// Standard Spoon memory manipulation header
+// Luke Wren 2013
+
+#include "stddefs"
+
 function memset(pointer dest, int value, int count)
 {
     while (count)
@@ -34,4 +40,16 @@ function pointer strcpy(pointer dest, pointer src)
         c = read(src);
     }
     strcpy = dest;
+}
+
+function int16 strlen(pointer src)
+{
+    strlen = 0;
+    var char c = read(src);
+    while (c)
+    {
+        strlen = incrementPointer(strlen);
+        src = incrementPointer(src);
+        c = read(src);
+    }
 }

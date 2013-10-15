@@ -1,3 +1,9 @@
+// stdmath
+// Standard Spoon maths function header
+// Luke Wren 2013
+
+#include "stddefs"
+
 // 8 bit
 
 function int add(int a, int b)
@@ -30,16 +36,7 @@ function int multiply(int a, int b)
 }
 
 function int lessthan(int a, int b);
-
-function int logicalnot(int a)
-{
-    if (a)
-    	logicalnot = 0x00;
-    else
-        logicalnot = 0xff;
-    return;
-}
-
+function int logicalnot(int a);
 
 function int divide(int a, int b)
 {
@@ -52,6 +49,7 @@ function int divide(int a, int b)
         divide = increment(divide);
     }
 }
+
 // non-zero if a < b:
 // if the top bit is different and only true for b, a must be < b.
 function int lessthan(int a, int b)
@@ -69,6 +67,15 @@ function int lessthan(int a, int b)
         a = shiftleft(a);
         b = shiftleft(b);
     }
+}
+
+function int logicalnot(int a)
+{
+    if (a)
+    	logicalnot = 0x00;
+    else
+        logicalnot = 0xff;
+    return;
 }
 
 function int equal(int a, int b)

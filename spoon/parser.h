@@ -4,6 +4,8 @@
 #include "syntaxtree.h"
 #include "tokenizer.h"
 
+#include <map>
+#include <set>
 #include <vector>
 
 class parser
@@ -11,6 +13,7 @@ class parser
     std::string filename;
     std::vector<token> tokens;
     std::map <std::string, type_enum> typestrings;
+    std::set <std::string> includedfiles;
     int index;
     token t;
     token lastt;

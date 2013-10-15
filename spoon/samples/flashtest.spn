@@ -1,0 +1,99 @@
+#include "stdscreen"
+
+const pointer flash_sig = 0xc002;
+const pointer flash_mid = 0xc003;
+const pointer flash_low = 0xc004;
+const pointer flash_in = 0xc005;
+const pointer flash_out = 0xc006;
+
+const int flashsig_oe = 0x40;
+const int flashsig_we = 0x80;
+const int flashsig_oe_we = 0xc0;
+
+var int flash_signal_byte;
+
+function writeflashsignal(int signal)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0x3f), and(signal, 0xc0));
+    output(flash_signal_byte, flash_sig);
+}
+
+function writeflashaddress(int top, pointer rest)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0xc0), and(top, 0x07));
+    output(flash_signal_byte, flash_sig);
+    output(first(rest), flash_mid);
+    output(second(rest), flash_low);
+}
+
+function int readflashbyte(int top, pointer rest)
+{
+    writeflashsignal(flashsig_oe);
+    writeflashaddress(top, rest);
+    readflashbyte = read(flash_out);
+}
+
+// This doesn't actually perform a write,  unless the correct security sequence is used.
+function int writeflashbyte(int top, pointer rest, int data)
+{
+    writeflashaddress(top, rest);
+    output(data, flash_in);
+    writeflashsignal(flashsig_oe_we);
+    writeflashsignal(flashsig_oe);
+    writeflashsignal(flashsig_oe_we);
+}
+
+function programflashbyte(int top, pointer rest, int data)
+{
+    writeflashbyte(0x00, 0x5555, 0xaa);
+    writeflashbyte(0x00, 0x2aaa, 0x55);
+    writeflashbyte(0x00, 0x5555, 0xa0);
+    writeflashbyte(top, rest, data);
+    // a 20 us wait is necessary but during write operations the processing time will be sufficient
+}
+
+function readflashnbytes(int top, pointer rest, pointer dest, int16 count)
+{
+    while (or(first(count), second(count)))
+    {
+        write(readflashbyte(top, rest), dest);
+        rest = incrementPointer(rest);
+        if (and(logicalnot(first(rest)), logicalnot(second(rest))))
+            top = increment(top);
+        dest = incrementPointer(dest);
+        count = decrementPointer(count);
+    }
+}
+
+function programflashnbytes(int top, pointer rest, pointer datap, int16 count)
+{
+    while (or(first(count), second(count)))
+    {
+        programflashbyte(top, rest, read(datap));
+        rest = incrementPointer(rest);
+        if (and(logicalnot(first(rest)), logicalnot(second(rest))))
+            top = increment(top);
+        datap = incrementPointer(datap);
+        count = decrementPointer(count);
+    }
+}
+
+function eraseflashsector(int top, pointer rest)
+{
+    writeflashbyte(0x00, 0x5555, 0xaa);
+    writeflashbyte(0x00, 0x2aaa, 0x55);
+    writeflashbyte(0x00, 0x5555, 0x80);
+    writeflashbyte(0x00, 0x5555, 0xaa);
+    writeflashbyte(0x00, 0x2aaa, 0x55);
+    writeflashbyte(top, rest, 0x30);
+}
+
+
+
+function main()
+{
+    readflashbyte(0, 0);
+    programflashbyte(0, 0, 0);
+    eraseflashsector(0, 0);
+}
+

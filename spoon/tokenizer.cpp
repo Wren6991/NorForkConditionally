@@ -110,6 +110,7 @@ std::vector <token> tokenize(std::string str)
     keywords["function"] = t_function;
     keywords["if" ] = t_if;
     keywords["int"] = t_type;
+    keywords["int16"] = t_type;
     keywords["macro"] = t_macro;
     keywords["pointer"] = t_type;
     keywords["return"] = t_return;
