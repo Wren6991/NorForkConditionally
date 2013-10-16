@@ -453,6 +453,16 @@ void compiler::compile(expression *expr)
                 throw_type_error(std::string("argument ") + "" + " to function " + expr->name, sig.arg_types[i], expr->args[i]->val_type);
         }
     }
+    else if (expr->type == exp_and || expr->type == exp_or || expr->type == exp_not)
+    {
+        for (unsigned i = 0; i < expr->args.size(); i++)
+        {
+            compile(expr->args[i]);
+            if (!match_types(type_int, expr->args[i]->val_type))
+                throw(error("Error: logical operators apply only to booleans"));
+        }
+    }
+
     else if (expr->type != exp_number && expr->type != exp_string)
     {
         throw(error("Error: attempted to compile unknown expression type"));
@@ -483,6 +493,10 @@ void compiler::gettype(expression *expr)
     case exp_string:
         expr->val_type = type_t(type_array, type_int, expr->name.size() + 1);
         break;
+    case exp_and:
+    case exp_not:
+    case exp_or:
+        expr->val_type = type_int;
     }
 }
 

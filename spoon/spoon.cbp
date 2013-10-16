@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-s samples/screen.spn samples/screen.bin " />
+				<Option parameters="samples/logicoperators.spn samples/logicoperators.bin " />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />
@@ -57,6 +57,9 @@
 		<Unit filename="samples/empty.spn" />
 		<Unit filename="samples/equal.spn" />
 		<Unit filename="samples/fibonacci.spn" />
+		<Unit filename="samples/flashtest.spn" />
+		<Unit filename="samples/helloworld.spn" />
+		<Unit filename="samples/logicoperators.spn" />
 		<Unit filename="samples/new.spn" />
 		<Unit filename="samples/screen.spn" />
 		<Unit filename="samples/screen.test.spn" />
@@ -65,6 +68,9 @@
 		<Unit filename="stddefs" />
 		<Unit filename="stdmath" />
 		<Unit filename="stdmem" />
+		<Unit filename="stdscreen">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="syntaxtree.h" />
 		<Unit filename="tokenizer.cpp" />
 		<Unit filename="tokenizer.h" />

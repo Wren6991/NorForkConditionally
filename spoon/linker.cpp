@@ -87,29 +87,51 @@ void linker::emit_nfc2(linkval x, linkval y)
 }
 
 // clear temp; set temp to not(x);  invert temp and branch on result.
-void linker::emit_branchifzero(linkval testloc, linkval dest)
+void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previous, bool invert)
 {
-    padto8bytes();
-    // if the last instruction wrote to the testloc and it's not using its skip fields for anything, we can use
-    // that instruction to perform the branch (as the testloc value will already be in the ALU)
-    if (false && last_instruction_points_to_this_one() && buffer[index - 8] == testloc.gethighbyte() && buffer[index - 7] == testloc.getlowbyte())
+    if (amend_previous)
     {
-        buffer[index - 2] = dest.gethighbyte();
-        buffer[index - 1] = dest.getlowbyte();
+        if (testloc.gethighbyte() != buffer[index - 8] || testloc.getlowbyte() != buffer[index - 7])
+            throw(error("Linker error: option amend_previous used but previous instruction does not write to testloc"));
+        if (!invert)
+        {
+            buffer[index - 2] = dest.gethighbyte(); // branch on zero
+            buffer[index - 1] = dest.getlowbyte();
+        }
+        else
+        {
+            buffer[index - 4] = dest.gethighbyte(); // branch on non zero
+            buffer[index - 3] = dest.getlowbyte();
+        }
     }
     else
     {
+        padto8bytes();
         linkval temploc = vars.addvar("__brztemp", type_int);
         emit_nfc2(temploc, getconstaddress(0xff));
         emit_nfc2(temploc, testloc);
         uint16_t next = index + 8;
         write16(temploc);
         write16(temploc);
-        write16(next);
-        write16(dest);
-        vars.remove("__brztemp");
+        if (!invert)
+        {
+            write16(next);
+            write16(dest);  // dest if 0
+        }
+        else
+        {
+            write16(dest);  // dest if non zero
+            write16(next);
+        }
     }
 
+
+    vars.remove("__brztemp");
+}
+
+void linker::emit_branchifnonzero(linkval testloc, linkval dest, bool amend_previous)
+{
+    emit_branchifzero(testloc, dest, amend_previous, true);
 }
 
 void linker::emit_branchalways(linkval dest, bool always_emit)
@@ -841,6 +863,42 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
             vars.remove_on_pop("__stringloctemp");
             return temploc;
         }
+    }
+    else if (expr->type == exp_not)
+    {
+        linkval return_loc = givenpreferred ? preferred : vars.addvar("__lnottemp", type_int);
+        std::string skiplabel = getlabel();
+        emit_nfc2(return_loc, getconstaddress(0xff));
+        emit_branchifnonzero(evaluate(expr->args[0]), skiplabel);
+        emit_nfc2(return_loc, getconstaddress(~1));
+        savelabel(skiplabel, index);
+        if(!givenpreferred)
+            vars.remove_on_pop("__lnottemp");
+        return return_loc;
+    }
+    else if (expr->type == exp_and)
+    {
+        linkval return_loc = givenpreferred ? preferred : vars.addvar("__landtemp", type_int);
+        std::string skiplabel = getlabel();
+        emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
+        emit_branchifzero(return_loc, skiplabel);
+        emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
+        savelabel(skiplabel, index);
+        if (!givenpreferred)
+            vars.remove_on_pop("__landtemp");
+        return return_loc;
+    }
+    else if (expr->type == exp_or)
+    {
+        linkval return_loc = givenpreferred ? preferred : vars.addvar("__lortemp", type_int);
+        std::string skiplabel = getlabel();
+        emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
+        emit_branchifnonzero(return_loc, skiplabel);
+        emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
+        savelabel(skiplabel, index);
+        if (!givenpreferred)
+            vars.remove_on_pop("__lortemp");
+        return return_loc;
     }
     else
     {

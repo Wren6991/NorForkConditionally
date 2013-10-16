@@ -44,8 +44,8 @@
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="libwxmsw29_core.a" />
-					<Add library="libwxbase29.a" />
+					<Add library="libwxmsw29u_core.a" />
+					<Add library="libwxbase29u.a" />
 					<Add library="libwxpng.a" />
 					<Add library="libwxzlib.a" />
 					<Add directory="$(#wx)/lib/gcc_dll" />

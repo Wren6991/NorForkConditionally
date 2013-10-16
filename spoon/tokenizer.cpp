@@ -26,7 +26,7 @@ std::string friendly_tokentype_names[] = {
     "name",
     "\"!\"",
     "number",
-    "\"||\!"
+    "\"||\"",
     "\"}\"",
     "\"return\"",
     "\")\"",
@@ -51,7 +51,8 @@ enum state_enum
     s_staraccepted,
     s_whitespace,
     s_charliteral,
-    s_expectingapostrophe
+    s_expectingapostrophe,
+    s_logicoperator
 };
 
 
@@ -94,7 +95,7 @@ inline bool allowed_in_name(char c)
 {
     // uppercase, lowercase, digit or underscore:
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
-            c == '&' || c == '|' || c == '!' || c == '+' || c == '-' || c == '*';
+            c == '+' || c == '-' || c == '*';
 }
 
 inline bool is_whitespace(char c)
@@ -104,12 +105,7 @@ inline bool is_whitespace(char c)
 
 std::vector <token> tokenize(std::string str)
 {
-    std::cout << "////////////////\\\\\\\\\\\\//////////\\\\\\\\\n";
-    std::cout << str;
     std::map<std::string, token_type_enum> keywords;
-    keywords["!"] = t_not;
-    keywords["&&"] = t_and;
-    keywords["||"] = t_or;
     keywords["break"] = t_break;
     keywords["char"] = t_type;
     keywords["const"] = t_const;
@@ -132,6 +128,7 @@ std::vector <token> tokenize(std::string str)
     symbols[','] = token(t_comma , ",");
     symbols['='] = token(t_equals, "=");
     symbols['#'] = token(t_hash  , "#");
+    symbols['!'] = token(t_not   , "!");
     symbols['('] = token(t_lparen, "(");
     symbols[')'] = token(t_rparen, ")");
     symbols['{'] = token(t_lbrace, "{");
@@ -159,18 +156,20 @@ std::vector <token> tokenize(std::string str)
                 startindex = index;
                 if (is_digit(c))
                     state = s_number;
+                else if (symbols.find(c) != symbols.end())  //if we find a matching symbol, push a matching token onto the list.
+                    tokens.push_back(token(symbols.find(c)->second, linenumber));
                 else if (allowed_in_name(c))
                     state = s_name;
                 else if (is_whitespace(c))   // swallow all the whitespace
                     state = s_whitespace;
-               else if (c == '/')
+                else if (c == '/')
                     state = s_slashaccepted;
-                else if (symbols.find(c) != symbols.end())  //if we find a matching symbol, push a matching token onto the list.
-                    tokens.push_back(token(symbols.find(c)->second, linenumber));
                 else if (c == '"')
                     state = s_string;
                 else if (c == '\'')
                     state = s_charliteral;
+                else if (c == '|' || c == '&')
+                    state = s_logicoperator;
                 else if (c)
                 {
                     std::stringstream ss;
@@ -270,7 +269,19 @@ std::vector <token> tokenize(std::string str)
                 state = s_start;
                 break;
             }
-
+            case s_logicoperator:
+                if (c == '&' && buffer[index - 1] == '&')
+                    tokens.push_back(token(t_and, "&&", linenumber));
+                else if (c == '|' && buffer[index - 1] == '|')
+                    tokens.push_back(token(t_or, "||", linenumber));
+                else
+                {
+                    std::stringstream ss;
+                    ss << "Error: malformed logic operator near \"" << str.substr(startindex, 2) << "\" on line " << linenumber;
+                    throw(error(ss.str()));
+                }
+                state = s_start;
+                break;
         }
     } while (c);
     if (state == s_string)

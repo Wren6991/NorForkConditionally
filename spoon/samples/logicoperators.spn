@@ -4,15 +4,19 @@ function main()
 {
     var int a = 1, b = 0;
     if (a || b)
-        output(1, dbgout); // true
+        output(val(1), debugout); // true
     if (a && b)
-        output(2, dbgout); // false
+        output(val(2), debugout); // false
     if (a && !b)
-        output(3, dbgout); // true
+        output(val(3), debugout); // true
     if (!a || b)
-        output(4, dbgout); // false
+        output(val(4), debugout); // false
     if (!b || a)
-        output(5, dbgout); //true
+        output(val(5), debugout); // true
     if (!(b || a))
-        output(6, dbgout); // false
+        output(val(6), debugout); // false
+    if ((b && b) || a)
+        output(val(7), debugout); // true
+    if (b && b || a)
+        output(val(8), debugout); // false
 }

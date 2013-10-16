@@ -166,6 +166,40 @@ void printtree(expression *expr)
 {
     if (expr->type == exp_name)
         std::cout << expr->name;
-    else
+    else if (expr->type == exp_number)
         std::cout << expr->number;
+    else if (expr->type == exp_not)
+    {
+        std::cout << "!(";
+        printtree(expr->args[0]);
+        std::cout << ")";
+    }
+    else if (expr->type == exp_or)
+    {
+        std::cout << "(";
+        printtree(expr->args[0]);
+        std::cout << " || ";
+        printtree(expr->args[1]);
+        std::cout << ")";
+    }
+    else if (expr->type == exp_and)
+    {
+        std::cout << "(";
+        printtree(expr->args[0]);
+        std::cout << " && ";
+        printtree(expr->args[1]);
+        std::cout << ")";
+    }
+    else if (expr->type == exp_funccall)
+    {
+        std::cout << expr->name << "(";
+        for (unsigned i = 0; i < expr->args.size(); i++)
+        {
+            printtree(expr->args[i]);
+            if (i < expr->args.size() - 1)
+                std::cout << ", ";
+        }
+        std::cout << ")";
+    }
+
 }

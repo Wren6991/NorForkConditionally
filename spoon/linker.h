@@ -45,7 +45,8 @@ class linker
     linkval evaluate_or_return_literal(expression*);
 // Code generation routines:
     void emit_nfc2(linkval x, linkval y);
-    void emit_branchifzero(linkval testloc, linkval dest);
+    void emit_branchifzero(linkval testloc, linkval dest, bool amend_previous = false, bool invert = false);
+    void emit_branchifnonzero(linkval testloc, linkval dest, bool amend_previous = false);           // shim for e_biz with invert = true
     void emit_branchalways(linkval dest, bool always_emit = false);     // can pass true to disable the follow behaviour, if the jump is jumped to (e.g. end of while)
     void emit_copy(linkval src, linkval dest);
     void emit_copy_inverted(linkval src, linkval dest);
