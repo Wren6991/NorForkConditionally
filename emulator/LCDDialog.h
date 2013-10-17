@@ -16,7 +16,7 @@ public:
     virtual ~LCDDialog();
 
     virtual void write(unsigned int address, unsigned int data);
-    virtual unsigned int read();
+    virtual unsigned int read(unsigned int address);
 
     //(*Declarations(LCDDialog)
     //*)

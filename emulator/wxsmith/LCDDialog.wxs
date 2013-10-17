@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<wxsmith>
+	<object class="wxDialog" name="LCDDialog">
+		<title>LCD</title>
+		<size>188,153</size>
+	</object>
+</wxsmith>

@@ -24,20 +24,22 @@ vm::vm()
 
 bool vm::isWriteable(uint16_t location)
 {
-    return (location >= 0x8000 && location < 0xc000) || location == DEBUG_OUT_POS;
-}
-
-inline bool isReadable(uint16_t location)   // certain locations do not yield any output, so default to 0.
-{
-    return location < 0xc000 || location == DEBUG_IN_POS;
+    return location >= 0x8000 && location < 0xc008;
 }
 
 uint8_t vm::get(uint16_t location)
 {
-    if (isReadable(location))
-        return (*memory)[location];
+    if (location >= 0xc000 && location < 0xc008 && location != DEBUG_IN_POS)
+    {
+        for (unsigned i = 0; i < peripherals.size(); i++)
+            if (peripherals[i]->readlocations.find(location) != peripherals[i]->readlocations.end())
+                return peripherals[i]->read(location);
+        return 0;
+    }
     else
-        return 0x00;
+    {
+        return (*memory)[location];
+    }
 }
 
 void vm::write(uint16_t location, uint8_t data)
@@ -45,9 +47,10 @@ void vm::write(uint16_t location, uint8_t data)
     if (!isWriteable(location))
         return;
     (*memory)[location] = data;
-    if (location == DEBUG_OUT_POS)  // or any other peripheral...
+    if (location >= DEBUG_OUT_POS && location < 0xc008)
     {
-        debug_written = true;
+        if (location == DEBUG_OUT_POS)
+            debug_written = true;
         for (unsigned int i = 0; i < peripherals.size(); i++)
             peripherals[i]->write(location, data);
     }

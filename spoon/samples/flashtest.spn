@@ -18,6 +18,15 @@ function writeflashsignal(int signal)
     output(flash_signal_byte, flash_sig);
 }
 
+function writeflashsignalpulse(int signal1, int signal2)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0x3f), and(signal1, 0xc0));
+    var int sig_byte_2 = or(and(flash_signal_byte, 0x3f), and(signal2, 0xc0));
+    output(flash_signal_byte, flash_sig);
+    output(sig_byte_2, flash_sig);
+    output(flash_signal_byte, flash_sig);
+}
+
 function writeflashaddress(int top, pointer rest)
 {
     flash_signal_byte = or(and(flash_signal_byte, 0xc0), and(top, 0x07));
@@ -28,7 +37,7 @@ function writeflashaddress(int top, pointer rest)
 
 function int readflashbyte(int top, pointer rest)
 {
-    writeflashsignal(flashsig_oe);
+    writeflashsignal(flashsig_we);
     writeflashaddress(top, rest);
     readflashbyte = read(flash_out);
 }
@@ -38,9 +47,7 @@ function int writeflashbyte(int top, pointer rest, int data)
 {
     writeflashaddress(top, rest);
     output(data, flash_in);
-    writeflashsignal(flashsig_oe_we);
-    writeflashsignal(flashsig_oe);
-    writeflashsignal(flashsig_oe_we);
+    writeflashsignalpulse(flashsig_oe_we, flashsig_oe);
 }
 
 function programflashbyte(int top, pointer rest, int data)
@@ -58,7 +65,7 @@ function readflashnbytes(int top, pointer rest, pointer dest, int16 count)
     {
         write(readflashbyte(top, rest), dest);
         rest = incrementPointer(rest);
-        if (and(logicalnot(first(rest)), logicalnot(second(rest))))
+        if (!(first(rest) || second(rest)))
             top = increment(top);
         dest = incrementPointer(dest);
         count = decrementPointer(count);
@@ -71,7 +78,7 @@ function programflashnbytes(int top, pointer rest, pointer datap, int16 count)
     {
         programflashbyte(top, rest, read(datap));
         rest = incrementPointer(rest);
-        if (and(logicalnot(first(rest)), logicalnot(second(rest))))
+        if (!(first(rest) || second(rest)))
             top = increment(top);
         datap = incrementPointer(datap);
         count = decrementPointer(count);
@@ -92,8 +99,36 @@ function eraseflashsector(int top, pointer rest)
 
 function main()
 {
-    readflashbyte(0, 0);
-    programflashbyte(0, 0, 0);
-    eraseflashsector(0, 0);
+    wakescreen();
+    emptyscreenbuffer();
+    printlineanddump("Flash test!");
+    while (true)
+    {
+        var int input = read(debugin);
+        if (and(input, 0xe0))
+        {
+            printlineanddump("Erasing sector...");
+            eraseflashsector(0, 0);
+            sleep(255);
+            printlineanddump("Done, writing file..");
+            var pointer str;
+            if (and(input, 0x80))
+                str = "apples";
+            else if (and(input, 0x40))
+                str = "bread";
+            else
+                str = "cheese";
+            programflashnbytes(0, 0, str, strlen(str));
+            printlineanddump("Done.");
+        }
+        else if (and(input, 0x10))
+        {
+            var char buffer[21];
+            printline("Flash contents:");
+            readflashnbytes(0, 0, buffer, 20);
+            buffer[20] = 0;
+            printlineanddump(buffer);
+        }
+    }
 }
 

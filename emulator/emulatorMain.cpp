@@ -12,7 +12,7 @@
  * - Show PC cursor on hexview
  * - variable speed
  * - location variables for watches
- * - code correspondence? (Link source lines->machine addresses, integrate with IDE)
+ * - code mapping? (Link source lines->machine addresses, integrate with IDE)
  */
 #include "emulatorMain.h"
 #include <fstream>
@@ -63,6 +63,7 @@ const long emulatorFrame::TOOL_OPEN = wxNewId();
 const long emulatorFrame::TOOL_SAVE = wxNewId();
 const long emulatorFrame::ID_TOOLBARITEM1 = wxNewId();
 const long emulatorFrame::TOOL_LCD = wxNewId();
+const long emulatorFrame::TOOL_FLASH = wxNewId();
 const long emulatorFrame::TOOL_ABOUT = wxNewId();
 const long emulatorFrame::ID_TOOLBAR1 = wxNewId();
 const long emulatorFrame::ID_TIMER1 = wxNewId();
@@ -189,10 +190,11 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     ToolBarItem2 = ToolBar1->AddTool(TOOL_OPEN, _("Open"), wxBitmap(wxImage(_T("icons\\folder_page.png"))), wxNullBitmap, wxITEM_NORMAL, _("Open file"), wxEmptyString);
     ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
+    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, _("Step simulation"), wxEmptyString);
     ToolBarItem5 = ToolBar1->AddTool(TOOL_LCD, _("LCD"), wxBitmap(wxImage(_T("icons/monitor.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show LCD"), wxEmptyString);
+    ToolBarItem6 = ToolBar1->AddTool(TOOL_FLASH, _("Flash"), wxBitmap(wxImage(_T("icons/drive_magnify.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show flash contents"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem6 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
+    ToolBarItem7 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
     ToolBar1->Realize();
     SetToolBar(ToolBar1);
     dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
@@ -234,6 +236,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_RCLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveAsClicked);
     Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
     Connect(TOOL_LCD,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnLCDClicked);
+    Connect(TOOL_FLASH,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnFlashClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
@@ -259,6 +262,8 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
 
     lcd = new LCDDialog(this);
     machine.peripherals.push_back(lcd);
+    flash = new FlashDialog(this);
+    machine.peripherals.push_back(flash);
 
     filename = "Untitled";
     filehaschanged = false;
@@ -337,6 +342,7 @@ void emulatorFrame::OnSaveClicked(wxCommandEvent& event)
     else if (filehaschanged)
     {
         SetFileName(filepath);
+        wxBell();
         //Text->SaveFile(filepath);
     }
 }
@@ -509,4 +515,9 @@ void emulatorFrame::OnMenuItemDeleteSelected(wxCommandEvent& event)
 void emulatorFrame::OnLCDClicked(wxCommandEvent& event)
 {
     lcd->Show();
+}
+
+void emulatorFrame::OnFlashClicked(wxCommandEvent& event)
+{
+    flash->Show();
 }

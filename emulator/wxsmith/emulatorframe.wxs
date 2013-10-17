@@ -313,6 +313,7 @@
 			<object class="tool" name="ID_TOOLBARITEM1" variable="ToolBarItem4" member="yes">
 				<label>Step</label>
 				<bitmap>icons\resultset_next.png</bitmap>
+				<tooltip>Step simulation</tooltip>
 				<handler function="OnStepClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_LCD" variable="ToolBarItem5" member="yes">
@@ -321,8 +322,14 @@
 				<tooltip>Show LCD</tooltip>
 				<handler function="OnLCDClicked" entry="EVT_TOOL" />
 			</object>
+			<object class="tool" name="TOOL_FLASH" variable="ToolBarItem6" member="yes">
+				<label>Flash</label>
+				<bitmap>icons/drive_magnify.png</bitmap>
+				<tooltip>Show flash contents</tooltip>
+				<handler function="OnFlashClicked" entry="EVT_TOOL" />
+			</object>
 			<object class="separator" />
-			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem6" member="yes">
+			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem7" member="yes">
 				<label>About</label>
 				<bitmap>icons\help.png</bitmap>
 				<tooltip>About this software</tooltip>

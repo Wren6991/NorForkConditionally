@@ -109,6 +109,12 @@ function printline(pointer text)
     printtobuffer(text, 60);
 }
 
+function printlineanddump(pointer text)
+{
+    printline(text);
+    dumpscreenbuffer();
+}
+
 function wakescreen()
 {
     screensignal = 0x00;

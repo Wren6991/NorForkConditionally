@@ -96,7 +96,7 @@ void LCDDialog::write(unsigned int address, unsigned int data)
     lastdata = data;
 }
 
-unsigned int LCDDialog::read()
+unsigned int LCDDialog::read(unsigned int address)
 {
-
+    return 0;
 }

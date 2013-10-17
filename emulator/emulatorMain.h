@@ -10,7 +10,7 @@
 #ifndef EMULATORMAIN_H
 #define EMULATORMAIN_H
 
-//(*Headers(emulatorFrame)
+//( *Headers(emulatorFrame)
 #include <wx/listctrl.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
@@ -27,6 +27,7 @@
 
 #include "HexView.h"
 #include "LCDDialog.h"
+#include "FlashDialog.h"
 #include "led.h"
 #include "vm.h"
 
@@ -45,6 +46,7 @@ private:
 
     HexView *memview;
     LCDDialog *lcd;
+    FlashDialog *flash;
     std::vector <uint8_t> buffer;
     vm machine;
 
@@ -66,6 +68,7 @@ private:
     void OnMenuAddWatchSelected(wxCommandEvent& event);
     void OnMenuItemDeleteSelected(wxCommandEvent& event);
     void OnLCDClicked(wxCommandEvent& event);
+    void OnFlashClicked(wxCommandEvent& event);
     //*)
 
     //(*Identifiers(emulatorFrame)
@@ -96,6 +99,7 @@ private:
     static const long TOOL_SAVE;
     static const long ID_TOOLBARITEM1;
     static const long TOOL_LCD;
+    static const long TOOL_FLASH;
     static const long TOOL_ABOUT;
     static const long ID_TOOLBAR1;
     static const long ID_TIMER1;
@@ -141,6 +145,7 @@ private:
     wxLed* Led2;
     wxFileDialog* dlgSaveAs;
     wxToolBarToolBase* ToolBarItem2;
+    wxToolBarToolBase* ToolBarItem7;
     //*)
 
     void SetFileName(std::string path, bool hasbeenmodified = false);

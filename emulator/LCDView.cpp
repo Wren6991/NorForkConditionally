@@ -28,13 +28,8 @@ LCDView::LCDView(wxFrame *parent, long id, long style, wxString name)
     address_columns = 3;
 
     SetMinSize(wxSize((n_columns + address_columns) * pixels_per_column + 2 * padding + scrollbar_width, 100));
-    buffer[0] = 'H'; buffer[1] = 'e'; buffer[2] = 'l'; buffer[3] = 'l'; buffer[4] = 'o';
-    for (int i = 0; i < 20; i++)
-    {
-        buffer[i + 20] = '0' + (i % 10);
-        buffer[i + 40] = '0' + (i % 10);
-        buffer[i + 60] = '0' + (i % 10);
-    }
+    for (int i = 0; i < LCD_N_CHARS; i++)
+        buffer[i] = ' ';
     font = wxFont(14, wxTELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Courier New");
     SetBackgroundColour(wxColor(160, 192, 48));
     renderbuffer = new wxBitmap(0, 0);
