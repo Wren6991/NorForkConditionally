@@ -41,5 +41,6 @@ function main()
 function main()
 {
     var int array[5];
-    array[2] = array[3];
+    if (array[1])
+        array[2] = array[3];
 }

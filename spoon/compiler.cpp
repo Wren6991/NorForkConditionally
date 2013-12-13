@@ -483,6 +483,8 @@ void compiler::gettype(expression *expr)
     {
     case exp_name:
         expr->val_type = globalsymboltable[expr->name].type;
+        if (expr->val_type.type == type_array && expr->indexed)
+            expr->val_type.type = expr->val_type.second;
         break;
     case exp_number:
         expr->val_type = type_number;

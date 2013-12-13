@@ -61,14 +61,20 @@ function programflashbyte(int top, pointer rest, int data)
 
 function readflashnbytes(int top, pointer rest, pointer dest, int16 count)
 {
-    while (or(first(count), second(count)))
+    var int c1 = increment(first(count)), c2 = second(count);
+    while (c1)
     {
-        write(readflashbyte(top, rest), dest);
-        rest = incrementPointer(rest);
-        if (!(first(rest) || second(rest)))
-            top = increment(top);
-        dest = incrementPointer(dest);
-        count = decrementPointer(count);
+        while (c2)
+        {
+            write(readflashbyte(top, rest), dest);
+            rest = incrementPointer(rest);
+            if (!(first(rest) || second(rest)))
+                top = increment(top);
+            dest = incrementPointer(dest);
+            c2 = decrement(c2);
+        }
+        c2 = 0xff;
+        c1 = decrement(c1);
     }
 }
 
@@ -85,17 +91,98 @@ function programflashnbytes(int top, pointer rest, pointer datap, int16 count)
     }
 }
 
-function eraseflashsector(int top, pointer rest)
+function eraseflashsectors(int top, pointer rest, int count)
 {
-    writeflashbyte(0x00, 0x5555, 0xaa);
-    writeflashbyte(0x00, 0x2aaa, 0x55);
-    writeflashbyte(0x00, 0x5555, 0x80);
-    writeflashbyte(0x00, 0x5555, 0xaa);
-    writeflashbyte(0x00, 0x2aaa, 0x55);
-    writeflashbyte(top, rest, 0x30);
+    while (count)
+    {
+        writeflashbyte(0x00, 0x5555, 0xaa);
+        writeflashbyte(0x00, 0x2aaa, 0x55);
+        writeflashbyte(0x00, 0x5555, 0x80);
+        writeflashbyte(0x00, 0x5555, 0xaa);
+        writeflashbyte(0x00, 0x2aaa, 0x55);
+        writeflashbyte(top, rest, 0x30);
+        var int newfirst = add(first(rest), 0x10);  // 0x10 << 8 bits = 4096 bytes (1 sector)
+        if (lessthan(newfirst, first(rest)))
+            top = increment(top);
+        rest = pair(newfirst, second(rest));
+        count = decrement(count);
+    }
 }
 
+// each file record: 16 bytes:
+// 3 bytes: start address
+// 12 bytes: name (always null terminated so 11 characters)
+// 1 bytes: n sectors (0 if empty record, ff sentinel value if last record)
+// the sentinel record is never used as a valid record - it's usually all ffs.
+var char currentfilerecord[16];
+function pointer findfile(pointer filename)
+{
+    findfile = 0xffff;
+    var pointer recordaddress = 0;
+    while (true)
+    {
+        readflashnbytes(0, recordaddress, currentfilerecord, 16);
+        if (equal(currentfilerecord[15], 0xff))
+            break;
+        if (currentfilerecord[15])
+        {
+            if (!strcmp(filename, addPointer(currentfilerecord, 3)))
+            {
+                findfile = recordaddress;
+                return;
+            }
+        }
+        recordaddress = addPointer(recordaddress, 16);
+    }
+}
 
+function deletefile(pointer tablepos)
+{
+    programflashbyte(0, addPointer(tablepos, 15), 0);
+}
+
+function createfile(pointer filename, int nsectors)
+{
+    var pointer recordaddress = findfile(filename);
+    if (!equal(first(recordaddress), 0xff))
+        deletefile(recordaddress);
+    recordaddress = 0;
+    while (true)
+    {
+        readflashnbytes(0, recordaddress, currentfilerecord, 16);
+        if (equal(currentfilerecord[15], 0xff))
+            break;
+        recordaddress = addPointer(recordaddress, 16);
+    }
+    var int topaddress = 0x0;
+    var pointer rest = 0x1000;
+    memset(currentfilerecord, 0, 16);
+    currentfilerecord[0] = topaddress;
+    currentfilerecord[1] = first(rest);
+    currentfilerecord[2] = second(rest);
+    memcpy(addPointer(currentfilerecord, 3), filename, 10);
+    currentfilerecord[15] = nsectors;
+    eraseflashsectors(topaddress, rest, nsectors);
+    programflashnbytes(0, recordaddress, currentfilerecord, 16);
+}
+
+function runprogram(pointer filename)
+{
+    printlineanddump("Running program:");
+    printlineanddump(filename);
+    var pointer recordpos = findfile(filename);
+    if (equal(first(recordpos), 0xff))
+    {
+        printlineanddump("Not found.");
+    }
+    else
+    {
+        var int16 filesize = pair(shiftleftn(currentfilerecord[15], 4), 0x00);
+        readflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]),
+                        0x8000, filesize);
+        goto 0x8000;
+    }
+}
 
 function main()
 {
@@ -105,23 +192,16 @@ function main()
     while (true)
     {
         var int input = read(debugin);
-        if (and(input, 0xe0))
+        if (and(input, 0x80))
         {
-            printlineanddump("Erasing sector...");
-            eraseflashsector(0, 0);
-            sleep(255);
-            printlineanddump("Done, writing file..");
-            var pointer str;
-            if (and(input, 0x80))
-                str = "apples";
-            else if (and(input, 0x40))
-                str = "bread";
-            else
-                str = "cheese";
-            programflashnbytes(0, 0, str, strlen(str));
-            printlineanddump("Done.");
+            createfile("apple", 1);
+            programflashnbytes(0, 0x1000, {
+            0x80, 0x20, 0x7d, 0x00, 0x80, 0x08, 0x80, 0x08,
+            0x80, 0x20, 0xc0, 0x01, 0x80, 0x10, 0x80, 0x10,
+            0xc0, 0x00, 0x80, 0x20, 0x80, 0x00, 0x80, 0x00
+            }, 24);
         }
-        else if (and(input, 0x10))
+        else if (and(input, 0x40))
         {
             var char buffer[21];
             printline("Flash contents:");
@@ -129,6 +209,40 @@ function main()
             buffer[20] = 0;
             printlineanddump(buffer);
         }
+        else if (and(input, 0x20))
+        {
+            var pointer filename = "apple";
+            printline("The file '");
+            printline(filename);
+            if (!equal(first(findfile(filename)), 0xff))
+                printlineanddump("' exists.");
+            else
+                printlineanddump("' does not exist.");
+            scrollscreen();
+            memcpy(addPointer(screenbuffer, 60), currentfilerecord, 16);
+            dumpscreenbuffer();
+        }
+        else if (and(input, 0x10))
+        {
+            runprogram("apple");
+        }
+        /*while(!read(debugin)){}
+        writeflashbyte(0x00, 0x5555, 0xaa);
+        printlineanddump("0x00, 0x5555, 0xaa");
+        while(read(debugin)){}
+        while(!read(debugin)){}
+        writeflashbyte(0x00, 0x2aaa, 0x55);
+        printlineanddump("0x00, 0x2aaa, 0x55");
+        while(read(debugin)){}
+        while(!read(debugin)){}
+        writeflashbyte(0x00, 0x5555, 0xa0);
+        printlineanddump("0x00, 0x5555, 0xa0");
+        while(read(debugin)){}
+        while(!read(debugin)){}
+        writeflashbyte(0x00, 0x0000, 'X');
+        printline("0x00, 0x0000, 'X'");
+        printlineanddump("Done.");
+        while(read(debugin)){}*/
     }
 }
 

@@ -170,6 +170,41 @@ LO      |74HC373
 MID     |   ''
 ```
 
+Most of the latches are arranged "notch down" (I turned the computer round halfway through making it... errr...) with pins on the databus in the following order:
+
+```
+    +------+
+Q4 -|      |- Q3
+    |      |
+Q5 -|      |- Q2
+    |      |
+Q6 -|      |- Q1
+    |      |
+Q7 -|      |- Q0
+    +--/\--+
+
+Ds are between Qs: QDDQQDDQ
+                   00112233
+```
+
+The nor gates are arranged differently:
+
+```
+    +------+
+ 0 -|      |- 3
+    |      |
+ 1 -|      |- 2
+    +--/\--+
+
+    +------+
+ 4 -|      |- 7
+    |      |
+ 5 -|      |- 6
+    +--/\--+
+
+Data sheet pin order...
+```
+
 Control Unit
 ------------
 

@@ -3,6 +3,7 @@
 // Luke Wren 2013
 
 #include "stddefs"
+#include "stdmath"
 
 function memset(pointer dest, int value, int count)
 {
@@ -52,4 +53,25 @@ function int16 strlen(pointer src)
         src = incrementPointer(src);
         c = read(src);
     }
+}
+
+function int strcmp(pointer sa, pointer sb)
+{
+    strcmp = 0;
+    var char ca = read(sa);
+    var char cb = read(sb);
+    while (ca && cb)
+    {
+        if (!equal(ca, cb))
+        {
+            strcmp = 1;
+            return;
+        }
+        sa = incrementPointer(sa);
+        sb = incrementPointer(sb);
+        ca = read(sa);
+        cb = read(sb);
+    }
+    if (ca || cb)
+        strcmp = 1;
 }

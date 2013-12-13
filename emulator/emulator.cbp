@@ -69,6 +69,8 @@
 		<Linker>
 			<Add option="-mthreads" />
 		</Linker>
+		<Unit filename="FlashDialog.cpp" />
+		<Unit filename="FlashDialog.h" />
 		<Unit filename="HexView.cpp" />
 		<Unit filename="HexView.h" />
 		<Unit filename="LCDDialog.cpp" />
@@ -92,6 +94,7 @@
 		</Unit>
 		<Unit filename="vm.cpp" />
 		<Unit filename="vm.h" />
+		<Unit filename="wxsmith/FlashDialog.wxs" />
 		<Unit filename="wxsmith/emulatorframe.wxs" />
 		<Extensions>
 			<code_completion />
@@ -103,6 +106,7 @@
 				<resources>
 					<wxFrame wxs="wxsmith/emulatorframe.wxs" src="emulatorMain.cpp" hdr="emulatorMain.h" fwddecl="0" i18n="1" name="emulatorFrame" language="CPP" />
 					<wxDialog wxs="wxsmith/LCDDialog.wxs" src="LCDDialog.cpp" hdr="LCDDialog.h" fwddecl="0" i18n="1" name="LCDDialog" language="CPP" />
+					<wxFrame wxs="wxsmith/FlashDialog.wxs" src="FlashDialog.cpp" hdr="FlashDialog.h" fwddecl="0" i18n="1" name="FlashDialog" language="CPP" />
 				</resources>
 			</wxsmith>
 			<DoxyBlocks>

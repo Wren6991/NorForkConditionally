@@ -692,7 +692,7 @@ void linker::link(goto_stat *sgoto)
     linkval temploc = vars.addvar("temp", type_int);
     write16(temploc);
     write16(temploc);
-    linkval target = evaluate(sgoto->target);
+    linkval target = evaluate_or_return_literal(sgoto->target);
     write16(target);
     write16(target);
     vars.remove("temp");

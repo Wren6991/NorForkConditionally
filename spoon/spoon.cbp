@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="samples/flashtest.spn samples/flashtest.bin " />
+				<Option parameters=" -s samples/flashtest.spn samples/flashtest.bin " />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />

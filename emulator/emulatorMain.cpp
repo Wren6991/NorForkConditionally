@@ -446,7 +446,7 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
 void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
 {
     bool debug_updated = false;
-    for (int i = 0; i < 4096; i++)
+    for (int i = 0; i < 8192; i++)
         if (TakeStep())
             debug_updated = true;
     if (debug_updated)
@@ -514,10 +514,16 @@ void emulatorFrame::OnMenuItemDeleteSelected(wxCommandEvent& event)
 
 void emulatorFrame::OnLCDClicked(wxCommandEvent& event)
 {
-    lcd->Show();
+    lcd->Iconize(false);
+    lcd->SetFocus();
+    lcd->Raise();
+    lcd->Show(true);
 }
 
 void emulatorFrame::OnFlashClicked(wxCommandEvent& event)
 {
-    flash->Show();
+    flash->Iconize(false);
+    flash->SetFocus();
+    flash->Raise();
+    flash->Show(true);
 }
