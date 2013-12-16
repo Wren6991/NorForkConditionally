@@ -17,6 +17,7 @@ typedef enum {
     t_const,
     t_continue,
     t_else,
+    t_export,
     t_equals,
     t_function,
     t_goto,

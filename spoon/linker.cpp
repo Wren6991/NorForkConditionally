@@ -351,15 +351,24 @@ std::vector<char> linker::link()
 
 void linker::link(funcdef* fdef)
 {
+
 #ifdef EBUG
     std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
 #endif
     vars.push_function_scope();
-    std::string returnstat_target = makeguid("__return", (long)fdef);
-    vars.addvar(returnstat_target, type_label);
-    savelabel(fdef->name + ":__startvector", index);
-    link(fdef->body);
-    savelabel(returnstat_target, index);
+    if (!fdef->exported)
+    {
+        std::string returnstat_target = makeguid("__return", (long)fdef);
+        vars.addvar(returnstat_target, type_label);
+        savelabel(fdef->name + ":__startvector", index);
+        link(fdef->body);
+        savelabel(returnstat_target, index);
+    }
+    else
+    {
+        savelabel(fdef->name + ":__startvector", fdef->exportvectors[0]);
+    }
+
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
                        JUMP_PVECTOR, type_t(type_pointer).getsize());
     emit_branchalways(JUMP_INSTRUCTION);
@@ -382,8 +391,10 @@ void linker::exportfuncdef(funcdef *fdef)
             defstring << ", " << fdef->args[i].type.getname() << " " << fullname.substr(0, fullname.find("@"));
         }
     }
+    // Export function information in the following order: call address, return value location, return vector, argument locations
     defstring << "): 0x";
     defstring << std::hex << ((valtable[fdef->name + ":__startvector_HI"].literal << 8) + valtable[fdef->name + ":__startvector_LO"].literal);
+    defstring << ", 0x" << vars.getvar(fdef->name + ":__returnval")->address.literal;
     defstring << ", 0x" << vars.getvar(fdef->name + ":__returnval")->address.literal;
     for (unsigned int i = 0; i < fdef->args.size(); i++)
         defstring << ", 0x" << vars.getvar(fdef->args[i].name)->address.literal;
@@ -997,11 +1008,22 @@ void linker::allocatefunctionstorage()
             funcdef *fdef = (funcdef*)(iter->second);
             if (fdef->name == "main")
                 continue;
-            vars.addvar(fdef->name + ":__returnval", fdef->return_type);
-            vars.addvar(fdef->name + ":__returnvector", type_pointer);
+            if (!fdef->exported)
+            {
+                vars.addvar(fdef->name + ":__returnval", fdef->return_type);
+                vars.addvar(fdef->name + ":__returnvector", type_pointer);
+            }
+            else
+            {
+                vars.registervar(fdef->name + ":__returnval", fdef->return_type, fdef->exportvectors[1]);
+                vars.registervar(fdef->name + ":__returnvector", type_pointer, fdef->exportvectors[2]);
+            }
             for (unsigned int argnum = 0; argnum < fdef->args.size(); argnum++)
             {
-                vars.addvar(fdef->args[argnum].name, fdef->args[argnum].type);  // name is already resolved to a global symbol by compiler.
+                if (!fdef->exported)
+                    vars.addvar(fdef->args[argnum].name, fdef->args[argnum].type);  // name is already resolved to a global symbol by compiler.
+                else
+                    vars.registervar(fdef->args[argnum].name, fdef->args[argnum].type, fdef->exportvectors[argnum + 3]);
             }
         }
     }

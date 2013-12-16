@@ -12,6 +12,11 @@ const int s_rs = 0x40;
 var int screensignal;
 var int screenbuffer[80];
 
+function sleep(int time)
+{
+    while (time)
+        time = decrement(time);
+}
 
 function pointer int2hexstr(int x)
 {

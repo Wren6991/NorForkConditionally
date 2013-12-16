@@ -28,10 +28,10 @@ class parser
     void throw_unexpected(std::string value, int linenumber = 0, token_type_enum expected = t_eof, token_type_enum got = t_eof);
     definition *getdefinition();
         constdef* getconstdef();
-        funcdef* getfuncdef();
+        funcdef* getfuncdef(bool exported = false);
         macrodef* getmacrodef();
     block* getblock();
-    vardeclaration* getvardeclaration(std::vector<statement*> *statlist = 0);   // we tell the function where the statements are, so it's allowed to push assignments. (See implementation for more notes)
+    vardeclaration* getvardeclaration(std::vector<statement*> *statlist = 0, bool exported = false);   // we tell the function where the statements are, so it's allowed to push assignments. (See implementation for more notes)
     vardeclaration::varpair getvarname_and_type(type_enum basetype, std::vector<statement*> *statlist);
     statement* getstatement();
         assignment* getassignment();

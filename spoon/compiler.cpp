@@ -227,7 +227,8 @@ void compiler::compile(funcdef *fdef)
             retsym.name = fdef->name + ":__returnval";
             currentscope->insert(fdef->name, retsym);
             globalsymboltable[retsym.name] = retsym;
-            compile(fdef->body, "", "", makeguid("__return", (long)fdef));
+            if (!fdef->exported)
+                compile(fdef->body, "", "", makeguid("__return", (long)fdef));
             defined_funcs.insert(fdef->name);
         }
     }

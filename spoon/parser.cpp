@@ -109,6 +109,15 @@ program* parser::getprogram()
             expect(t_name);
             do_preprocessor(prog.obj);
         }
+        else if (accept(t_export))
+        {
+            if (accept(t_var))
+                prog.obj->defs.push_back(getvardeclaration(NULL, true));
+            else if (accept(t_function))
+                prog.obj->defs.push_back(getfuncdef(true));
+            else
+                expect(t_var);
+        }
         else
         {
             throw_unexpected(t.value, t.linenumber, t_function, t.type);
@@ -192,7 +201,7 @@ macrodef* parser::getmacrodef()
 }
 
 
-funcdef* parser::getfuncdef()
+funcdef* parser::getfuncdef(bool exported)
 {
     resourcep <funcdef> def;
     if (accept(t_type))
@@ -220,7 +229,28 @@ funcdef* parser::getfuncdef()
         }
     }
     expect(t_rparen);
-    if (accept(t_semicolon))
+    if (exported)
+    {
+        expect(t_colon);
+        def.obj->exported = true;
+        def.obj->defined = true;
+        for (unsigned int i = 0; i < def.obj->args.size() + 3; i++)
+        {
+            // One for location, one for return value, one for return vector, one for each argument:
+            expect(t_number);
+            def.obj->exportvectors.push_back(intfromstring(lastt.value));
+            if (!accept(t_comma))
+            {
+                expect(t_semicolon);
+                break;
+            }
+        }
+        if (lastt.type != t_semicolon)
+            throw(error("Error: too many export vectors for function " + def.obj->name));
+        else if (def.obj->exportvectors.size() != def.obj->args.size() + 3)
+            throw(error("Error: not enough export vectors for function " + def.obj->name));
+    }
+    else if (accept(t_semicolon))
     {
         def.obj->defined = false;
     }
@@ -261,7 +291,7 @@ block* parser::getblock()
 // We tell the function where the statements are, so it's allowed to push assignments.
 // (This avoids sequencing problems with vardecs compiled at start of block, otherwise assignments
 // would all take place at start of block when vardecs are processed.)
-vardeclaration* parser::getvardeclaration(std::vector<statement*> *statlist)
+vardeclaration* parser::getvardeclaration(std::vector<statement*> *statlist, bool exported)
 {
     resourcep <vardeclaration> vardec;
     expect(t_type);
@@ -272,6 +302,13 @@ vardeclaration* parser::getvardeclaration(std::vector<statement*> *statlist)
     {
         expect(t_name);
         vardec.obj->vars.push_back(getvarname_and_type(basetype, statlist));
+    }
+    if (exported)
+    {
+        expect(t_colon);
+        expect(t_number);
+        vardec.obj->vars[0].exported = true;
+        vardec.obj->vars[0].exportvector = intfromstring(lastt.value);
     }
     expect(t_semicolon);
     return vardec.release();

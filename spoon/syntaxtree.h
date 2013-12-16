@@ -78,10 +78,12 @@ struct funcdef: public definition
     std::vector <argument> args;
     block *body;
     bool defined;       // vs. merely declared
+    bool exported;
+    std::vector <int> exportvectors;
     // Only used by compiler and linker:
     std::set<std::string> dependson;
     bool is_used;   // For mark and sweep of functions by linker
-    funcdef() {type = dt_funcdef; defined = false; is_used = false;}
+    funcdef() {type = dt_funcdef; defined = false; is_used = false; exported = false;}
 };
 
 struct macrodef: public definition
@@ -98,6 +100,9 @@ struct vardeclaration: public definition
     {
         std::string name;
         type_t type;
+        bool exported;
+        int exportvector;
+        varpair() {exported = false;}
     };
     std::vector <varpair> vars;
     vardeclaration() {type = dt_vardec;}

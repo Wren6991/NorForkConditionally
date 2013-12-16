@@ -14,6 +14,7 @@ std::string friendly_tokentype_names[] = {
     "\"const\"",
     "\"continue\"",
     "\"else\"",
+    "\"export\""
     "\"=\"",
     "\"function\"",
     "\"goto\"",
@@ -111,6 +112,7 @@ std::vector <token> tokenize(std::string str)
     keywords["const"] = t_const;
     keywords["continue"] = t_continue;
     keywords["else"] = t_else;
+    keywords["export"] = t_export;
     keywords["goto" ] = t_goto;
     keywords["function"] = t_function;
     keywords["if" ] = t_if;

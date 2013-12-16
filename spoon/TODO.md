@@ -1,24 +1,15 @@
 Todo:
 -----
 
-- Expressions: add (), &&, ||, !
-	- these are *control* operators, so they're suitable to add to the language (as opposed to arithmetic)
-	- && and || have short-circuit behaviour, which can't otherwise be implemented without a bunch of ifs.
-- Make characters such as +, -, &, | acceptable for symbols
-	- This means they can be used for function names! &(x, 0xf)
-- Add a #name directive
-    - e.g. #name + add: searches through all remaining tokens for the symbol "+" and replaces it with "add"
 - bulk out the standard library
 - Use object destructors to give debug information as the stack is unwound: "inside while, inside function main" etc.
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
-- have a better way of handling builtins! (some sort of map to function pointers?)
-- Make code generator its own separate class, friend of linker.
-- compile-to-RAM option
-- export definitions and offsets of globals for RAM programs to use ROM routines.
-- headers/preprocessor
-- make function definitions use vardeclaration::varpair instead of name and type. (lets us reuse getvarname_and_type() for array types)
+- Separate memory spaces (compile to RAM option)
+	- no need to link const table, add pointer runtime support if in a RAM program
+- fix that x = const int bug
+- Make macros sane (+ possibly ruby yield?)
 - When we're doing an if:
 	- if the last instruction wrote to the location that we're branching on, we've already got the ability to branch on the result.
 	- so we check for this condition, and that both of the preceding skip fields point to the current index.
