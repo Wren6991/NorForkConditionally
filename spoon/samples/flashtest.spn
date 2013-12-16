@@ -225,8 +225,8 @@ function main()
         else if (and(input, 0x10))
         {
             runprogram("apple");
-        }
-        /*while(!read(debugin)){}
+        }/*
+        while(!read(debugin)){}
         writeflashbyte(0x00, 0x5555, 0xaa);
         printlineanddump("0x00, 0x5555, 0xaa");
         while(read(debugin)){}

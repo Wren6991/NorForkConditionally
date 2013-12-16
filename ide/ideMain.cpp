@@ -13,8 +13,8 @@
 //#include <wx/util.h>
 #include <stdio.h>
 
-#include "icons/accept.xpm"
-#include "icons/error.xpm"
+/*#include "icons/accept.xpm"
+#include "icons/error.xpm"*/
 
 //(*InternalHeaders(ideFrame)
 #include <wx/bitmap.h>
@@ -262,13 +262,13 @@ void ideFrame::OnRunClicked(wxCommandEvent& event)
         if (message == "")
         {
             StatusBar->SetStatusText("Done.");
-            StatusBar->Indicator->SetIcon(wxIcon(accept_xpm));
+            //StatusBar->Indicator->SetIcon(wxIcon(accept_xpm));
         }
         else
         {
             StatusBar->SetStatusText(message);
             wxBell();
-            StatusBar->Indicator->SetIcon(wxIcon(error_xpm));
+            //StatusBar->Indicator->SetIcon(wxIcon(error_xpm));
         }
         pclose(pProcess);
     }
@@ -327,6 +327,8 @@ void ideFrame::OnPagesPageChanged(wxNotebookEvent& event)
 
 void ideFrame::OnCloseClicked(wxCommandEvent& event)
 {
+    if (pagelist.size() <= 1)
+        return;
     if (filehaschanged)
     {
         wxMessageDialog dlg(this, "Save changes to " + filename + "?", "New File", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
@@ -362,7 +364,7 @@ void MyStatusBar::OnSize(wxSizeEvent &event)
 
 MyStatusBar::MyStatusBar(wxWindow *parent, long id, long style, wxString name): wxStatusBar(parent, id, style, name)
 {
-    Indicator = new wxStaticBitmap(this, wxID_ANY, wxIcon(accept_xpm));
+    Indicator = new wxStaticBitmap(this, wxID_ANY, wxIcon(/*accept_xpm*/));
     int __wxStatusBarWidths_1[2] = { -1, 16 };
     int __wxStatusBarStyles_1[2] = { wxSB_NORMAL, wxSB_NORMAL };
     SetFieldsCount(2,__wxStatusBarWidths_1);

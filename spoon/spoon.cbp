@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters=" -s samples/flashtest.spn samples/flashtest.bin " />
+				<Option parameters="-s samples/flashtest.spn samples/flashtest.bin " />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />
@@ -22,6 +22,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="samples/flashtest.spn          samples/flashtest.bin " />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
@@ -63,6 +64,7 @@
 		<Unit filename="samples/new.spn" />
 		<Unit filename="samples/screen.spn" />
 		<Unit filename="samples/screen.test.spn" />
+		<Unit filename="samples/strcmp.spn" />
 		<Unit filename="samples/string.spn" />
 		<Unit filename="samples/test.spn" />
 		<Unit filename="stddefs" />
