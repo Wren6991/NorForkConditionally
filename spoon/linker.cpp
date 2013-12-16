@@ -275,13 +275,14 @@ std::vector<char> linker::link()
     {
         if (definitions[i]->type == dt_vardec)
         {
-            vardeclaration &dec = *((vardeclaration*)definitions[i]);
-            for (unsigned int i = 0; i < dec.vars.size(); i++)
+            vardeclaration *dec = (vardeclaration*)definitions[i];
+            for (unsigned int i = 0; i < dec->vars.size(); i++)
             {
-                vardeclaration::varpair &var = dec.vars[i];
+                vardeclaration::varpair &var = dec->vars[i];
                 vars.addvar(var.name, var.type);
                 if (var.type.type == type_array)
                     savelabel(var.name, vars.getvar(var.name)->address);
+                exportvardeclaration(dec);
             }
         }
     }
@@ -362,7 +363,54 @@ void linker::link(funcdef* fdef)
     emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
                        JUMP_PVECTOR, type_t(type_pointer).getsize());
     emit_branchalways(JUMP_INSTRUCTION);
+    exportfuncdef(fdef);
 }
+
+void linker::exportfuncdef(funcdef *fdef)
+{
+    // No export if hardcoded:
+    if (defined_funcs[fdef->name] == 0)
+        return;
+    defstring << "export function " << fdef->return_type.getname() << " " << fdef->name << "(";
+    if (fdef->args.size() > 0)
+    {
+        std::string fullname = fdef->args[0].name;
+        defstring << fdef->args[0].type.getname() << " " << fullname.substr(0, fullname.find("@"));
+        for (unsigned int i = 1; i < fdef->args.size(); i++)
+        {
+            std::string fullname = fdef->args[i].name;
+            defstring << ", " << fdef->args[i].type.getname() << " " << fullname.substr(0, fullname.find("@"));
+        }
+    }
+    defstring << "): 0x";
+    defstring << std::hex << ((valtable[fdef->name + ":__startvector_HI"].literal << 8) + valtable[fdef->name + ":__startvector_LO"].literal);
+    defstring << ", 0x" << vars.getvar(fdef->name + ":__returnval")->address.literal;
+    for (unsigned int i = 0; i < fdef->args.size(); i++)
+        defstring << ", 0x" << vars.getvar(fdef->args[i].name)->address.literal;
+    defstring << ";\r\n";
+}
+
+void linker::exportvardeclaration(vardeclaration *vardec)
+{
+    for (unsigned int i = 0; i < vardec->vars.size(); i++)
+    {
+        vardeclaration::varpair &var = vardec->vars[i];
+        defstring << "export var ";
+        std::string type_str = var.type.getname();
+        std::string subscript = "";
+        if (type_str.find('[') != std::string::npos)
+        {
+            int bracketpos = type_str.find('[');
+            subscript = type_str.substr(bracketpos);
+            type_str = type_str.substr(0, bracketpos);
+        }
+        std::string name = var.name;
+        name = name.substr(0, name.find('@'));
+        defstring << type_str << " " << name << subscript <<  ": ";
+        defstring << "0x" << std::hex << vars.getvar(var.name)->address.literal << ";\r\n";
+    }
+}
+
 
 void linker::link(block *blk)
 {
@@ -1011,7 +1059,11 @@ void linker::markusedfunctions(std::string rootfunc)
             markusedfunctions(def->name);
         }
     }
+}
 
+std::string linker::getdefstring()
+{
+    return defstring.str();
 }
 uint16_t linker::evaluate(linkval lv)
 {

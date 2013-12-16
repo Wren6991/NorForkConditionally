@@ -6,6 +6,7 @@
 #include "vardict.h"
 
 #include <map>
+#include <sstream>
 #include <stdint.h>
 #include <vector>
 
@@ -38,6 +39,7 @@ class linker
     std::vector<linkval> buffer;
     std::map<std::string, linkval> valtable;        // contains values for substitution
     std::vector<std::pair<std::string, std::string> > stringvalues;   // label, contents
+    std::stringstream defstring;    // contains global variable and function export data
     void savelabel(std::string, linkval);
     void write8(linkval);
     void write16(linkval);
@@ -57,6 +59,8 @@ class linker
     bool last_instruction_points_to_this_one();
 // Tree traversal:
     void link(funcdef*);
+    void exportfuncdef(funcdef*);
+    void exportvardeclaration(vardeclaration *vardec);
     void link(block*);
     void link(statement*);
     void link(funccall*);
@@ -76,6 +80,7 @@ public:
     linker();
     void add_object(object* obj);
     std::vector<char> link();
+    std::string getdefstring();
     bool strip_unused_functions;
 };
 

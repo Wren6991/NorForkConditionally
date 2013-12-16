@@ -104,7 +104,7 @@ int main(int argc, char **argv)
         l.add_object(obj);
         std::vector<char> machinecode = l.link();
 #ifdef EBUG
-        printout(machinecode);
+        //printout(machinecode);
 #endif
         std::fstream outfile(ofilename, std::ios::out | std::ios::binary);
         if (!outfile.is_open())
@@ -112,6 +112,9 @@ int main(int argc, char **argv)
         for (unsigned int i = 0; i < machinecode.size(); i++)
             outfile.put(machinecode[i]);
         outfile.close();
+        std::fstream deffile(ofilename + ".def", std::ios::out | std::ios::binary);
+        deffile << l.getdefstring();
+        deffile.close();
     }
     catch (error e)
     {

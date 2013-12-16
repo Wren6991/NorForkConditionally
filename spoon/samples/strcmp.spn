@@ -1,0 +1,9 @@
+#include "stdmem"
+
+function main()
+{
+    if (strcmp("a", "a"))
+        output(val(1), debugout);
+    else
+        output(val(2), debugout);
+}
