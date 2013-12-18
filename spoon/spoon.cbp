@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-s samples/flashtest.spn samples/flashtest.bin " />
+				<Option parameters="-s samples/fibonacci.spn samples/fibonacci.bin" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />
@@ -57,6 +57,7 @@
 		<Unit filename="samples/beep.spn" />
 		<Unit filename="samples/empty.spn" />
 		<Unit filename="samples/equal.spn" />
+		<Unit filename="samples/exporttest.spn" />
 		<Unit filename="samples/fibonacci.spn" />
 		<Unit filename="samples/flashtest.spn" />
 		<Unit filename="samples/helloworld.spn" />

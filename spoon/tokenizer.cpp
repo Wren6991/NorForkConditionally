@@ -14,7 +14,7 @@ std::string friendly_tokentype_names[] = {
     "\"const\"",
     "\"continue\"",
     "\"else\"",
-    "\"export\""
+    "\"export\"",
     "\"=\"",
     "\"function\"",
     "\"goto\"",

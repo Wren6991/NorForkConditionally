@@ -36,6 +36,8 @@ class linker
     std::map<std::string, definition*> defined_funcs;
     std::vector<definition*> definitions;
     int index;
+    int current_address;
+    bool compile_to_ram;
     std::vector<linkval> buffer;
     std::map<std::string, linkval> valtable;        // contains values for substitution
     std::vector<std::pair<std::string, std::string> > stringvalues;   // label, contents
@@ -81,6 +83,7 @@ public:
     void add_object(object* obj);
     std::vector<char> link();
     std::string getdefstring();
+    void setcompiletoram(bool ram);
     bool strip_unused_functions;
 };
 

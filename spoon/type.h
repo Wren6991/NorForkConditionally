@@ -21,7 +21,7 @@ struct type_t
     type_t(type_enum _type = type_none, type_enum _second = type_none, int _count = 0) {type = _type; second = _second; count = _count;}
     bool operator== (const type_t &rhs) const;
     int getsize() const;
-    int getstoragesize() const;
+    int getstoragesize() const; // NB the difference between these two! for an array, getsize() is the pointer size, and storagesize() is the underlying array size.
     std::string getname() const;
 };
 

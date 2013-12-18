@@ -45,14 +45,17 @@ linker::linker()
     defined_funcs["shiftright"] = 0;
 
     index = 0;
+    current_address = 0;
+    compile_to_ram = false;
     strip_unused_functions = false;
     buffer.reserve(ROM_SIZE);
 }
 
-void linker::savelabel(std::string name, linkval address)
+void linker::savelabel(std::string name, linkval current_address)
 {
-    valtable[name + "_HI"] = address.gethighbyte();
-    valtable[name + "_LO"] = address.getlowbyte();
+    valtable[name] = current_address;
+    valtable[name + "_HI"] = current_address.gethighbyte();
+    valtable[name + "_LO"] = current_address.getlowbyte();
 }
 
 // NB: index refers to the location _about_ to be written. (I.e. next location)
@@ -62,6 +65,7 @@ void linker::write8(linkval val)
         throw(error("Error: program too big!"));
     buffer.push_back(val);
     index++;
+    current_address++;
 }
 
 void linker::write16(linkval val)
@@ -79,7 +83,7 @@ void linker::padto8bytes()
 void linker::emit_nfc2(linkval x, linkval y)
 {
     padto8bytes();
-    uint16_t next = index + 8;
+    uint16_t next = current_address + 8;
     write16(x);
     write16(y);
     write16(next);
@@ -279,7 +283,10 @@ std::vector<char> linker::link()
             for (unsigned int i = 0; i < dec->vars.size(); i++)
             {
                 vardeclaration::varpair &var = dec->vars[i];
-                vars.addvar(var.name, var.type);
+                if (var.exported)
+                    vars.registervar(var.name, var.type, var.exportvector);
+                else
+                    vars.addvar(var.name, var.type);
                 if (var.type.type == type_array)
                     savelabel(var.name, vars.getvar(var.name)->address);
                 exportvardeclaration(dec);
@@ -300,15 +307,19 @@ std::vector<char> linker::link()
     // we write to bfda (rrrr) to set the pointer read location
     // when we jump to bfd0, it clears bff0 and then reads ~*ptr into it.
     // bff1 is cleared - as the result is always 0, the machine jumps to the return (rrrr) which was written beforehand.
-    emit_writeconst_multiple(0x7d00, 0xbfc2, 2);
-    emit_writeconst_multiple(0xbfc8bfc8, 0xbfc4, 4);
-    emit_writeconst_multiple(0xbff0, 0xbfca, 2);
-    emit_writeconst_multiple(0xbfe0bfe0, 0xbfcc, 4);
-    emit_writeconst_multiple(0xbff07d00, 0xbfd0, 4);
-    emit_writeconst_multiple(0xbfd8bfd8, 0xbfd4, 4);
-    emit_writeconst_multiple(0xbff0, 0xbfd8, 2);
-    emit_writeconst_multiple(0xbfe0bfe0, 0xbfdc, 4);
-    emit_writeconst_multiple(0xbff17d00, 0xbfe0, 4);
+    if (!compile_to_ram)
+    {
+        emit_writeconst_multiple(0x7d00, 0xbfc2, 2);
+        emit_writeconst_multiple(0xbfc8bfc8, 0xbfc4, 4);
+        emit_writeconst_multiple(0xbff0, 0xbfca, 2);
+        emit_writeconst_multiple(0xbfe0bfe0, 0xbfcc, 4);
+        emit_writeconst_multiple(0xbff07d00, 0xbfd0, 4);
+        emit_writeconst_multiple(0xbfd8bfd8, 0xbfd4, 4);
+        emit_writeconst_multiple(0xbff0, 0xbfd8, 2);
+        emit_writeconst_multiple(0xbfe0bfe0, 0xbfdc, 4);
+        emit_writeconst_multiple(0xbff17d00, 0xbfe0, 4);
+    }
+
 
     // Link in the main function body
 #ifdef EBUG
@@ -316,10 +327,10 @@ std::vector<char> linker::link()
 #endif
     vars.addvar(makeguid("__return", (long)defined_funcs["main"]), type_label);
     link(((funcdef*)defined_funcs["main"])->body);
-    savelabel(makeguid("__return", (long)defined_funcs["main"]), index);
+    savelabel(makeguid("__return", (long)defined_funcs["main"]), current_address);
 
     // generate halt instruction:
-    emit_branchalways(index, true);
+    emit_branchalways(current_address, true);
 
     // Link in the rest of the functions afterwards.
     if (strip_unused_functions)
@@ -337,11 +348,13 @@ std::vector<char> linker::link()
     for (unsigned int stringnum = 0; stringnum < stringvalues.size(); stringnum++)
     {
         std::cout << "Saving string at "  << stringvalues[stringnum].first << "\n";
-        savelabel(stringvalues[stringnum].first, index);
+        savelabel(stringvalues[stringnum].first, current_address);
         std::string &str = stringvalues[stringnum].second;
         for (unsigned int i = 0; i <= str.size(); i++)      // <= instead of < because we want to include the terminating zero.
             write8(str[i]);
     }
+    savelabel("__program_end", current_address);
+    std::cout << "__program_end: " << evaluate(linkval("__program_end")) << "\n";
 //#ifdef EBUG
     std::cout << "Executable size: " << std::dec << index << std::hex << " (0x" << index << ") bytes.\n";
 //#endif // EBUG
@@ -353,25 +366,24 @@ void linker::link(funcdef* fdef)
 {
 
 #ifdef EBUG
-    std::cout << "Linking function: " << fdef->name << ", @" << std::hex << index << "\n";
+    std::cout << "Linking function: " << fdef->name << ", @" << std::hex << current_address << "\n";
 #endif
     vars.push_function_scope();
     if (!fdef->exported)
     {
         std::string returnstat_target = makeguid("__return", (long)fdef);
         vars.addvar(returnstat_target, type_label);
-        savelabel(fdef->name + ":__startvector", index);
+        savelabel(fdef->name + ":__startvector", current_address);
         link(fdef->body);
-        savelabel(returnstat_target, index);
+        savelabel(returnstat_target, current_address);
+        emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
+                       JUMP_PVECTOR, type_t(type_pointer).getsize());
+        emit_branchalways(JUMP_INSTRUCTION);
     }
     else
     {
         savelabel(fdef->name + ":__startvector", fdef->exportvectors[0]);
     }
-
-    emit_copy_multiple(vars.getvar(fdef->name + ":__returnvector")->address,
-                       JUMP_PVECTOR, type_t(type_pointer).getsize());
-    emit_branchalways(JUMP_INSTRUCTION);
     exportfuncdef(fdef);
 }
 
@@ -430,7 +442,10 @@ void linker::link(block *blk)
         for (unsigned int i = 0; i < (*iter)->vars.size(); i++)
         {
             vardeclaration::varpair &var = (*iter)->vars[i];
-            vars.addvar(var.name, var.type);
+            if (var.exported)
+                vars.registervar(var.name, var.type, var.exportvector);
+            else
+                vars.addvar(var.name, var.type);
             if (var.type.type == type_array)
                 savelabel(var.name, vars.getvar(var.name)->address);
         }
@@ -460,7 +475,7 @@ void linker::link(statement *stat)
         link((goto_stat*)stat);
         break;
     case stat_label:
-        savelabel(((label*)stat)->name, index);
+        savelabel(((label*)stat)->name, current_address);
         break;
     case stat_if:
         link((if_stat*)stat);
@@ -548,7 +563,7 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
     // We write the location of the label to the function's return vector (even if we don't know it yet - this gets sorted out at the final assembly), then jump into the function.
     emit_writelabel(returnlabel, vars.getvar(fdef->name + ":__returnvector")->address);
     emit_branchalways(linkval(fdef->name + ":__startvector"));
-    savelabel(returnlabel, index);
+    savelabel(returnlabel, current_address);
     return vars.getvar(fdef->name + ":__returnval")->address;
 }
 
@@ -627,7 +642,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             emit_copy_multiple(pointerpos, POINTER_WRITE_COPY_INSTRUCTION, type_t(type_pointer).getsize());
             emit_writelabel(returnlabel, JUMP_PVECTOR);
             emit_branchalways(POINTER_WRITE_CLEAR_INSTRUCTION);
-            savelabel(returnlabel, index);                                          // URGH this is so inefficient :(
+            savelabel(returnlabel, current_address);                                          // URGH this is so inefficient :(
         }
         else if (name == "read" || name == "increment" || name == "decrement" ||
                  name == "shiftleft" || name == "shiftright")
@@ -658,7 +673,7 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             }
             emit_writelabel(returnlabel, JUMP_PVECTOR);
             emit_branchalways(POINTER_READ_INSTRUCTION);
-            savelabel(returnlabel, index);
+            savelabel(returnlabel, current_address);
             if (givenpreferred)
             {
                 emit_copy_inverted(POINTER_READ_RESULT, preferred);
@@ -776,12 +791,12 @@ void linker::link(if_stat* ifs)
     {
         // finished the if clause: nonconditional jump past else clause.
         emit_branchalways(linkval(endlabel), true);
-        savelabel(elselabel, index);
+        savelabel(elselabel, current_address);
         link(ifs->elseblock);
     }
     else
-        savelabel(elselabel, index);
-    savelabel(endlabel, index);
+        savelabel(elselabel, current_address);
+    savelabel(endlabel, current_address);
     vars.pop_temp_scope();
 }
 
@@ -798,12 +813,12 @@ void linker::link(while_stat *whiles)
     std::string exitlabel = makeguid("__exit", (long)whiles->blk);
     vars.addvar(toplabel, type_label);
     vars.addvar(exitlabel, type_label);
-    savelabel(toplabel, index);
+    savelabel(toplabel, current_address);
     emit_branchifzero(evaluate(whiles->expr), exitlabel);
     link(whiles->blk);
     // jump unconditionally to top:
     emit_branchalways(linkval(toplabel), true);
-    savelabel(exitlabel, index);
+    savelabel(exitlabel, current_address);
     vars.remove(toplabel);
     vars.remove(exitlabel);
     vars.pop_temp_scope();
@@ -930,7 +945,7 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
         emit_nfc2(return_loc, getconstaddress(0xff));
         emit_branchifnonzero(evaluate(expr->args[0]), skiplabel);
         emit_nfc2(return_loc, getconstaddress(~1));
-        savelabel(skiplabel, index);
+        savelabel(skiplabel, current_address);
         if(!givenpreferred)
             vars.remove_on_pop("__lnottemp");
         return return_loc;
@@ -942,7 +957,7 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
         emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
         emit_branchifzero(return_loc, skiplabel);
         emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
-        savelabel(skiplabel, index);
+        savelabel(skiplabel, current_address);
         if (!givenpreferred)
             vars.remove_on_pop("__landtemp");
         return return_loc;
@@ -954,7 +969,7 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
         emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
         emit_branchifnonzero(return_loc, skiplabel);
         emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
-        savelabel(skiplabel, index);
+        savelabel(skiplabel, current_address);
         if (!givenpreferred)
             vars.remove_on_pop("__lortemp");
         return return_loc;
@@ -1087,6 +1102,17 @@ std::string linker::getdefstring()
 {
     return defstring.str();
 }
+
+void linker::setcompiletoram(bool ram)
+{
+    compile_to_ram = ram;
+    if (compile_to_ram)
+        current_address = index + HEAP_BOTTOM;
+    else
+        current_address = index;
+    vars.start_from_top = !compile_to_ram;
+}
+
 uint16_t linker::evaluate(linkval lv)
 {
     switch (lv.type)

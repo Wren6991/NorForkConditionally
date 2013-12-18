@@ -7,7 +7,7 @@
 
 void vardict::find_first_available_space(int searchstart)
 {
-    for (int i = HEAP_SIZE - 1; i >= 0; i--)
+    for (int i = 0; i < HEAP_SIZE; i++)
     {
         if (!memory_in_use[i])
         {
@@ -24,29 +24,28 @@ void vardict::find_first_available_space(int searchstart)
 int vardict::getspace(int size)
 {
     int pos = first_available_space;
-    while (pos >= 0)
+    while (pos < HEAP_SIZE)
     {
         int start = pos;
         bool enoughSpace = true;
-        for (; pos > start - size && enoughSpace; pos--)
+        for (; pos < start + size && enoughSpace; pos++)
         {
             if (memory_in_use[pos])
             {
                 enoughSpace = false;
-                pos--;          // start checking again at the next unchecked location
+                pos++;          // start checking again at the next unchecked location
             }
         }
         if (enoughSpace)
         {
-            for (int i = start; i > start - size; i--)
+            for (int i = start; i < start + size; i++)
             {
                 memory_in_use[i] = true;
                 has_been_used[i] = true;
             }
-            int bottom = start - size + 1;
             if (start == first_available_space)
                 find_first_available_space(first_available_space);       // if we've covered the first known free space, find a new one.
-            return bottom;
+            return start;
         }
     }
     throw(error("Error: no more free space in heap!"));
@@ -62,9 +61,12 @@ linkval vardict::addvar(std::string name, type_t type)
     if (vars.find(name) != vars.end())
         var->next = vars[name];  // push the stack down one...
     vars[name] = var;
-    var->address = var->offset + HEAP_BOTTOM;
+    if (start_from_top)
+        var->address = HEAP_TOP - var->offset - type.getstoragesize() + 1;
+    else
+        var->address = linkval("__program_end") + var->offset;
 #ifdef EBUG
-    std::cout << "adding var " << name << " 0x" << std::hex << var->offset << "\n";
+    std::cout << "adding var " << name << " (" << type.getstoragesize() << ") 0x" << std::hex << var->offset << " -> " << var->address.literal << "\n";
 #endif
     return var->address;
 }
@@ -161,7 +163,8 @@ void vardict::remove_on_pop(std::string name)
 
 vardict::vardict()
 {
-    first_available_space = HEAP_TOP - HEAP_BOTTOM;
+    first_available_space = 0;
+    start_from_top = true;
     for (int i = 0; i < HEAP_SIZE; i++)
     {
         memory_in_use.push_back(0);
