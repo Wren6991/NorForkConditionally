@@ -6,8 +6,6 @@ Todo:
 	- "defuse" them if the function completes successfully, otherwise they'll print an error message when destroyed.
 - line numbers for syntax errors
 - stack unwinding information for syntax errors ("in function main" etc.)
-- Separate memory spaces (compile to RAM option)
-	- no need to link const table, add pointer runtime support if in a RAM program
 - fix that x = const int bug
 - Make macros sane (+ possibly ruby yield?)
 - When we're doing an if:

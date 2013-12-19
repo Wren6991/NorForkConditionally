@@ -66,7 +66,7 @@ linkval vardict::addvar(std::string name, type_t type)
     else
         var->address = linkval("__program_end") + var->offset;
 #ifdef EBUG
-    std::cout << "adding var " << name << " (" << type.getstoragesize() << ") 0x" << std::hex << var->offset << " -> " << var->address.literal << "\n";
+    std::cout << "adding var " << name << " 0x" << std::hex << var->offset << "\n";
 #endif
     return var->address;
 }
