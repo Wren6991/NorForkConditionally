@@ -53,7 +53,17 @@ void printtree(constdef *def, int indentation)
 void printtree(funcdef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "\nDefinition of function " << def->name << ":\n";
+    std::cout << "\nDefinition of function " << def->name << ": (";
+    if (def->args.size() == 0)
+        std::cout << "void";
+    else
+        for (unsigned int i = 0; i < def->args.size(); i++)
+        {
+            std::cout << def->args[i].type.getname();
+            if (i < def->args.size() - 1)
+                std::cout << ", ";
+        }
+    std::cout << ") => " << def->return_type.getname() << ":\n";
     indent(indentation);
     std::cout << " Depends on:\n";
     for (std::set<std::string>::iterator iter = def->dependson.begin(); iter != def->dependson.end(); iter++)
@@ -75,7 +85,21 @@ void printtree(funcdef *def, int indentation)
 void printtree(macrodef *def, int indentation)
 {
     indent(indentation);
-    std::cout << "\nDefinition of macro " << def->name << ":\n";
+    std::cout << "\nDefinition of macro " << def->name << ": (";
+    if (def->args.size() == 0)
+    {
+        std::cout << "<none>";
+    }
+    else
+    {
+        for (unsigned int i = 0; i < def->args.size(); i++)
+        {
+            std::cout << def->args[i];
+            if (i < def->args.size() - 1)
+                std::cout << ", ";
+        }
+    }
+    std::cout << "):\n";
     printtree(def->body, indentation);
 }
 
@@ -100,7 +124,7 @@ void printtree(vardeclaration *decl, int indentation)
     for (unsigned int i = 0; i < decl->vars.size(); i++)
     {
         indent(indentation);
-        std::cout << "declared " << decl->vars[i].type.getname() << " " << decl->vars[i].name << "\n";
+        std::cout << "Declared " << decl->vars[i].type.getname() << " " << decl->vars[i].name << "\n";
     }
 
 }
@@ -111,11 +135,11 @@ void printtree(statement *stat, int indentation)
     if (stat->type == stat_call)
     {
         funccall *fcall = (funccall*)stat;
-        std::cout << "call to function " << fcall->name << "\n";
+        std::cout << "Call to function " << fcall->name << "\n";
         for (unsigned int i = 0; i < fcall->args.size(); i++)
         {
             indent(indentation + 1);
-            std::cout << "argument: ";
+            std::cout << "Argument: ";
             printtree(fcall->args[i]);
             std::cout << "\n";
         }
@@ -123,7 +147,7 @@ void printtree(statement *stat, int indentation)
     else if (stat->type == stat_goto)
     {
         goto_stat *sgoto = (goto_stat*)stat;
-        std::cout << "goto ";
+        std::cout << "Goto ";
         printtree(sgoto->target);
         std::cout << "\n";
     }
@@ -157,6 +181,18 @@ void printtree(statement *stat, int indentation)
         std::cout << "Setting " << assg->name << " to ";
         printtree(assg->expr);
         std::cout << "\n";
+    }
+    else if (stat->type == stat_break)
+    {
+        std::cout << "Break\n";
+    }
+    else if (stat->type == stat_continue)
+    {
+        std::cout << "Continue\n";
+    }
+    else if (stat->type == stat_return)
+    {
+        std::cout << "Return\n";
     }
 
 
@@ -200,6 +236,10 @@ void printtree(expression *expr)
                 std::cout << ", ";
         }
         std::cout << ")";
+    }
+    else if (expr->type == exp_string)
+    {
+        std::cout << "\"" << expr->name << "\"";
     }
 
 }

@@ -98,6 +98,7 @@ private:
     static const long TOOL_OPEN;
     static const long TOOL_SAVE;
     static const long ID_TOOLBARITEM1;
+    static const long ID_TOOLBARITEM2;
     static const long TOOL_LCD;
     static const long TOOL_FLASH;
     static const long TOOL_ABOUT;
@@ -141,6 +142,7 @@ private:
     wxSlider* Slider4;
     wxButton* btnStartStop;
     wxToolBarToolBase* ToolBarItem5;
+    wxToolBarToolBase* ToolBarItem8;
     wxSlider* Slider6;
     wxLed* Led2;
     wxFileDialog* dlgSaveAs;

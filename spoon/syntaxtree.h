@@ -119,6 +119,7 @@ struct statement
 {
     stat_type type;
     virtual statement* getcopy() = 0;
+    virtual ~statement() {};
 };
 
 struct funccall: public statement
@@ -127,6 +128,7 @@ struct funccall: public statement
     std::vector <expression*> args;
     virtual statement* getcopy();
     funccall() {type = stat_call;}
+    virtual ~funccall() {}
 };
 
 struct goto_stat: public statement
@@ -134,6 +136,7 @@ struct goto_stat: public statement
     expression *target;
     virtual statement* getcopy();
     goto_stat() {type = stat_goto;}
+    virtual ~goto_stat() {}
 };
 
 struct assignment: public statement
@@ -144,6 +147,7 @@ struct assignment: public statement
     expression *expr;
     virtual statement* getcopy();
     assignment() {type = stat_assignment; indexed = false;}
+    virtual ~assignment() {}
 };
 
 struct label: public statement
@@ -151,6 +155,7 @@ struct label: public statement
     std::string name;
     virtual statement* getcopy();
     label() {type = stat_label;}
+    virtual ~label() {}
 };
 
 struct if_stat: public statement
@@ -160,6 +165,7 @@ struct if_stat: public statement
     block *elseblock;
     virtual statement* getcopy();
     if_stat() {type = stat_if; elseblock = 0;}
+    virtual ~if_stat() {}
 };
 
 struct while_stat: public statement
@@ -168,24 +174,28 @@ struct while_stat: public statement
     block *blk;
     virtual statement* getcopy();
     while_stat() {type = stat_while;}
+    virtual ~while_stat() {}
 };
 
 struct break_stat: public statement
 {
     break_stat() {type = stat_break;}
     virtual statement* getcopy() { return new break_stat; }
+    virtual ~break_stat() {}
 };
 
 struct continue_stat: public statement
 {
     continue_stat() {type = stat_continue;}
     virtual statement* getcopy() { return new continue_stat; }
+    virtual ~continue_stat() {}
 };
 
 struct return_stat: public statement
 {
     return_stat() {type = stat_return;}
     virtual statement* getcopy() { return new return_stat; }
+    virtual ~return_stat() {}
 };
 
 struct block
@@ -255,6 +265,7 @@ inline statement* while_stat::getcopy()
     while_stat *whiles = new while_stat;
     whiles->expr = expr->getcopy();
     whiles->blk = blk->getcopy();
+    return whiles;
 }
 
 inline block* block::getcopy()

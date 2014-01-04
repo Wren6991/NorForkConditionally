@@ -36,7 +36,37 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
 
 int main(int argc, char **argv)
 {
-    std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
+    while (true)
+    {
+        std::string str;
+        std::stringstream ss;
+        std::stringstream oss;
+        std::cout << "Enter source text:\n";
+        while (std::getline(std::cin, str))
+        {
+            if (str.find(4) != str.npos)
+                break;
+            oss << "=> " << str << "\n";
+            ss << str << "\r\n";
+        }
+        try {
+            std::cout << oss.str();
+            std::cout << "\nPrinting tokens:\n\n";
+            std::vector<token> tokens = tokenize(ss.str());
+            extern std::string friendly_tokentype_names[];
+            for (unsigned int i = 0; i < tokens.size(); i++)
+                std::cout << std::setw(12) << std::left << (friendly_tokentype_names[tokens[i].type] + ":") << "\"" << tokens[i].value << "\"\n";
+            std::cout << "\nPrinting parsed tree:\n\n";
+            parser p(tokens);
+            program *prog = p.getprogram();
+            printtree(prog);
+        } catch (error e) {
+            std::cout << e.errstring << "\n";
+        }
+        std::cout << "Done.\n";
+    }
+
+    /*std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
     std::string ifilename, ofilename;
     bool have_ifilename, have_ofilename;
     bool strip_unused_functions = false;
@@ -99,6 +129,7 @@ int main(int argc, char **argv)
         std::vector<token> tokens = tokenize(&source[0]);
         parser p(tokens, ifilename);
         program *prog = p.getprogram();
+        printtree(prog);
         compiler c;
         object *obj = c.compile(prog);
 #ifdef EBUG
@@ -110,7 +141,7 @@ int main(int argc, char **argv)
         l.add_object(obj);
         std::vector<char> machinecode = l.link();
 #ifdef EBUG
-        printout(machinecode);
+        //printout(machinecode);
 #endif
         std::fstream outfile(ofilename, std::ios::out | std::ios::binary);
         if (!outfile.is_open())
@@ -127,5 +158,5 @@ int main(int argc, char **argv)
         std::cout << e.errstring << "\n";
         return 1;
     }
-    return 0;
+    return 0;*/
 }

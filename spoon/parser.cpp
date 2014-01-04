@@ -477,13 +477,13 @@ expression* parser::getexpression()
 {
     resourcep <expression> expr = getsinglevalue();
 
-    if (accept(t_and) || accept(t_or))
+    while (accept(t_and) || accept(t_or))
     {
         expression *temp = expr.obj;
         expr.obj = new expression;
         expr.obj->type = (lastt.type == t_and) ? exp_and : exp_or;
         expr.obj->args.push_back(temp);
-        expr.obj->args.push_back(getexpression());
+        expr.obj->args.push_back(getsinglevalue());
     }
     return expr.release();
 }

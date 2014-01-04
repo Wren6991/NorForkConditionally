@@ -64,7 +64,8 @@ extern std::string token_type_names[];
 token::token()
 {
     type = t_eof;
-    value = std::string();
+    value = "<EOF>";
+    linenumber = -1;
 }
 
 token::token(token_type_enum type_, std::string value_, int linenumber_ = -1)
@@ -290,8 +291,6 @@ std::vector <token> tokenize(std::string str)
         throw(error("Error: expected \" to close string near EOF"));
     else if (state == s_charliteral || state == s_expectingapostrophe)
         throw(error("Error: expected ' to close char literal near EOF"));
-    /*for (unsigned int i = 0; i < tokens.size(); i++)
-        std::cout << tokens[i].type << ":\t\"" << tokens[i].value << "\"\n";*/
     return tokens;
 }
 

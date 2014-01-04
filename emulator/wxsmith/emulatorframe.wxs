@@ -316,20 +316,25 @@
 				<tooltip>Step simulation</tooltip>
 				<handler function="OnStepClicked" entry="EVT_TOOL" />
 			</object>
-			<object class="tool" name="TOOL_LCD" variable="ToolBarItem5" member="yes">
+			<object class="tool" name="ID_TOOLBARITEM2" variable="ToolBarItem5" member="yes">
+				<label>Breakpoint</label>
+				<bitmap>C:\Users\Owner\Documents\CodeBlocks\NorForkConditionally\emulator\icons\stop.png</bitmap>
+				<tooltip>Set/remove breakpoint</tooltip>
+			</object>
+			<object class="tool" name="TOOL_LCD" variable="ToolBarItem6" member="yes">
 				<label>LCD</label>
 				<bitmap>icons/monitor.png</bitmap>
 				<tooltip>Show LCD</tooltip>
 				<handler function="OnLCDClicked" entry="EVT_TOOL" />
 			</object>
-			<object class="tool" name="TOOL_FLASH" variable="ToolBarItem6" member="yes">
+			<object class="tool" name="TOOL_FLASH" variable="ToolBarItem7" member="yes">
 				<label>Flash</label>
 				<bitmap>icons/drive_magnify.png</bitmap>
 				<tooltip>Show flash contents</tooltip>
 				<handler function="OnFlashClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="separator" />
-			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem7" member="yes">
+			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem8" member="yes">
 				<label>About</label>
 				<bitmap>icons\help.png</bitmap>
 				<tooltip>About this software</tooltip>
