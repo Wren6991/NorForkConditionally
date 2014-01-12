@@ -3,11 +3,7 @@ const pointer debugin = 0xc001;
 const int true = 0xff;
 const int false = 0x00;
 
-function int read(pointer p);
-function int increment(int x);
-function int decrement(int x);
-function int shiftleft(int x);
-function int shiftright(int x);
+function int read(pointer src);
 
 macro output(src, dest)
 {

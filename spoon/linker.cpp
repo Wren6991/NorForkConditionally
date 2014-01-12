@@ -5,13 +5,13 @@
 // REMOVE:
 #include "printtree.h"
 
+#include <iostream>
 #include <set>
 #include <sstream>
 
-#include <iostream>
+//////////////////////// General defs /////////////////////////////
 
 std::string makeguid(std::string name, int ptr);
-
 
 std::string getlabel()
 {
@@ -25,8 +25,6 @@ uint16_t getconstaddress(uint8_t val)
 {
     return DECREMENT_START + ((val + 1) % 256);
 }
-
-//////////////////////// Vardict defs /////////////////////////////
 
 
 //////////////////////// Linker defs /////////////////////////////
@@ -244,19 +242,14 @@ void linker::add_object(object *obj)
     for (unsigned int i = 0; i < obj->tree->defs.size(); i++)
     {
         definition *def = obj->tree->defs[i];
-        if ((def->type != dt_funcdef || !((funcdef*)def)->defined) && (def->type != dt_macrodef && def->type != dt_vardec))
+        if ((def->type != dt_funcdef || !((funcdef*)def)->defined) && def->type != dt_vardec)
         {
-            throw(error("Error: linker only accepts defined functions as symbols, wtf are you doing."));
+            throw(error("Error: linker only accepts defined functions as symbols (internal error upstream)"));
         }
         if (def->type == dt_funcdef)
         {
             funcdef *fdef = (funcdef*)def;
             defined_funcs[fdef->name] = fdef;
-        }
-        else if (def->type == dt_macrodef)
-        {
-            macrodef *mdef = (macrodef*)def;
-            defined_funcs[mdef->name] = mdef;
         }
         definitions.push_back(def);
     }
@@ -468,6 +461,11 @@ void linker::link(statement *stat)
 {
     switch(stat->type)
     {
+    case stat_block:
+        link((block*)stat);
+        break;
+    case stat_empty:
+        break;
     case stat_call:
         link((funccall*)stat);
         break;
@@ -487,7 +485,12 @@ void linker::link(statement *stat)
         link((assignment*)stat);
         break;
     default:
-        throw(error("Error: linking unrecognized statement type"));
+        {
+            std::stringstream ss;
+            ss << "Error: linking unrecognized statement type: " << stat->type;
+            throw(error(ss.str()));
+        }
+        break;
     }
 }
 
@@ -516,27 +519,7 @@ void linker::link(funccall *call)
     }
     else
     {
-        if (def->type == dt_macrodef)
-        {
-            macrodef *mdef = (macrodef*)def;
-            // WHAT HAPPENS IF THE SAME MACRO IS CALLED IN DIFFERENT LOCATIONS?
-            vars.push_temp_scope();
-            for (unsigned int i = 0; i < mdef->args.size(); i++)
-            {
-                std::string local_argname = getlabel();
-                savelabel(local_argname, evaluate_or_return_literal(call->args[i]));
-                valtable[mdef->args[i]] = local_argname;
-                vars.addvar(mdef->args[i], type_label);
-            }
-            link(mdef->body);
-            for (unsigned int i = 0; i < mdef->args.size(); i++)
-                vars.remove(mdef->args[i]);
-            vars.pop_temp_scope();
-        }
-        else if (def->type == dt_funcdef)
-        {
-            linkfunctioncall(call->args, (funcdef*)def);
-        }
+        linkfunctioncall(call->args, (funcdef*)def);
     }
 }
 

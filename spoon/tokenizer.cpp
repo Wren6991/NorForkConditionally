@@ -265,7 +265,11 @@ std::vector <token> tokenize(std::string str)
             case s_expectingapostrophe:
             {
                 if (c != '\'')
-                    throw(error("Error: expected ' to close char literal near \"" + str.substr(index, 1) + "\""));
+                {
+                    std::stringstream ss;
+                    std::cout << "Error: expected ' to close char literal near \"" << c << "\" on line " << linenumber;
+                    throw(error(ss.str()));
+                }
                 std::stringstream ss;
                 ss << (int)(str[index - 1]);
                 tokens.push_back(token(t_number, ss.str(), linenumber));

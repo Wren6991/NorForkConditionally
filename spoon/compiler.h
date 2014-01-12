@@ -12,10 +12,12 @@ struct func_signature
 {
     type_t return_type;
     std::vector<type_t> arg_types;
+    bool is_macro;
     bool args_must_match;       // to be used with macros, and special builtins like NFC.
+    funcdef *def;
     bool operator==(func_signature &rhs) const {return rhs.return_type == return_type && rhs.arg_types == arg_types;}
     bool operator!=(func_signature &rhs) const {return !operator==(rhs);}
-    func_signature() {args_must_match = true;}
+    func_signature() {args_must_match = true; is_macro = false; def = 0;}
 };
 
 struct symbol
@@ -25,6 +27,7 @@ struct symbol
     bool is_constant;
     int value;
     symbol(){is_constant = false;}
+    std::string tostring();
 };
 
 class scope
@@ -50,6 +53,7 @@ class compiler
     std::map<std::string, symbol> globalsymboltable;
     std::set<std::string> defined_funcs;
     std::map<std::string, func_signature> functions;
+    std::map<std::string, expression*> expression_subs;
     funcdef *currentfuncdef;
     void pushscope();
     void popscope();
@@ -58,18 +62,19 @@ class compiler
     object* compile(program*);
     void compile(macrodef*);
     void compile(funcdef*);
-    void compile(block*, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = ""); // optionally supply labels for break/continue
+    void compile(statement*&, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = ""); // optionally supply labels for break/continue
+    void compile(block*, std::string exitlabel = "", std::string toplabel = "", std::string returnlabel = "");      // (block is a subclass of statement...)
     void compile(vardeclaration *dec);      // returns list of assignments specified by variable initializers.
-    void compile(funccall*);
+    void compile(funccall*&);
     void compile(goto_stat*);
     void compile(label*);
     void compile(if_stat*, std::string exitlabel, std::string toplabel, std::string returnlabel);
     void compile(while_stat*, std::string returnlabel);
     void compile(assignment*);
-    void compile(expression*);
+    void compile(expression*&);
     void gettype(expression*);
     bool match_types(type_t expected, type_t &received);
-    void addvar(std::string name, type_t type, int ptr, bool isConstant = false, int constvalue = 0);
+    void addvar(std::string name, type_t type, int ptr, int linenumber, bool isConstant = false, int constvalue = 0);
 };
 
 

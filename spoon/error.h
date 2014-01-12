@@ -12,4 +12,6 @@ class error
     error(std::string);
 };
 
+#define throw_error(error_stream) { std::stringstream __ss; (__ss << error_stream); throw(error(__ss.str()));}
+
 #endif // _ERROR_H_INCLUDED_

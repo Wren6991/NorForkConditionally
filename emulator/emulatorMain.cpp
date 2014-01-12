@@ -192,7 +192,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
     ToolBar1->AddSeparator();
     ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, _("Step simulation"), wxEmptyString);
-    ToolBarItem5 = ToolBar1->AddTool(ID_TOOLBARITEM2, _("Breakpoint"), wxBitmap(wxImage(_T("C:\\Users\\Owner\\Documents\\CodeBlocks\\NorForkConditionally\\emulator\\icons\\stop.png"))), wxNullBitmap, wxITEM_NORMAL, _("Set/remove breakpoint"), wxEmptyString);
+    ToolBarItem5 = ToolBar1->AddTool(ID_TOOLBARITEM2, _("Breakpoint"), wxBitmap(wxImage(_T("icons\\stop.png"))), wxNullBitmap, wxITEM_NORMAL, _("Set/remove breakpoint"), wxEmptyString);
     ToolBarItem6 = ToolBar1->AddTool(TOOL_LCD, _("LCD"), wxBitmap(wxImage(_T("icons/monitor.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show LCD"), wxEmptyString);
     ToolBarItem7 = ToolBar1->AddTool(TOOL_FLASH, _("Flash"), wxBitmap(wxImage(_T("icons/drive_magnify.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show flash contents"), wxEmptyString);
     ToolBar1->AddSeparator();
@@ -394,8 +394,8 @@ bool emulatorFrame::TakeStep()
     {
         result = true;
         machine.debug_written = false;
-        uint8_t data = buffer[DEBUG_OUT_POS];
-        //std::cout << "debug output: " << std::hex << (int)data << "\n";
+        /*uint8_t data = buffer[DEBUG_OUT_POS];
+        std::cout << "debug output: " << std::hex << (int)data << "\n";*/
     }
     memview->cursors[0].index = machine.PC;
     return result;

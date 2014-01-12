@@ -35,8 +35,6 @@
 										<object class="wxBoxSizer" variable="BoxSizer2" member="no">
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED7" variable="Led7" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -44,8 +42,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED6" variable="Led6" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -53,8 +49,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED5" variable="Led5" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -62,8 +56,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED4" variable="Led4" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -71,8 +63,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED3" variable="Led3" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -80,8 +70,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED2" variable="Led2" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -89,8 +77,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED1" variable="Led1" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -98,8 +84,6 @@
 											</object>
 											<object class="sizeritem">
 												<object class="wxLed" name="ID_LED0" variable="Led0" member="yes">
-													<Disable_Colour>#004000</Disable_Colour>
-													<Enable_Colour>#00FF00</Enable_Colour>
 													<enabled>0</enabled>
 												</object>
 												<flag>wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -318,7 +302,7 @@
 			</object>
 			<object class="tool" name="ID_TOOLBARITEM2" variable="ToolBarItem5" member="yes">
 				<label>Breakpoint</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\NorForkConditionally\emulator\icons\stop.png</bitmap>
+				<bitmap>icons\stop.png</bitmap>
 				<tooltip>Set/remove breakpoint</tooltip>
 			</object>
 			<object class="tool" name="TOOL_LCD" variable="ToolBarItem6" member="yes">

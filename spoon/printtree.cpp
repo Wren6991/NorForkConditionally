@@ -132,6 +132,8 @@ void printtree(vardeclaration *decl, int indentation)
 void printtree(statement *stat, int indentation)
 {
     indent(indentation);
+    if (stat->type == stat_block)
+        printtree((block*)stat, indentation);
     if (stat->type == stat_call)
     {
         funccall *fcall = (funccall*)stat;

@@ -36,7 +36,7 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
 
 int main(int argc, char **argv)
 {
-    while (true)
+    /*while (true)
     {
         std::string str;
         std::stringstream ss;
@@ -64,9 +64,9 @@ int main(int argc, char **argv)
             std::cout << e.errstring << "\n";
         }
         std::cout << "Done.\n";
-    }
+    }*/
 
-    /*std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
+    std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
     std::string ifilename, ofilename;
     bool have_ifilename, have_ofilename;
     bool strip_unused_functions = false;
@@ -133,7 +133,8 @@ int main(int argc, char **argv)
         compiler c;
         object *obj = c.compile(prog);
 #ifdef EBUG
-        //printtree(obj->tree);
+        std::cout << "\n\nPost-compile tree:\n\n";
+        printtree(obj->tree);
 #endif // EBUG
         linker l;
         l.strip_unused_functions = strip_unused_functions;
@@ -158,5 +159,5 @@ int main(int argc, char **argv)
         std::cout << e.errstring << "\n";
         return 1;
     }
-    return 0;*/
+    return 0;
 }

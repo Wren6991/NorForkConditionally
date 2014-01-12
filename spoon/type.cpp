@@ -8,7 +8,8 @@ const std::string friendly_type_names[] = {
     "pointer",
     "label",
     "array",
-    "number"
+    "number",
+    "expression"
 };
 
 const int type_sizes[] = {
@@ -17,7 +18,8 @@ const int type_sizes[] = {
     2,
     0,
     2,
-    1
+    1,
+    0
 };
 
 bool type_t::operator==(const type_t &rhs) const
@@ -50,13 +52,13 @@ std::string type_t::getname() const
     if (type == type_array)
     {
         std::stringstream ss;
-        ss << friendly_type_names[second] << "[";
+        ss << ((second >= 0 && second < n_types) ? friendly_type_names[second] : std::string("UNDEFINEDTYPE")) << "[";
         if (count)
             ss << count;
         ss << "]";
         return ss.str();
     }
     else
-        return friendly_type_names[type];
+        return (type >= 0 && type < n_types) ? friendly_type_names[type] : std::string("UNDEFINEDTYPE");
 }
 

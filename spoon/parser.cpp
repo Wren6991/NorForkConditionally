@@ -157,7 +157,7 @@ void parser::do_preprocessor(program *prog)
     }
     else
     {
-        throw(error("Error: unrecognised preprocessor directive \"" + lastt.value + "\""));
+        throw(error("Error: unrecognised preprocessor directive: \"" + lastt.value + "\""));
     }
 }
 
@@ -166,6 +166,7 @@ void parser::do_preprocessor(program *prog)
 constdef* parser::getconstdef()
 {
     resourcep <constdef> def;
+    def.obj->linenumber = lastt.linenumber;
     expect(t_type);
     def.obj->valtype = typestrings[lastt.value];
     expect(t_name);
@@ -183,6 +184,7 @@ constdef* parser::getconstdef()
 macrodef* parser::getmacrodef()
 {
     resourcep <macrodef> def;
+    def.obj->linenumber = lastt.linenumber;
     expect(t_name);
     def.obj->name = lastt.value;
     expect(t_lparen);
@@ -204,6 +206,7 @@ macrodef* parser::getmacrodef()
 funcdef* parser::getfuncdef(bool exported)
 {
     resourcep <funcdef> def;
+    def.obj->linenumber = lastt.linenumber;
     if (accept(t_type))
     {
         def.obj->return_type = typestrings[lastt.value];
@@ -267,23 +270,20 @@ funcdef* parser::getfuncdef(bool exported)
 block* parser::getblock()
 {
     resourcep <block> blk;
-    if (accept(t_lbrace))
+    expect(t_lbrace);
+    blk.obj->linenumber = lastt.linenumber;
+    while(t.type != t_rbrace)
     {
-        while(t.type != t_rbrace)
+        if (accept(t_var))
         {
-            if (accept(t_var))
-            {
-                blk.obj->declarations.push_back(getvardeclaration(&blk.obj->statements));
-            }
-            else
-            {
-                blk.obj->statements.push_back(getstatement());
-            }
+            blk.obj->declarations.push_back(getvardeclaration(&blk.obj->statements));
         }
-        accept(t_rbrace);
+        else
+        {
+            blk.obj->statements.push_back(getstatement());
+        }
     }
-    else
-        blk.obj->statements.push_back(getstatement());
+    expect(t_rbrace);
     return blk.release();
 }
 
@@ -294,6 +294,7 @@ block* parser::getblock()
 vardeclaration* parser::getvardeclaration(std::vector<statement*> *statlist, bool exported)
 {
     resourcep <vardeclaration> vardec;
+    vardec.obj->linenumber = lastt.linenumber;
     expect(t_type);
     type_enum basetype = typestrings[lastt.value];
     expect(t_name);
@@ -352,52 +353,64 @@ vardeclaration::varpair parser::getvarname_and_type(type_enum basetype, std::vec
 
 statement* parser::getstatement()
 {
-    if (accept(t_goto))
+    int linenumber = t.linenumber;
+    statement *stat;
+    if (t.type == t_lbrace)
     {
-        return getgoto();
+        stat = getblock();
+    }
+    else if (accept(t_goto))
+    {
+        stat = getgoto();
     }
     else if (accept(t_if))
     {
-        return getif();
+        stat = getif();
     }
     else if (accept(t_while))
     {
-        return getwhile();
+        stat = getwhile();
     }
     else if (accept(t_break))
     {
         resourcep <break_stat> breaks;
         expect(t_semicolon);
-        return breaks.release();
+        stat = breaks.release();
     }
     else if (accept(t_continue))
     {
         resourcep <continue_stat> continues;
         expect(t_semicolon);
-        return continues.release();
+        stat = continues.release();
     }
     else if (accept(t_return))
     {
         resourcep <return_stat> returns;
         expect(t_semicolon);
-        return returns.release();
+        stat = returns.release();
+    }
+    else if (accept(t_semicolon))
+    {
+        stat = new empty_stat;
     }
     else
     {
         expect(t_name);
         if (t.type == t_lparen)
         {
-            return getfunccall();
+            stat = getfunccall();
         }
         else if (t.type == t_colon)
         {
-            return getlabel();
+            stat = getlabel();
         }
         else
         {
-            return getassignment();
+            stat = getassignment();
         }
     }
+    stat->linenumber = linenumber;
+    return stat;
 }
 
 assignment* parser::getassignment()
@@ -457,9 +470,9 @@ if_stat* parser::getif()
     expect(t_lparen);
     ifs.obj->expr = getexpression();
     expect(t_rparen);
-    ifs.obj->ifblock = getblock();
+    ifs.obj->ifblock = getstatement();
     if (accept(t_else))
-        ifs.obj->elseblock = getblock();
+        ifs.obj->elseblock = getstatement();
     return ifs.release();
 }
 
@@ -469,7 +482,7 @@ while_stat* parser::getwhile()
     expect(t_lparen);
     whiles.obj->expr = getexpression();
     expect(t_rparen);
-    whiles.obj->blk = getblock();
+    whiles.obj->blk = getstatement();
     return whiles.release();
 }
 
@@ -484,6 +497,7 @@ expression* parser::getexpression()
         expr.obj->type = (lastt.type == t_and) ? exp_and : exp_or;
         expr.obj->args.push_back(temp);
         expr.obj->args.push_back(getsinglevalue());
+        expr.obj->linenumber = temp->linenumber;
     }
     return expr.release();
 }
@@ -491,6 +505,7 @@ expression* parser::getexpression()
 expression* parser::getsinglevalue()
 {
    resourcep <expression> expr;
+   expr.obj->linenumber = lastt.linenumber;
 
     if (accept(t_not))
     {

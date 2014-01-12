@@ -10,6 +10,7 @@ typedef enum {
     type_label,
     type_array,
     type_number,        // generic number type, for compiler use only.
+    type_expression,
     n_types
 } type_enum;
 

@@ -6,6 +6,9 @@
 
 #include <iostream>
 
+
+#include "printtree.h"
+
 // take a local symbol and a globally unique pointer value,
 // concatenate into a guid string
 std::string makeguid(std::string name, int ptr)
@@ -15,10 +18,10 @@ std::string makeguid(std::string name, int ptr)
     return ss.str();
 }
 
-void throw_type_error(std::string context, type_t expected, type_t got)
+void throw_type_error(std::string context, type_t expected, type_t got, int linenumber)
 {
-    throw (error("Error: Type mismatch in " + context + ": was expecting " + expected.getname() +
-                 " but got " + got.getname()));
+    throw_error("Error: Type mismatch in " << context << ": was expecting " << expected.getname() <<
+                 " but got " << got.getname() << "(line " << linenumber << ")");
 }
 
 // Scope definitions: //
@@ -29,6 +32,7 @@ scope::scope(scope *_parent)
 
 void scope::insert(std::string name, symbol var)
 {
+    std::cout << "Inserting variable " << name << " into this scope -> " << var.tostring() << "\n";
     variables[name] = var;
 }
 
@@ -40,7 +44,7 @@ symbol& scope::get(std::string name)
     else if (parent)
         return parent->get(name);
     else
-        throw(error("Error: undefined name _!"));
+        throw_error("Error: undefined name _!");
 }
 
 // If the current scope has a match then return true, else refer upwards
@@ -96,10 +100,10 @@ void compiler::popscope()
 // add a new variable to the current scope: it is saved in the current scope
 // with its local name, and in the global symbol table with its global name,
 // so we can do type checking and stuff in the second pass.
-void compiler::addvar(std::string name, type_t type, int ptr, bool isConstant, int constvalue)
+void compiler::addvar(std::string name, type_t type, int ptr, int linenumber, bool isConstant, int constvalue)
 {
     if (currentscope->inthisscope(name))
-        throw(error("Error: duplicate declaration of variable " + name));
+        throw(error("Error: duplicate declaration of variable " + name + " on line "));
     symbol var;
     var.name = makeguid(name, ptr);
     var.type = type;
@@ -120,7 +124,7 @@ object* compiler::compile(program *prog)
         if (def->type == dt_constdef)
         {
             constdef *cdef = (constdef*)def;
-            addvar(cdef->name, cdef->valtype, (long)cdef, true, cdef->value);
+            addvar(cdef->name, cdef->valtype, (long)cdef, cdef->linenumber, true, cdef->value);
         }
         else if (def->type == dt_macrodef)
         {
@@ -153,7 +157,7 @@ object* compiler::compile(program *prog)
     while (idef != obj->tree->defs.end())
     {
         definition *def = *idef;
-        if (def->type == dt_constdef || (def->type == dt_funcdef && !((funcdef*)def)->defined))
+        if (def->type == dt_constdef || (def->type == dt_funcdef && !((funcdef*)def)->defined) || def->type == dt_macrodef)
         {
             idef = obj->tree->defs.erase(idef);     // strip out everything apart from function definitions. (macros have already been subbed by this point)
         }
@@ -171,22 +175,22 @@ void compiler::compile(macrodef *mdef)
     pushscope();
     func_signature sig;
     sig.args_must_match = false;
+    sig.is_macro = true;
     sig.return_type = type_none;
+    sig.def = (funcdef*)mdef;
     for (unsigned int i = 0; i < mdef->args.size(); i++)
     {
-        addvar(mdef->args[i], type_label, (long)&(mdef->args[i]));
-        mdef->args[i] = currentscope->get(mdef->args[i]).name;
+        addvar(mdef->args[i], type_expression, (long)&(mdef->args[i]), mdef->linenumber);
+        std::cout << "Renaming " << mdef->args[i] << " to " << currentscope->get(mdef->args[i]).name << "\n";
+        symbol sym = currentscope->get(mdef->args[i]);
+        mdef->args[i] = sym.name;
+        globalsymboltable[mdef->args[i]] = sym;
         sig.arg_types.push_back(type_none);
     }
     if (defined_funcs.find(mdef->name) != defined_funcs.end())
-    {
-        std::stringstream ss;
-        ss << "Error: conflicting definitions of macro \"" << mdef->name << "\"";
-        throw(error(ss.str()));
-    }
-    compile(mdef->body);
+        throw_error("Error: conflicting definitions of macro \"" << mdef->name << "\"");
     popscope();
-    functions[mdef->name] = sig;           // never mind that it's a macro instead of a function - the calls are the same, we'll let the linker worry about the code generation.
+    functions[mdef->name] = sig;
     defined_funcs.insert(mdef->name);
 }
 
@@ -201,23 +205,19 @@ void compiler::compile(funcdef *fdef)
     for (unsigned int i = 0; i < fdef->args.size(); i++)
     {
         argument *arg = &(fdef->args[i]);
-        addvar(arg->name, arg->type, (long)arg);
+        addvar(arg->name, arg->type, (long)arg, fdef->linenumber);
         arg->name = currentscope->get(arg->name).name;
         sig.arg_types.push_back(arg->type);
     }
-    if (functions.find(fdef->name) != functions.end())
+    if (functions.find(fdef->name) != functions.end() && sig != functions[fdef->name])
     {
-        if (sig != functions[fdef->name])
-        {
-            std::stringstream ss;
-            ss << "Error: conflicting type declarations for function \"" << fdef->name << "\"";
-            throw(error(ss.str()));
-        }
+        throw_error("Error: conflicting type declarations for function \"" << fdef->name << "\"");
     }
     else
     {
         functions[fdef->name] = sig;
     }
+
     if (defined_funcs.find(fdef->name) == defined_funcs.end()) // i.e. function is currently undefined
     {
         if (fdef->defined)
@@ -232,21 +232,15 @@ void compiler::compile(funcdef *fdef)
             defined_funcs.insert(fdef->name);
         }
     }
-    else    // (if function has already been defined)
+    else if (fdef->defined)  // function exists (this is else clause of above) and we are processing a definition as opposed to merely a declaration
     {
-        if (fdef->defined)  // and we have another definition in this func def...
-        {
-            std::stringstream ss;
-            ss << "Error: conflicting definitions of function \"" << fdef->name << "\"";
-            throw(error(ss.str()));
-        }
+        throw_error("Error: conflicting definitions of function \"" << fdef->name << "\"");
     }
     popscope();
 }
 
 // Push all the variable declarations into a new scope.
-// run through all the statements and delegate compilation based
-// on statement type
+// Run through all the statements and delegate their compilation.
 void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, std::string returnlabel)
 {
     pushscope();
@@ -258,10 +252,10 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
     // scan through for labels: (because they break the forward-view scoping rule)
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
-        // NOTE: we put a label in the declarations, but put a pointer variable in the current scope. Compiler thinks pointer, linker knows label.
+        // NOTE: we put a label in the declarations, but a pointer variable in the current scope (for type checking purposes). Compiler thinks pointer, linker knows label.
         if (blk->statements[i]->type == stat_label)
         {
-            addvar(((label*)blk->statements[i])->name, type_pointer, (long)(blk->statements[i]));
+            addvar(((label*)blk->statements[i])->name, type_pointer, (long)(blk->statements[i]), blk->linenumber);
             vardeclaration *dec = new vardeclaration;
             vardeclaration::varpair var;
             var.type = type_label;
@@ -274,54 +268,62 @@ void compiler::compile(block *blk, std::string exitlabel, std::string toplabel, 
     // compile the remaining statements:
     for (unsigned int i = 0; i < blk->statements.size(); i++)
     {
-        statement *&stat = blk->statements[i];      // reference to pointer to statement (so we can reassign it)
-
-        switch (stat->type)
-        {
-        case stat_call:
-            compile((funccall*)stat);
-            break;
-        case stat_goto:
-            compile((goto_stat*)stat);
-            break;
-        case stat_label:
-            ((label*)stat)->name = currentscope->get(((label*)stat)->name).name;        // replace local label with globally unique one
-            break;
-        case stat_if:
-            compile((if_stat*)stat, exitlabel, toplabel, returnlabel);
-            break;
-        case stat_while:
-            compile((while_stat*)stat, returnlabel);
-            break;
-        case stat_assignment:
-            compile((assignment*)stat);
-            break;
-        case stat_break:
-            if (exitlabel == "")
-                throw(error("Error: no loop to break from"));
-            delete stat;
-            stat = new goto_stat;
-            ((goto_stat*)stat)->target = new expression(exitlabel);
-            break;
-        case stat_continue:
-            if (toplabel == "")
-                throw(error("Error: no loop to continue"));
-            delete stat;
-            stat = new goto_stat;
-            ((goto_stat*)stat)->target = new expression(toplabel);
-            break;
-        case stat_return:
-            if (returnlabel == "")
-                throw(error("Error: no function to break from"));
-            delete stat;
-            stat = new goto_stat;
-            ((goto_stat*)stat)->target = new expression(returnlabel);
-            break;
-        default:
-            throw(error("Error: unrecognised statement type"));
-        }
+       compile(blk->statements[i], exitlabel, toplabel, returnlabel);      // reference to pointer to statement (so we can reassign it)
     }
     popscope();
+}
+
+void compiler::compile(statement *&stat, std::string exitlabel, std::string toplabel, std::string returnlabel)
+{
+    switch (stat->type)
+    {
+    case stat_block:
+        compile((block*)stat, exitlabel, toplabel, returnlabel);
+        break;
+    case stat_call:
+        compile((funccall*&)stat);
+        break;
+    case stat_empty:
+        break;
+    case stat_goto:
+        compile((goto_stat*)stat);
+        break;
+    case stat_label:
+        ((label*)stat)->name = currentscope->get(((label*)stat)->name).name;        // replace local label with globally unique one
+        break;
+    case stat_if:
+        compile((if_stat*)stat, exitlabel, toplabel, returnlabel);
+        break;
+    case stat_while:
+        compile((while_stat*)stat, returnlabel);
+        break;
+    case stat_assignment:
+        compile((assignment*)stat);
+        break;
+    case stat_break:
+        if (exitlabel == "")
+            throw(error("Error: no loop to break from"));
+        delete stat;
+        stat = new goto_stat;
+        ((goto_stat*)stat)->target = new expression(exitlabel);
+        break;
+    case stat_continue:
+        if (toplabel == "")
+            throw(error("Error: no loop to continue"));
+        delete stat;
+        stat = new goto_stat;
+        ((goto_stat*)stat)->target = new expression(toplabel);
+        break;
+    case stat_return:
+        if (returnlabel == "")
+            throw(error("Error: no function to break from"));
+        delete stat;
+        stat = new goto_stat;
+        ((goto_stat*)stat)->target = new expression(returnlabel);
+        break;
+    default:
+        throw(error("Error: unrecognised statement type"));
+    }
 }
 
 void compiler::compile(vardeclaration *dec)
@@ -329,19 +331,18 @@ void compiler::compile(vardeclaration *dec)
     for (unsigned int j = 0; j < dec->vars.size(); j++)
     {
         vardeclaration::varpair &var = dec->vars[j];
-        addvar(var.name, var.type, (long)dec);
+        addvar(var.name, var.type, (long)dec, dec->linenumber);
         var.name = currentscope->get(var.name).name;    // replace the declaration with the global name of the var; makes linking easier.
     }
 }
 
 // compile ALL the arguments!
-void compiler::compile(funccall *fcall)
+void compiler::compile(funccall *&fcall)
 {
+    std::cout << "Call to function " << fcall->name << "\n";
     if (functions.find(fcall->name) == functions.end())
     {
-        std::stringstream ss;
-        ss << "Error: implicit declaration of function \"" << fcall->name << "\"";
-        throw(error(ss.str()));
+        throw_error("Error: implicit declaration of function \"" << fcall->name << "\"");
     }
     if (currentfuncdef)
     {
@@ -352,12 +353,28 @@ void compiler::compile(funccall *fcall)
         throw(error("Error: not enough arguments to function " + fcall->name));
     else if (fcall->args.size() > sig.arg_types.size())
         throw(error("Error: too many arguments to function " + fcall->name));
-
-    for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
+    if (!sig.is_macro) // is function
     {
-        compile(fcall->args[argnum]);
-        if (sig.args_must_match && !match_types(sig.arg_types[argnum], fcall->args[argnum]->val_type))
-            throw_type_error(std::string("argument ") + "" + " to function " + fcall->name, sig.arg_types[argnum], fcall->args[argnum]->val_type);
+        for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
+        {
+            compile(fcall->args[argnum]);
+            if (sig.args_must_match && !match_types(sig.arg_types[argnum], fcall->args[argnum]->val_type))
+                throw_type_error(std::string("argument ") + "" + " to function " + fcall->name, sig.arg_types[argnum], fcall->args[argnum]->val_type, fcall->linenumber);
+        }
+    }
+    else
+    {
+        pushscope();
+        block *macrobody = ((macrodef*)sig.def)->body->getcopy();
+        for (unsigned int argnum = 0; argnum < fcall->args.size(); argnum++)
+        {
+            std::string argname = ((macrodef*)sig.def)->args[argnum];
+            expression_subs[argname] = fcall->args[argnum];
+            currentscope->insert(argname.substr(0, argname.find('@')), globalsymboltable[argname]);
+        }
+        compile(macrobody);
+        fcall = (funccall*)macrobody; // It's still actually a block, and the type tag will tell the linker this, we just need to cast the pointer for the assignment.
+        popscope();
     }
 }
 
@@ -407,7 +424,7 @@ void compiler::compile(assignment *assg)
     type_t secondtype = assg->expr->val_type.second;
     if (!match_types(assg_type, assg->expr->val_type) &&
         !(assg->expr->indexed && match_types(assg_type, secondtype)))
-        throw_type_error("assignment of variable " + assg->name.substr(0, assg->name.find("@")), assg_type, assg->expr->val_type);
+        throw_type_error("assignment of variable " + assg->name.substr(0, assg->name.find("@")), assg_type, assg->expr->val_type, assg->linenumber);
 }
 
 // To compile an expression:
@@ -416,22 +433,32 @@ void compiler::compile(assignment *assg)
 //     - if it refers to a constant, swap the constant value in for the name.
 // - otherwise, leave it
 // - get its type once we've compiled it
-void compiler::compile(expression *expr)
+void compiler::compile(expression *&expr)
 {
     bool typeAlreadyDetermined = false;
     if (expr->type == exp_name)
     {
         if (!currentscope->exists(expr->name))
         {
-            throw(error("Error: undeclared name \"" + expr->name + "\" in expression."));
+            throw_error("Error: undeclared name \"" << expr->name << "\" in expression on line " << expr->linenumber);
         }
+        std::cout << "Expression containing " << expr->name;
         expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
+        std::cout <<  "\n    " << globalsymboltable[expr->name].tostring() << "\n";
         if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
         {
             expr->type = exp_number;
             expr->number = globalsymboltable[expr->name].value;
             expr->val_type = globalsymboltable[expr->name].type;
             typeAlreadyDetermined = true;
+        }
+        else if (globalsymboltable[expr->name].type == type_expression)
+        {
+            expr = expression_subs[expr->name]->getcopy();
+            std::cout << "Subbing expression: (";
+            printtree(expr);
+            std::cout << ")\n";
+            compile(expr);
         }
     }
     else if (expr->type == exp_funccall)
@@ -451,7 +478,7 @@ void compiler::compile(expression *expr)
         {
             compile(expr->args[i]);
             if (sig.args_must_match && !match_types(sig.arg_types[i], expr->args[i]->val_type))
-                throw_type_error(std::string("argument ") + "" + " to function " + expr->name, sig.arg_types[i], expr->args[i]->val_type);
+                throw_type_error(std::string("argument ") + "" + " to function " + expr->name, sig.arg_types[i], expr->args[i]->val_type, expr->linenumber);
         }
     }
     else if (expr->type == exp_and || expr->type == exp_or || expr->type == exp_not)
@@ -460,13 +487,13 @@ void compiler::compile(expression *expr)
         {
             compile(expr->args[i]);
             if (!match_types(type_int, expr->args[i]->val_type))
-                throw(error("Error: logical operators apply only to booleans"));
+                throw_error("Error: logical operators apply only to booleans (line " << expr->linenumber << ")");
         }
     }
 
     else if (expr->type != exp_number && expr->type != exp_string)
     {
-        throw(error("Error: attempted to compile unknown expression type"));
+        throw_error("Error: attempted to compile unknown expression type on line " << expr->linenumber);
     }
     // tell the compiler to make note of the type: (if we haven't already gotten it from the symbol table)
     if (!typeAlreadyDetermined)
@@ -525,4 +552,14 @@ bool compiler::match_types(type_t expected, type_t &received)
     {
         return false;
     }
+}
+
+std::string symbol::tostring()
+{
+    std::stringstream ss;
+    ss << "(Name: " << name << ", type: " << type.getname();
+    if (is_constant)
+        ss << " (" << value << ")";
+    ss << (is_constant ? ", constant)" : ", not constant)");
+    return ss.str();
 }

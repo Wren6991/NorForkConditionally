@@ -15,7 +15,9 @@ typedef enum {
 } def_type;
 
 typedef enum {
+    stat_block,
     stat_call,
+    stat_empty,
     stat_goto,
     stat_assignment,
     stat_label,
@@ -50,6 +52,7 @@ struct program
 struct definition
 {
     def_type type;
+    int linenumber;
 };
 
 struct constdef: public definition
@@ -118,6 +121,7 @@ struct vardeclaration: public definition
 struct statement
 {
     stat_type type;
+    int linenumber;
     virtual statement* getcopy() = 0;
     virtual ~statement() {};
 };
@@ -161,8 +165,8 @@ struct label: public statement
 struct if_stat: public statement
 {
     expression *expr;
-    block *ifblock;
-    block *elseblock;
+    statement *ifblock;
+    statement *elseblock;
     virtual statement* getcopy();
     if_stat() {type = stat_if; elseblock = 0;}
     virtual ~if_stat() {}
@@ -171,7 +175,7 @@ struct if_stat: public statement
 struct while_stat: public statement
 {
     expression *expr;
-    block *blk;
+    statement *blk;
     virtual statement* getcopy();
     while_stat() {type = stat_while;}
     virtual ~while_stat() {}
@@ -198,11 +202,20 @@ struct return_stat: public statement
     virtual ~return_stat() {}
 };
 
-struct block
+struct block: public statement
 {
     std::vector <vardeclaration*> declarations;
     std::vector <statement*> statements;
-    block* getcopy();
+    block() {type = stat_block;}
+    virtual block* getcopy();
+    virtual ~block() {}
+};
+
+struct empty_stat: public statement
+{
+    empty_stat() {type = stat_empty;}
+    virtual statement* getcopy() {return new empty_stat;}
+    virtual ~empty_stat() {}
 };
 
 struct expression
@@ -210,6 +223,7 @@ struct expression
     exp_type type;
     std::string name;
     int number;
+    int linenumber;
     bool indexed;
     type_t val_type;         // <- Not touched by the parser: the compiler sets it when it reads types, and the linker reads it later.
     std::vector<expression*> args;
@@ -222,6 +236,7 @@ inline statement* funccall::getcopy()
 {
     funccall *f = new funccall;
     f->name = name;
+    f->linenumber = linenumber;
     for (unsigned int i = 0; i < args.size(); ++i)
         f->args.push_back(args[i]->getcopy());
     return f;
@@ -230,6 +245,7 @@ inline statement* funccall::getcopy()
 inline statement* goto_stat::getcopy()
 {
     goto_stat *g = new goto_stat;
+    g->linenumber = linenumber;
     g->target = target->getcopy();
     return g;
 }
@@ -238,6 +254,7 @@ inline statement* assignment::getcopy()
 {
     assignment *assg = new assignment;
     assg->name = name;
+    assg->linenumber = linenumber;
     assg->indexed = indexed;
     assg->index = index;
     assg->expr = expr->getcopy();
@@ -248,12 +265,14 @@ inline statement* label::getcopy()
 {
     label *lbl = new label;
     lbl->name = name;
+    lbl->linenumber = linenumber;
     return lbl;
 }
 
 inline statement* if_stat::getcopy()
 {
     if_stat *ifs = new if_stat;
+    ifs->linenumber = linenumber;
     ifs->expr = expr->getcopy();
     ifs->ifblock = ifblock->getcopy();
     ifs->elseblock = elseblock->getcopy();
@@ -263,6 +282,7 @@ inline statement* if_stat::getcopy()
 inline statement* while_stat::getcopy()
 {
     while_stat *whiles = new while_stat;
+    whiles->linenumber = linenumber;
     whiles->expr = expr->getcopy();
     whiles->blk = blk->getcopy();
     return whiles;
@@ -271,6 +291,7 @@ inline statement* while_stat::getcopy()
 inline block* block::getcopy()
 {
     block *blk = new block;
+    blk->linenumber = linenumber;
     for (unsigned int i = 0; i < declarations.size(); ++i)
         blk->declarations.push_back(declarations[i]->getcopy());
     for (unsigned int i = 0; i < statements.size(); ++i)
@@ -283,6 +304,7 @@ inline expression* expression::getcopy()
     expression *expr = new expression;
     expr->type = type;
     expr->name = name;
+    expr->linenumber = linenumber;
     expr->number = number;
     expr->val_type = val_type;
     for (unsigned int i = 0; i < args.size(); ++i)
