@@ -22,10 +22,6 @@
 					<Add directory="$(#wx)/lib/gcc_dll/mswd" />
 				</ResourceCompiler>
 				<Linker>
-					<Add library="libwxmsw29u_core.a" />
-					<Add library="libwxbase29u.a" />
-					<Add library="libwxpng.a" />
-					<Add library="libwxzlib.a" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
 				</Linker>
 			</Target>
@@ -44,22 +40,18 @@
 				</ResourceCompiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="libwxmsw29u_core.a" />
-					<Add library="libwxbase29u.a" />
-					<Add library="libwxpng.a" />
-					<Add library="libwxzlib.a" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-Wall" />
 			<Add option="-pipe" />
 			<Add option="-mthreads" />
+			<Add option='[[if (PLATFORM == PLATFORM_MSW &amp;&amp; (GetCompilerFactory().GetCompilerVersionString(_T(&quot;gcc&quot;)) &gt;= _T(&quot;4.0.0&quot;))) print(_T(&quot;-Wno-attributes&quot;));]]' />
 			<Add option="-D__GNUWIN32__" />
 			<Add option="-D__WXMSW__" />
 			<Add option="-DWXUSINGDLL" />
-			<Add option='[[if (PLATFORM == PLATFORM_MSW &amp;&amp; (GetCompilerFactory().GetCompilerVersionString(_T(&quot;gcc&quot;)) &gt;= _T(&quot;4.0.0&quot;))) print(_T(&quot;-Wno-attributes&quot;));]]' />
-			<Add option="-Wall" />
 			<Add directory="$(#wx)/include" />
 			<Add directory="$(#wx)/contrib/include" />
 		</Compiler>
@@ -68,6 +60,10 @@
 		</ResourceCompiler>
 		<Linker>
 			<Add option="-mthreads" />
+			<Add library="libwxmsw30u_core.a" />
+			<Add library="libwxbase30u.a" />
+			<Add library="libwxpng.a" />
+			<Add library="libwxzlib.a" />
 		</Linker>
 		<Unit filename="FlashDialog.cpp" />
 		<Unit filename="FlashDialog.h" />
