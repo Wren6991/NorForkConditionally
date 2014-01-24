@@ -4,10 +4,9 @@
 *Disclaimer: This is ripped straight from my A level writeup (a Word document), so some of the formatting's probably messed up and the appendices don't exist. I'll sort this out!*
 
 
-    The language is called Spoon. (As the successor to Fork, this was the only logical choice, besides “Knife”. Knife would be banned in schools anyway, unless
-    I rounded the ends and made it out of plastic.)
+The language is called Spoon. (As the successor to Fork, this was the only logical choice, besides “Knife”. Knife would be banned in schools anyway, unless I rounded the ends and made it out of plastic.)
 
-    The syntax of the language is defined by the following BNF/regular expressions:
+The syntax of the language is defined by the following BNF/regular expressions:
 ```
 <program> ::= {<constdef>|<funcdef>|<macrodef>|<vardecl>}
 
@@ -54,7 +53,7 @@
 
 <string> ::= \"[^\"]*\"
 ```
-Where non-terminals are in &lt;angle-brackets&gt; , terminals are in `backquotes`, `[x]` represents optional `x` and `{x}` represents optional multiple `x` (a Kleene closure).
+Where non-terminals are in &lt;angle-brackets&gt; , terminals are in \`backquotes\`, `[x]` represents optional `x` and `{x}` represents optional multiple `x` (a Kleene closure).
 
 
 Identifiers and operators are all case sensitive.

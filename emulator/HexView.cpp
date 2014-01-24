@@ -1,9 +1,11 @@
 #include "HexView.h"
 
 #include <iostream>
+#include <sstream>
 #include <wx/defs.h>
 #include <wx/font.h>
 #include <wx/validate.h>
+#include <wx/clipbrd.h>
 
 #include "ceventpropagator.h"
 
@@ -191,6 +193,18 @@ void HexView::mouseUp(wxMouseEvent &event)
     mousedown = false;
 }
 
+void HexView::sendCharEvent(char c)
+{
+    wxKeyEvent evt;
+    evt.m_keyCode = ' ';
+    keyPressed(evt);
+}
+
+void HexView::sendInt(int n)
+{
+    (*buffer)[grid2index(selection)] = n;
+}
+
 void HexView::keyPressed(wxKeyEvent &event)
 {
     int c = event.GetKeyCode();
@@ -213,6 +227,66 @@ void HexView::keyPressed(wxKeyEvent &event)
         setSelection(selection + wxPoint(0, -1));
     else if (c == WXK_DOWN)
         setSelection(selection + wxPoint(0, 1));
+    else if ((c == 'G' || c == 'g') && event.AltDown())
+    {
+        std::string addresstext = wxGetTextFromUser("Enter address (hex):", "Go to Address", "", this).ToStdString();
+        int address;
+        std::stringstream ss;
+        ss << std::hex << addresstext;
+        ss >> address;
+        setSelection(index2grid(address));
+    }
+    else if ((c == 'V' || c == 'v') && event.ControlDown())
+    {
+        if (wxTheClipboard->Open())
+        {
+            if (wxTheClipboard->IsSupported(wxDF_TEXT))
+            {
+                wxTextDataObject data;
+                wxTheClipboard->GetData(data);
+                wxMessageBox(data.GetText());
+                std::string text = data.GetText().ToStdString();
+                bool in_whitespace = false;
+                bool int_read = false;
+                int result = 0;
+                for (unsigned int i = 0; i < text.size(); i++)
+                {
+                    char c = text[i];
+                    if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ',')
+                    {
+                        if (!in_whitespace)
+                        {
+                            in_whitespace = true;
+                            if (int_read)
+                            {
+                                int_read = false;
+                                sendInt(result);
+                                result = 0;
+                            }
+                            sendCharEvent(' ');
+                        }
+                    }
+                    else
+                    {
+                        in_whitespace = false;
+                        bool digit_read = true;
+                        if (c >= '0' && c <= '9')
+                            result = (result << 4) + c - '0';
+                        else if (c >= 'a' && c <= 'f')
+                            result = (result << 4) + c - 'a' + 10;
+                        else if (c >= 'A' && c <= 'F')
+                            result = (result << 4) + c - 'A' + 10;
+                        else
+                            digit_read = false;
+                        int_read = int_read || digit_read;
+                    }
+                }
+                if (int_read)
+                    sendInt(result);
+            }
+            wxTheClipboard->Close();
+        }
+    }
     else
         needtorefresh = false;
 

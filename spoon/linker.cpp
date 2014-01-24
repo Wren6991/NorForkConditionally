@@ -112,7 +112,7 @@ void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previou
         linkval temploc = vars.addvar("__brztemp", type_int);
         emit_nfc2(temploc, getconstaddress(0xff));
         emit_nfc2(temploc, testloc);
-        uint16_t next = index + 8;
+        uint16_t next = current_address + 8;
         write16(temploc);
         write16(temploc);
         if (!invert)
@@ -400,7 +400,7 @@ void linker::exportfuncdef(funcdef *fdef)
     defstring << "): 0x";
     defstring << std::hex << ((valtable[fdef->name + ":__startvector_HI"].literal << 8) + valtable[fdef->name + ":__startvector_LO"].literal);
     defstring << ", 0x" << vars.getvar(fdef->name + ":__returnval")->address.literal;
-    defstring << ", 0x" << vars.getvar(fdef->name + ":__returnval")->address.literal;
+    defstring << ", 0x" << vars.getvar(fdef->name + ":__returnvector")->address.literal;
     for (unsigned int i = 0; i < fdef->args.size(); i++)
         defstring << ", 0x" << vars.getvar(fdef->args[i].name)->address.literal;
     defstring << ";\r\n";
@@ -975,17 +975,20 @@ std::vector<char> linker::assemble()
     }
     if (image.size() > (unsigned)INCREMENT_START)
         throw(error("Error: program is too big!"));
-    // put constant tables into last kilobyte.
-    while (image.size() < (unsigned)INCREMENT_START)
-        image.push_back(0);
-    for (unsigned int i = 0; i <= 255; i++)
-        image.push_back((i + 1) & 0xff);
-    for (unsigned int i = 0; i <= 255; i++)
-        image.push_back((i - 1) & 0xff);
-    for (unsigned int i = 0; i <= 255; i++)
-        image.push_back((i << 1) & 0xff);
-    for (unsigned int i = 0; i <= 255; i++)
-        image.push_back((i >> 1) & 0xff);
+    // pad and put constant tables into last kilobyte.
+    if (!compile_to_ram)
+    {
+        while (image.size() < (unsigned)INCREMENT_START)
+            image.push_back(0);
+        for (unsigned int i = 0; i <= 255; i++)
+            image.push_back((i + 1) & 0xff);
+        for (unsigned int i = 0; i <= 255; i++)
+            image.push_back((i - 1) & 0xff);
+        for (unsigned int i = 0; i <= 255; i++)
+            image.push_back((i << 1) & 0xff);
+        for (unsigned int i = 0; i <= 255; i++)
+            image.push_back((i >> 1) & 0xff);
+    }
     return image;
 }
 

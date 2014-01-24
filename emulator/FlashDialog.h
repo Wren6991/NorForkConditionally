@@ -10,6 +10,7 @@
 //(*Headers(FlashDialog)
 #include <wx/sizer.h>
 #include <wx/toolbar.h>
+#include <wx/filedlg.h>
 #include <wx/frame.h>
 //*)
 
@@ -17,11 +18,11 @@ class FlashDialog: public wxFrame, public peripheral
 {
     static const int flash_size = 0x80000;
 
-    static const int flash_sig_address = 0xc002;
-    static const int flash_mid_address = 0xc003;
-    static const int flash_lo_address = 0xc004;
-    static const int flash_in_address = 0xc005;
-    static const int flash_out_address = 0xc006;
+    static const unsigned int flash_sig_address = 0xc002;
+    static const unsigned int flash_mid_address = 0xc003;
+    static const unsigned int flash_lo_address = 0xc004;
+    static const unsigned int flash_in_address = 0xc005;
+    static const unsigned int flash_out_address = 0xc006;
 
     static const int flash_sig_we = 0x80;
     static const int flash_sig_oe = 0x40;
@@ -50,6 +51,7 @@ public:
 
     //(*Declarations(FlashDialog)
     wxToolBar* ToolBar1;
+    wxFileDialog* OpenFileDialog;
     wxToolBarToolBase* ToolBarItem1;
     wxBoxSizer* BoxSizer1;
     wxToolBarToolBase* ToolBarItem2;
@@ -67,7 +69,12 @@ private:
 
     //(*Handlers(FlashDialog)
     void OnClose(wxCloseEvent& event);
+    void OnToolBarOpenClicked(wxCommandEvent& event);
     //*)
+    std::string filename;
+    std::string filepath;
+    bool filehaschanged;
+    void SetFileName(std::string path, bool hasbeenmodified = false);
 
     DECLARE_EVENT_TABLE()
 };

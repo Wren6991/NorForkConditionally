@@ -59,10 +59,10 @@
 		</ResourceCompiler>
 		<Linker>
 			<Add option="-mthreads" />
-			<Add library="libwxmsw29u_core.a" />
-			<Add library="libwxbase29u.a" />
+			<Add library="libwxmsw30u_core.a" />
+			<Add library="libwxbase30u.a" />
 			<Add library="libwxpng.a" />
-			<Add library="libwxmsw29u_stc.a" />
+			<Add library="libwxmsw30u_stc.a" />
 		</Linker>
 		<Unit filename="ideApp.cpp" />
 		<Unit filename="ideApp.h" />

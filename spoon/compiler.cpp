@@ -32,7 +32,7 @@ scope::scope(scope *_parent)
 
 void scope::insert(std::string name, symbol var)
 {
-    std::cout << "Inserting variable " << name << " into this scope -> " << var.tostring() << "\n";
+    //std::cout << "Inserting variable " << name << " into this scope -> " << var.tostring() << "\n";
     variables[name] = var;
 }
 
@@ -181,7 +181,7 @@ void compiler::compile(macrodef *mdef)
     for (unsigned int i = 0; i < mdef->args.size(); i++)
     {
         addvar(mdef->args[i], type_expression, (long)&(mdef->args[i]), mdef->linenumber);
-        std::cout << "Renaming " << mdef->args[i] << " to " << currentscope->get(mdef->args[i]).name << "\n";
+        //std::cout << "Renaming " << mdef->args[i] << " to " << currentscope->get(mdef->args[i]).name << "\n";
         symbol sym = currentscope->get(mdef->args[i]);
         mdef->args[i] = sym.name;
         globalsymboltable[mdef->args[i]] = sym;
@@ -339,7 +339,7 @@ void compiler::compile(vardeclaration *dec)
 // compile ALL the arguments!
 void compiler::compile(funccall *&fcall)
 {
-    std::cout << "Call to function " << fcall->name << "\n";
+    //std::cout << "Call to function " << fcall->name << "\n";
     if (functions.find(fcall->name) == functions.end())
     {
         throw_error("Error: implicit declaration of function \"" << fcall->name << "\"");
@@ -442,9 +442,9 @@ void compiler::compile(expression *&expr)
         {
             throw_error("Error: undeclared name \"" << expr->name << "\" in expression on line " << expr->linenumber);
         }
-        std::cout << "Expression containing " << expr->name;
+        //std::cout << "Expression containing " << expr->name;
         expr->name = currentscope->get(expr->name).name;        // replace local name with globally unique name;
-        std::cout <<  "\n    " << globalsymboltable[expr->name].tostring() << "\n";
+        //std::cout <<  "\n    " << globalsymboltable[expr->name].tostring() << "\n";
         if (globalsymboltable[expr->name].is_constant)          // if it's a constant, fetch the value from the global symbol table and replace.
         {
             expr->type = exp_number;
@@ -455,9 +455,9 @@ void compiler::compile(expression *&expr)
         else if (globalsymboltable[expr->name].type == type_expression)
         {
             expr = expression_subs[expr->name]->getcopy();
-            std::cout << "Subbing expression: (";
-            printtree(expr);
-            std::cout << ")\n";
+            //std::cout << "Subbing expression: (";
+            //printtree(expr);
+            //std::cout << ")\n";
             compile(expr);
         }
     }

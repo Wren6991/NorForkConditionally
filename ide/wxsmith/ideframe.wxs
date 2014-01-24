@@ -30,49 +30,49 @@
 			<style>wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER</style>
 			<object class="tool" name="TOOL_NEW" variable="ToolBarItem1" member="yes">
 				<label>New</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_add.png</bitmap>
+				<bitmap>icons\page_add.png</bitmap>
 				<tooltip>New file</tooltip>
 				<handler function="OnNewClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_OPEN" variable="ToolBarItem2" member="yes">
 				<label>Open</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\folder_page.png</bitmap>
+				<bitmap>icons\folder_page.png</bitmap>
 				<tooltip>Open file</tooltip>
 				<handler function="OnOpenClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_SAVE" variable="ToolBarItem3" member="yes">
 				<label>Save</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disk.png</bitmap>
+				<bitmap>icons\disk.png</bitmap>
 				<tooltip>Right click for save as</tooltip>
 				<handler function="OnSaveClicked" entry="EVT_TOOL" />
 				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
 			</object>
 			<object class="tool" name="TOOL_CLOSE" variable="ToolBarItem4" member="yes">
 				<label>Close</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\page_delete.png</bitmap>
+				<bitmap>icons\page_delete.png</bitmap>
 				<handler function="OnCloseClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="separator" />
 			<object class="tool" name="TOOL_RUN" variable="ToolBarItem5" member="yes">
 				<label>Run</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\resultset_next.png</bitmap>
+				<bitmap>icons\resultset_next.png</bitmap>
 				<tooltip>Run in simulator</tooltip>
 				<handler function="OnRunClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_CONNECT" variable="ToolBarItem6" member="yes">
 				<label>Connect</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\disconnect.png</bitmap>
+				<bitmap>icons\disconnect.png</bitmap>
 				<tooltip>Connect to device</tooltip>
 			</object>
 			<object class="tool" name="TOOL_DOWNLOAD" variable="ToolBarItem7" member="yes">
 				<label>Download</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\arrow_down.png</bitmap>
+				<bitmap>icons\arrow_down.png</bitmap>
 				<tooltip>Download to device</tooltip>
 			</object>
 			<object class="separator" />
 			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem8" member="yes">
 				<label>About</label>
-				<bitmap>C:\Users\Owner\Documents\CodeBlocks\norforkconditionally\ide\icons\help.png</bitmap>
+				<bitmap>icons\help.png</bitmap>
 				<tooltip>About this software</tooltip>
 				<handler function="OnAbout" entry="EVT_TOOL" />
 			</object>

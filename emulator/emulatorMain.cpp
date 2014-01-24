@@ -78,7 +78,7 @@ BEGIN_EVENT_TABLE(emulatorFrame,wxFrame)
     //*)
 END_EVENT_TABLE()
 
-emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
+emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id): logfile("log.txt", std::ios::out)
 {
     while (buffer.size() < (unsigned)VM_MEM_SIZE)
         buffer.push_back(0);
@@ -128,7 +128,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Led1 = new wxLed(this,ID_LED1,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led1->Disable();
     BoxSizer2->Add(Led1, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    Led0 = new wxLed(this,ID_LED0,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
+    Led0 = new wxLed(this,ID_LED1,wxColour(0,64,0),wxColour(0,255,0),wxDefaultPosition,wxDefaultSize);
     Led0->Disable();
     BoxSizer2->Add(Led0, 0, wxALL|wxSHAPED|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
     BoxSizer5->Add(BoxSizer2, 1, wxLEFT|wxRIGHT|wxEXPAND|wxFIXED_MINSIZE|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
@@ -209,6 +209,16 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     mnuWatch.Append(MenuItem2);
     MenuItem3 = new wxMenuItem((&mnuWatch), ID_MENUDELETEWATCH, _("Delete Watch"), wxEmptyString, wxITEM_NORMAL);
     mnuWatch.Append(MenuItem3);
+    dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
+    dlgSaveAs = new wxFileDialog(this, _("-1"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
+    TimerTick.SetOwner(this, ID_TIMER1);
+    TimerTick.Start(50, false);
+    MenuItem1 = new wxMenuItem((&mnuWatch), ID_MENUADDWATCH, _("Add Watch"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem1);
+    MenuItem2 = new wxMenuItem((&mnuWatch), ID_MENUCHANGEADDRESS, _("Change Address"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem2);
+    MenuItem3 = new wxMenuItem((&mnuWatch), ID_MENUDELETEWATCH, _("Delete Watch"), wxEmptyString, wxITEM_NORMAL);
+    mnuWatch.Append(MenuItem3);
     SetSizer(BoxSizer1);
     Layout();
 
@@ -237,9 +247,13 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_RCLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveAsClicked);
     Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
+    Connect(ID_TOOLBARITEM2,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAddBreakpointClicked);
     Connect(TOOL_LCD,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnLCDClicked);
     Connect(TOOL_FLASH,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnFlashClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
+    Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
+    Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
+    Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
     Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
@@ -248,6 +262,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id)
     Connect(ID_LSTWATCHES, wxEVT_COMMAND_RIGHT_CLICK, (wxObjectEventFunction)&emulatorFrame::OnlstWatchesItemRClick);
 
     TimerTick.Stop();
+    isRunning = false;
 
     lstWatches->InsertColumn(0, "Name");
     lstWatches->InsertColumn(1, "Address");
@@ -390,6 +405,7 @@ bool emulatorFrame::TakeStep()
 {
     bool result = false;
     machine.step();
+    //logfile << "PC: " << std::hex << machine.PC << "\n";
     if (machine.debug_written)
     {
         result = true;
@@ -398,6 +414,16 @@ bool emulatorFrame::TakeStep()
         std::cout << "debug output: " << std::hex << (int)data << "\n";*/
     }
     memview->cursors[0].index = machine.PC;
+    if (breakpoints.find(machine.PC) != breakpoints.end())
+    {
+        if (isRunning)
+        {
+            wxCommandEvent evt;
+            OnbtnStartStopClick(evt);
+        }
+        wxBell();
+        std::cout << "Hit breakpoint:" << std::hex << machine.PC << "\n";
+    }
     return result;
 }
 
@@ -412,12 +438,7 @@ void emulatorFrame::UpdateDisplay()
     writevalue(Led2, data & 0x04);
     writevalue(Led1, data & 0x02);
     writevalue(Led0, data & 0x01);
-}
 
-void emulatorFrame::OnStepClicked(wxCommandEvent& event)
-{
-    if (TakeStep())
-        UpdateDisplay();
     memview->Refresh();
     wxListItem item;
     for (int i = 0; i < lstWatches->GetItemCount(); i++)
@@ -444,17 +465,22 @@ void emulatorFrame::OnStepClicked(wxCommandEvent& event)
     StatusBar1->SetStatusText(ss.str());
 }
 
+void emulatorFrame::OnStepClicked(wxCommandEvent& event)
+{
+    TakeStep();
+    UpdateDisplay();
+}
+
 
 void emulatorFrame::OnTimerTickTrigger(wxTimerEvent& event)
 {
-    bool debug_updated = false;
     for (int i = 0; i < 8192; i++)
-        if (TakeStep())
-            debug_updated = true;
-    if (debug_updated)
-        UpdateDisplay();
-    wxCommandEvent evt;
-    OnStepClicked(evt);
+    {
+        TakeStep();
+        if (!isRunning)
+            break;
+    }
+    UpdateDisplay();
 }
 
 void emulatorFrame::OnbtnResetClick(wxCommandEvent& event)
@@ -464,23 +490,26 @@ void emulatorFrame::OnbtnResetClick(wxCommandEvent& event)
         OnbtnStartStopClick(event);
     memview->Refresh();
     std::stringstream ss;
-    ss << "PC: " << std::hex << std::setw(4) << std::setfill('0') << machine.PC;
+    ss << std::hex << std::setw(4) << std::setfill('0') << machine.PC;
     StatusBar1->SetStatusText(ss.str());
 
 }
 
 void emulatorFrame::OnbtnStartStopClick(wxCommandEvent& event)
 {
-    if (TimerTick.IsRunning())
+    if (isRunning)
     {
         TimerTick.Stop();
+        isRunning = false;
         btnStartStop->SetLabel("Start");
     }
     else
     {
         TimerTick.Start();
+        isRunning = true;
         btnStartStop->SetLabel("Stop");
     }
+    logfile.flush();
 }
 
 void emulatorFrame::OnlstWatchesItemRClick(wxListEvent& event)
@@ -528,4 +557,28 @@ void emulatorFrame::OnFlashClicked(wxCommandEvent& event)
     flash->SetFocus();
     flash->Raise();
     flash->Show(true);
+}
+
+void emulatorFrame::OnAddBreakpointClicked(wxCommandEvent& event)
+{
+    bool alreadyExists = false;
+    int selectedIndex = memview->grid2index(memview->getSelection());
+    selectedIndex -= selectedIndex % 8;
+    for (unsigned int i = 1; i < memview->cursors.size(); i++)  // ignore cursor[0] (PC)
+    {
+        if (memview->cursors[i].index == selectedIndex)
+        {
+            alreadyExists = true;
+            memview->cursors.erase(memview->cursors.begin() + i);
+            memview->Refresh();
+            breakpoints.erase(selectedIndex);
+            break;
+        }
+    }
+    if (!alreadyExists)
+    {
+        memview->cursors.push_back(HexView::cursor(wxColor(255, 192, 192), selectedIndex,  1));
+        memview->Refresh();
+        breakpoints.insert(selectedIndex);
+    }
 }

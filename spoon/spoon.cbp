@@ -62,6 +62,7 @@
 		<Unit filename="samples/flashtest.spn" />
 		<Unit filename="samples/helloworld.spn" />
 		<Unit filename="samples/logicoperators.spn" />
+		<Unit filename="samples/manage.spn" />
 		<Unit filename="samples/new.spn" />
 		<Unit filename="samples/screen.spn" />
 		<Unit filename="samples/screen.test.spn" />

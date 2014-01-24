@@ -184,6 +184,44 @@ function runprogram(pointer filename)
     }
 }
 
+function pointer getstring()
+{
+    var char buffer[20];
+    printlineanddump(">");
+    var pointer cursorp = addPointer(screenbuffer, 61);
+    var char c = 0;
+    var int nwritten = 0;
+    while (true)   // until newline
+    {
+        while(!and(read(debugin), 0x80));
+        c = and(read(debugin), 0x7f);
+        if (equal(c, 10))
+        {
+            break;
+        }
+        else if (equal(c, 8))
+        {
+            if (nwritten)
+            {
+                nwritten = decrement(nwritten);
+                write(' ', cursorp);
+                cursorp = decrementPointer(cursorp);
+            }
+        }
+        else
+        {
+            nwritten = increment(nwritten);
+            write(c, cursorp);
+            cursorp = incrementPointer(cursorp);
+        }
+        dumpscreenbuffer();
+        while (and(read(debugin), 0x80));
+    }
+    write(0, cursorp);
+    strcpy(buffer, addPointer(screenbuffer, 61));
+    getstring = buffer;
+}
+
 function main()
 {
     wakescreen();
@@ -234,6 +272,11 @@ function main()
         else if (and(input, 0x10))
         {
             runprogram("apple");
+        }
+        else if (and(input, 0x08))
+        {
+            printlineanddump("Enter program name:");
+            runprogram(getstring());
         }/*
         while(!read(debugin)){}
         writeflashbyte(0x00, 0x5555, 0xaa);

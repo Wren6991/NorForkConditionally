@@ -17,14 +17,9 @@ class HexView: public wxPanel
 
     bool mousedown;
     wxPoint selection; // int coords of column, row
-    void setSelection(wxPoint); // performs bounding
 
-    wxPoint screen2grid(wxPoint);
-    wxPoint grid2screen(wxPoint);   // rather just use one matrix but...
-    bool ongrid(wxPoint);
-
-    wxPoint index2grid(int index);
-    int grid2index(wxPoint grid);
+    void sendCharEvent(char c);
+    void sendInt(int n);
 
 public:
 
@@ -37,13 +32,13 @@ public:
     };
 
 
-
     int padding;
     int n_columns;
     int pixels_per_column;
     int pixels_per_row;
     int address_columns;
     std::vector <cursor> cursors;
+
 
     HexView(wxFrame *parent, std::vector<uint8_t> *data, long id = wxID_ANY,
             long style = 0, wxString name = wxPanelNameStr);
@@ -63,6 +58,14 @@ public:
     void render(wxDC &targetdc);
 
     wxPoint getSelection();
+    void setSelection(wxPoint); // performs bounding
+
+    wxPoint screen2grid(wxPoint);
+    wxPoint grid2screen(wxPoint);   // rather just use one matrix but...
+    bool ongrid(wxPoint);
+
+    wxPoint index2grid(int index);
+    int grid2index(wxPoint grid);
 
     ~HexView();
 

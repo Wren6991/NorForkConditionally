@@ -11,11 +11,16 @@
 			<object class="tool" name="TOOL_FLASH_LOAD" variable="ToolBarItem1" member="yes">
 				<label>Load</label>
 				<bitmap>icons/folder_page.png</bitmap>
+				<handler function="OnToolBarOpenClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_FLASH_SAVE" variable="ToolBarItem2" member="yes">
 				<label>Save</label>
 				<bitmap>icons/disk.png</bitmap>
 			</object>
+		</object>
+		<object class="wxFileDialog" variable="OpenFileDialog" member="yes">
+			<message>Select file</message>
+			<style>wxFD_OPEN|wxFD_FILE_MUST_EXIST</style>
 		</object>
 	</object>
 </wxsmith>

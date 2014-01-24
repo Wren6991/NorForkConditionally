@@ -23,6 +23,7 @@
 #include <wx/timer.h>
 #include <wx/statusbr.h>
 //*)
+#include <fstream>
 #include <vector>
 
 #include "HexView.h"
@@ -48,7 +49,11 @@ private:
     LCDDialog *lcd;
     FlashDialog *flash;
     std::vector <uint8_t> buffer;
+    std::set <uint16_t> breakpoints;
     vm machine;
+    bool isRunning;
+
+    std::fstream logfile;
 
     //(*Handlers(emulatorFrame)
     void OnQuit(wxCommandEvent& event);
@@ -69,6 +74,7 @@ private:
     void OnMenuItemDeleteSelected(wxCommandEvent& event);
     void OnLCDClicked(wxCommandEvent& event);
     void OnFlashClicked(wxCommandEvent& event);
+    void OnAddBreakpointClicked(wxCommandEvent& event);
     //*)
 
     //(*Identifiers(emulatorFrame)

@@ -71,7 +71,12 @@ void printtree(funcdef *def, int indentation)
         indent(indentation);
         std::cout << "  " << (*iter) << "\n";
     }
-    if (def->defined)
+    if (def->exported)
+    {
+        indent(indentation + 1);
+        std::cout << "(exported)\n";
+    }
+    else if (def->defined)
     {
         printtree(def->body, indentation);
     }

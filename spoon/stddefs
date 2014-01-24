@@ -7,7 +7,7 @@ const pointer debugin = 0xc001;
 const pointer screenout = 0xc000;
 
 const int true = 0xff;
-const int false = 0xff;
+const int false = 0x00;
 
 function int first(pointer p);
 function int second(pointer p);

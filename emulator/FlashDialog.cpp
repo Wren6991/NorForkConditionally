@@ -1,5 +1,6 @@
 #include "FlashDialog.h"
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 
@@ -39,9 +40,11 @@ FlashDialog::FlashDialog(wxWindow* parent,wxWindowID id,const wxPoint& pos,const
 	ToolBarItem2 = ToolBar1->AddTool(TOOL_FLASH_SAVE, _("Save"), wxBitmap(wxImage(_T("icons/disk.png"))), wxNullBitmap, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
 	ToolBar1->Realize();
 	SetToolBar(ToolBar1);
+	OpenFileDialog = new wxFileDialog(this, _("Select file"), wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
 	BoxSizer1->Fit(this);
 	BoxSizer1->SetSizeHints(this);
 
+	Connect(TOOL_FLASH_LOAD,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&FlashDialog::OnToolBarOpenClicked);
 	Connect(wxID_ANY,wxEVT_CLOSE_WINDOW,(wxObjectEventFunction)&FlashDialog::OnClose);
 	//*)
     storageview = new HexView(this, &storage);
@@ -130,4 +133,39 @@ void FlashDialog::OnClose(wxCloseEvent& event)
 {
     event.Veto();
     this->Hide();
+}
+
+void FlashDialog::OnToolBarOpenClicked(wxCommandEvent& event)
+{
+    if (OpenFileDialog->ShowModal() == wxID_OK)
+    {
+        SetFileName(OpenFileDialog->GetPath().ToStdString(), false);
+        std::fstream file(filepath.c_str(), std::ios::in | std::ios::binary);
+        file.seekg(0, std::ios::end);
+        int length = file.tellg();
+        file.seekg(0, std::ios::beg);
+        uint8_t *inputbuf = new uint8_t[length];
+        file.read((char*)inputbuf, length);
+        file.close();
+
+        storage.clear();
+        storage.reserve(length);
+        for (int i = 0; i < length; i++)
+            storage.push_back(inputbuf[i]);
+        delete[] inputbuf;
+        while (storage.size() < (1 << 19))
+            storage.push_back(0xff);
+        storageview->Refresh();
+    }
+}
+
+void FlashDialog::SetFileName(std::string path, bool hasbeenmodified)
+{
+    filepath = path;
+    int index = path.rfind("/");
+    if (index < 0)
+        index = path.rfind("\\");
+    filename = path.substr(index + 1, path.size() - index - 1);
+    this->SetTitle((hasbeenmodified? "*" : "") + filename + " - Flash View");
+    filehaschanged = hasbeenmodified;
 }
