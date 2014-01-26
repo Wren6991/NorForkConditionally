@@ -76,8 +76,8 @@ class linker
     uint16_t evaluate(linkval);
     std::vector<char> assemble();
     void allocatefunctionstorage();
+    std::set<std::string> analysedependencies(std::string rootfunc);
     void removeunusedfunctions();
-    void markusedfunctions(std::string rootfunc);
 public:
     linker();
     void add_object(object* obj);

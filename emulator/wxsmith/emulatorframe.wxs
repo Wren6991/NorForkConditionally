@@ -294,16 +294,17 @@
 				<handler function="OnSaveAsClicked" entry="EVT_TOOL_RCLICKED" />
 			</object>
 			<object class="separator" />
-			<object class="tool" name="ID_TOOLBARITEM1" variable="ToolBarItem4" member="yes">
+			<object class="tool" name="TOOL_STEP" variable="ToolBarItem4" member="yes">
 				<label>Step</label>
 				<bitmap>icons\resultset_next.png</bitmap>
-				<tooltip>Step simulation</tooltip>
+				<tooltip>Step simulation (F6)</tooltip>
 				<handler function="OnStepClicked" entry="EVT_TOOL" />
 			</object>
-			<object class="tool" name="ID_TOOLBARITEM2" variable="ToolBarItem5" member="yes">
+			<object class="tool" name="TOOL_BREAKP" variable="ToolBarItem5" member="yes">
 				<label>Breakpoint</label>
 				<bitmap>icons\stop.png</bitmap>
-				<tooltip>Set/remove breakpoint</tooltip>
+				<tooltip>Set/remove breakpoint (F5)</tooltip>
+				<handler function="OnAddBreakpointClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_LCD" variable="ToolBarItem6" member="yes">
 				<label>LCD</label>

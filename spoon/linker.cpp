@@ -318,6 +318,7 @@ std::vector<char> linker::link()
 #ifdef EBUG
     std::cout << "Linking main\n";
 #endif
+    analysedependencies("main");
     vars.addvar(makeguid("__return", (long)defined_funcs["main"]), type_label);
     link(((funcdef*)defined_funcs["main"])->body);
     savelabel(makeguid("__return", (long)defined_funcs["main"]), current_address);
@@ -527,11 +528,29 @@ void linker::link(funccall *call)
 // returns: the location of the function returnval register.
 linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
 {
+    // First: scan the arguments for immediate evaluations of functions that ultimately depend on this one (start from 1 not 0 because evaluated before write so no overwrite for 0)
+    std::map<int, std::pair<linkval, int>> temps;
+    for (unsigned int i = 1; i < args.size(); i++)
+    {
+        if (args[i]->type != exp_funccall)
+            continue;
+        if (fdef->dependson.find(fdef->name) != fdef->dependson.end());
+        {
+            type_t return_type = ((funcdef*)defined_funcs[args[i]->name])->return_type;
+            linkval temp = vars.addvar("__fdep_temp", return_type);
+            emit_copy_multiple(evaluate(args[i], true, temp), temp, return_type.getsize());
+            temps[i] = std::pair<linkval, int>(temp, return_type.getsize());
+        }
+    }
     // For each argument: if it is a constant then emit a constant copy, else evaluate the expression and copy the result to the argloc.
     for (unsigned int i = 0; i < args.size(); i++)
     {
         if (args[i]->type == exp_number)
             emit_writeconst_multiple(args[i]->number, vars.getvar(fdef->args[i].name)->address, fdef->args[i].type.getsize());
+        else if (temps.find(i) != temps.end())
+        {
+            emit_copy_multiple(temps[i].first, vars.getvar(fdef->args[i].name)->address, temps[i].second);
+        }
         else
         {
             linkval argloc = vars.getvar(fdef->args[i].name)->address;
@@ -1032,7 +1051,6 @@ void linker::allocatefunctionstorage()
 
 void linker::removeunusedfunctions()
 {
-    markusedfunctions("main");
     std::map<std::string, definition*>::iterator fiter;
     bool noincrement = false;
     for (fiter = defined_funcs.begin(); fiter != defined_funcs.end(); fiter++)
@@ -1061,7 +1079,7 @@ void linker::removeunusedfunctions()
     }
 }
 
-void linker::markusedfunctions(std::string rootfunc)
+std::set<std::string> linker::analysedependencies(std::string rootfunc)
 {
     std::cout << "Finding dependencies for " << rootfunc << "\n";
     funcdef *rootdef = (funcdef*)defined_funcs[rootfunc];
@@ -1079,9 +1097,14 @@ void linker::markusedfunctions(std::string rootfunc)
             continue;
         if (!def->is_used)
         {
-            markusedfunctions(def->name);
+            // analyse each dependency's sub-dependencies recursively, and add them to this function's
+            // dependencies, so we know all dependencies of a function (not just sub dependencies) (this also marks used functions)
+            std::set<std::string> nextleveldeps = analysedependencies(def->name);
+            for (std::set<std::string>::iterator iter = nextleveldeps.begin(); iter != nextleveldeps.end(); iter++)
+                dependencies.insert(*iter);
         }
     }
+    return dependencies;
 }
 
 std::string linker::getdefstring()

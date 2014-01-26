@@ -129,12 +129,12 @@ int main(int argc, char **argv)
         std::vector<token> tokens = tokenize(&source[0]);
         parser p(tokens, ifilename);
         program *prog = p.getprogram();
-        printtree(prog);
+        //printtree(prog);
         compiler c;
         object *obj = c.compile(prog);
 #ifdef EBUG
         std::cout << "\n\nPost-compile tree:\n\n";
-        printtree(obj->tree);
+        //printtree(obj->tree);
 #endif // EBUG
         linker l;
         l.strip_unused_functions = strip_unused_functions;

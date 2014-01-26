@@ -103,8 +103,8 @@ private:
     static const long TOOL_NEW;
     static const long TOOL_OPEN;
     static const long TOOL_SAVE;
-    static const long ID_TOOLBARITEM1;
-    static const long ID_TOOLBARITEM2;
+    static const long TOOL_STEP;
+    static const long TOOL_BREAKP;
     static const long TOOL_LCD;
     static const long TOOL_FLASH;
     static const long TOOL_ABOUT;

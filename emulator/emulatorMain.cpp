@@ -61,8 +61,8 @@ const long emulatorFrame::ID_STATUSBAR1 = wxNewId();
 const long emulatorFrame::TOOL_NEW = wxNewId();
 const long emulatorFrame::TOOL_OPEN = wxNewId();
 const long emulatorFrame::TOOL_SAVE = wxNewId();
-const long emulatorFrame::ID_TOOLBARITEM1 = wxNewId();
-const long emulatorFrame::ID_TOOLBARITEM2 = wxNewId();
+const long emulatorFrame::TOOL_STEP = wxNewId();
+const long emulatorFrame::TOOL_BREAKP = wxNewId();
 const long emulatorFrame::TOOL_LCD = wxNewId();
 const long emulatorFrame::TOOL_FLASH = wxNewId();
 const long emulatorFrame::TOOL_ABOUT = wxNewId();
@@ -191,24 +191,14 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id): logfile("log.txt",
     ToolBarItem2 = ToolBar1->AddTool(TOOL_OPEN, _("Open"), wxBitmap(wxImage(_T("icons\\folder_page.png"))), wxNullBitmap, wxITEM_NORMAL, _("Open file"), wxEmptyString);
     ToolBarItem3 = ToolBar1->AddTool(TOOL_SAVE, _("Save"), wxBitmap(wxImage(_T("icons\\disk.png"))), wxNullBitmap, wxITEM_NORMAL, _("Right click for save as"), wxEmptyString);
     ToolBar1->AddSeparator();
-    ToolBarItem4 = ToolBar1->AddTool(ID_TOOLBARITEM1, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, _("Step simulation"), wxEmptyString);
-    ToolBarItem5 = ToolBar1->AddTool(ID_TOOLBARITEM2, _("Breakpoint"), wxBitmap(wxImage(_T("icons\\stop.png"))), wxNullBitmap, wxITEM_NORMAL, _("Set/remove breakpoint"), wxEmptyString);
+    ToolBarItem4 = ToolBar1->AddTool(TOOL_STEP, _("Step"), wxBitmap(wxImage(_T("icons\\resultset_next.png"))), wxNullBitmap, wxITEM_NORMAL, _("Step simulation (F6)"), wxEmptyString);
+    ToolBarItem5 = ToolBar1->AddTool(TOOL_BREAKP, _("Breakpoint"), wxBitmap(wxImage(_T("icons\\stop.png"))), wxNullBitmap, wxITEM_NORMAL, _("Set/remove breakpoint (F5)"), wxEmptyString);
     ToolBarItem6 = ToolBar1->AddTool(TOOL_LCD, _("LCD"), wxBitmap(wxImage(_T("icons/monitor.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show LCD"), wxEmptyString);
     ToolBarItem7 = ToolBar1->AddTool(TOOL_FLASH, _("Flash"), wxBitmap(wxImage(_T("icons/drive_magnify.png"))), wxNullBitmap, wxITEM_NORMAL, _("Show flash contents"), wxEmptyString);
     ToolBar1->AddSeparator();
     ToolBarItem8 = ToolBar1->AddTool(TOOL_ABOUT, _("About"), wxBitmap(wxImage(_T("icons\\help.png"))), wxNullBitmap, wxITEM_NORMAL, _("About this software"), wxEmptyString);
     ToolBar1->Realize();
     SetToolBar(ToolBar1);
-    dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
-    dlgSaveAs = new wxFileDialog(this, _("-1"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
-    TimerTick.SetOwner(this, ID_TIMER1);
-    TimerTick.Start(50, false);
-    MenuItem1 = new wxMenuItem((&mnuWatch), ID_MENUADDWATCH, _("Add Watch"), wxEmptyString, wxITEM_NORMAL);
-    mnuWatch.Append(MenuItem1);
-    MenuItem2 = new wxMenuItem((&mnuWatch), ID_MENUCHANGEADDRESS, _("Change Address"), wxEmptyString, wxITEM_NORMAL);
-    mnuWatch.Append(MenuItem2);
-    MenuItem3 = new wxMenuItem((&mnuWatch), ID_MENUDELETEWATCH, _("Delete Watch"), wxEmptyString, wxITEM_NORMAL);
-    mnuWatch.Append(MenuItem3);
     dlgOpen = new wxFileDialog(this, _("Open"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_OPEN|wxFD_FILE_MUST_EXIST, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
     dlgSaveAs = new wxFileDialog(this, _("-1"), wxEmptyString, wxEmptyString, _("Binary files (*.bin)|*.bin|All files (*.*)|*.*"), wxFD_SAVE|wxFD_OVERWRITE_PROMPT, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
     TimerTick.SetOwner(this, ID_TIMER1);
@@ -246,18 +236,25 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id): logfile("log.txt",
     Connect(TOOL_OPEN,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnOpenClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveClicked);
     Connect(TOOL_SAVE,wxEVT_COMMAND_TOOL_RCLICKED,(wxObjectEventFunction)&emulatorFrame::OnSaveAsClicked);
-    Connect(ID_TOOLBARITEM1,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
-    Connect(ID_TOOLBARITEM2,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAddBreakpointClicked);
+    Connect(TOOL_STEP,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnStepClicked);
+    Connect(TOOL_BREAKP,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAddBreakpointClicked);
     Connect(TOOL_LCD,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnLCDClicked);
     Connect(TOOL_FLASH,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnFlashClicked);
     Connect(TOOL_ABOUT,wxEVT_COMMAND_TOOL_CLICKED,(wxObjectEventFunction)&emulatorFrame::OnAbout);
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
     Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
-    Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
-    Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
-    Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
     //*)
+
+    wxAcceleratorEntry entries[6];
+    entries[0].Set(wxACCEL_CTRL, (int)'N', TOOL_NEW);
+    entries[1].Set(wxACCEL_CTRL, (int)'S', TOOL_SAVE);
+    entries[2].Set(wxACCEL_CTRL, (int)'O', TOOL_OPEN);
+    entries[3].Set(wxACCEL_NORMAL, WXK_F5, TOOL_BREAKP);
+    entries[4].Set(wxACCEL_NORMAL, WXK_F6, TOOL_STEP);
+    entries[5].Set(wxACCEL_NORMAL, WXK_F11, TOOL_ABOUT);
+    wxAcceleratorTable accel(6, entries);
+    SetAcceleratorTable(accel);
 
     Connect(ID_LSTWATCHES, wxEVT_COMMAND_RIGHT_CLICK, (wxObjectEventFunction)&emulatorFrame::OnlstWatchesItemRClick);
 

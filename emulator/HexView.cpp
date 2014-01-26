@@ -347,6 +347,12 @@ wxPoint HexView::getSelection()
 
 void HexView::onSize(wxSizeEvent &event)
 {
+    int selectionpos = grid2index(selection);
+    int newcolumncount = event.GetSize().GetX() / pixels_per_column - address_columns;
+    n_columns = newcolumncount - (newcolumncount % 8);
+    if (!n_columns)
+        n_columns = 8;
+    selection = index2grid(selectionpos);
     scrollbar->SetSize(event.GetSize().GetWidth() - scrollbar_width, 0,
                        scrollbar_width, event.GetSize().GetHeight());     // x, y, width, height
     scrollbar->SetScrollbar(scrollbar->GetThumbPosition(), 1,
