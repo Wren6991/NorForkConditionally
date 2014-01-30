@@ -341,14 +341,15 @@ std::vector<char> linker::link()
     // Finally, push all the strings onto the end.
     for (unsigned int stringnum = 0; stringnum < stringvalues.size(); stringnum++)
     {
-        std::cout << "Saving string at "  << stringvalues[stringnum].first << "\n";
         savelabel(stringvalues[stringnum].first, current_address);
         std::string &str = stringvalues[stringnum].second;
         for (unsigned int i = 0; i <= str.size(); i++)      // <= instead of < because we want to include the terminating zero.
             write8(str[i]);
     }
     savelabel("__program_end", current_address);
+#ifdef EBUG
     std::cout << "__program_end: " << evaluate(linkval("__program_end")) << "\n";
+#endif // EBUG
 //#ifdef EBUG
     std::cout << "Executable size: " << std::dec << index << std::hex << " (0x" << index << ") bytes.\n";
 //#endif // EBUG
@@ -534,9 +535,12 @@ linkval linker::linkfunctioncall(std::vector<expression*> &args, funcdef *fdef)
     {
         if (args[i]->type != exp_funccall)
             continue;
+        funcdef *dependedfunc = (funcdef*)defined_funcs[args[i]->name];
+        if (!dependedfunc)  // i.e. if builtin
+            continue;
         if (fdef->dependson.find(fdef->name) != fdef->dependson.end());
         {
-            type_t return_type = ((funcdef*)defined_funcs[args[i]->name])->return_type;
+            type_t return_type = dependedfunc->return_type;
             linkval temp = vars.addvar("__fdep_temp", return_type);
             emit_copy_multiple(evaluate(args[i], true, temp), temp, return_type.getsize());
             temps[i] = std::pair<linkval, int>(temp, return_type.getsize());
@@ -1081,14 +1085,18 @@ void linker::removeunusedfunctions()
 
 std::set<std::string> linker::analysedependencies(std::string rootfunc)
 {
+    #ifdef EBUG
     std::cout << "Finding dependencies for " << rootfunc << "\n";
+    #endif
     funcdef *rootdef = (funcdef*)defined_funcs[rootfunc];
     rootdef->is_used = true;
     std::set<std::string> &dependencies = rootdef->dependson;
+    #ifdef EBUG
     std::cout << " - Depends on";
     for (std::set<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++)
         std::cout << " " << *i;
     std::cout << ".\n";
+    #endif // EBUG
 
     for (std::set<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++)
     {

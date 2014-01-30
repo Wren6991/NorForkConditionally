@@ -29,11 +29,13 @@
 #include "HexView.h"
 #include "LCDDialog.h"
 #include "FlashDialog.h"
+#include "keyboardcontroller.h"
 #include "led.h"
 #include "vm.h"
 
 class emulatorFrame: public wxFrame
 {
+    friend class emulatorApp;
 public:
 
     emulatorFrame(wxWindow* parent,wxWindowID id = -1);
@@ -48,6 +50,7 @@ private:
     HexView *memview;
     LCDDialog *lcd;
     FlashDialog *flash;
+    KeyboardController *keyboard;
     std::vector <uint8_t> buffer;
     std::set <uint16_t> breakpoints;
     vm machine;
@@ -75,6 +78,8 @@ private:
     void OnLCDClicked(wxCommandEvent& event);
     void OnFlashClicked(wxCommandEvent& event);
     void OnAddBreakpointClicked(wxCommandEvent& event);
+    void OnTextKeyboardText(wxCommandEvent& event);
+    void OnKeyDown(wxKeyEvent& event);
     //*)
 
     //(*Identifiers(emulatorFrame)

@@ -244,6 +244,7 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id): logfile("log.txt",
     Connect(ID_TIMER1,wxEVT_TIMER,(wxObjectEventFunction)&emulatorFrame::OnTimerTickTrigger);
     Connect(ID_MENUADDWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuAddWatchSelected);
     Connect(ID_MENUDELETEWATCH,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&emulatorFrame::OnMenuItemDeleteSelected);
+    Connect(wxEVT_KEY_DOWN,(wxObjectEventFunction)&emulatorFrame::OnKeyDown);
     //*)
 
     wxAcceleratorEntry entries[6];
@@ -278,6 +279,8 @@ emulatorFrame::emulatorFrame(wxWindow* parent,wxWindowID id): logfile("log.txt",
     machine.peripherals.push_back(lcd);
     flash = new FlashDialog(this);
     machine.peripherals.push_back(flash);
+    keyboard = new KeyboardController;
+    machine.peripherals.push_back(keyboard);
 
     filename = "Untitled";
     filehaschanged = false;
@@ -579,3 +582,29 @@ void emulatorFrame::OnAddBreakpointClicked(wxCommandEvent& event)
         breakpoints.insert(selectedIndex);
     }
 }
+
+void emulatorFrame::OnKeyDown(wxKeyEvent& event)
+{
+    if (memview->HasFocus())
+        return;
+    int keycode = event.GetKeyCode();
+    if (keycode >= 'A' && keycode <= 'Z')
+    {
+        if (!event.ShiftDown())
+            keycode += 'a' - 'A';
+        keyboard->keycode = keycode;
+    }
+    else if (keycode >= ' ' && keycode < 127)
+    {
+        keyboard->keycode = keycode;
+    }
+    else if (keycode == WXK_RETURN)
+    {
+        keyboard->keycode = 10;
+    }
+    else if (keycode == WXK_BACK)
+    {
+        keyboard->keycode = 8;
+    }
+}
+

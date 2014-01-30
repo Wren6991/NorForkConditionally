@@ -75,3 +75,15 @@ function int strcmp(pointer sa, pointer sb)
     if (ca || cb)
         strcmp = 1;
 }
+
+function int instr(pointer str, char tofind)
+{
+    var char c = read(str);
+    instr = 0;
+    while (c && xor(c, tofind))
+    {
+        str = incrementPointer(str);
+        instr = increment(instr);
+        c = read(str);
+    }
+}

@@ -36,44 +36,15 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
 
 int main(int argc, char **argv)
 {
-    /*while (true)
-    {
-        std::string str;
-        std::stringstream ss;
-        std::stringstream oss;
-        std::cout << "Enter source text:\n";
-        while (std::getline(std::cin, str))
-        {
-            if (str.find(4) != str.npos)
-                break;
-            oss << "=> " << str << "\n";
-            ss << str << "\r\n";
-        }
-        try {
-            std::cout << oss.str();
-            std::cout << "\nPrinting tokens:\n\n";
-            std::vector<token> tokens = tokenize(ss.str());
-            extern std::string friendly_tokentype_names[];
-            for (unsigned int i = 0; i < tokens.size(); i++)
-                std::cout << std::setw(12) << std::left << (friendly_tokentype_names[tokens[i].type] + ":") << "\"" << tokens[i].value << "\"\n";
-            std::cout << "\nPrinting parsed tree:\n\n";
-            parser p(tokens);
-            program *prog = p.getprogram();
-            printtree(prog);
-        } catch (error e) {
-            std::cout << e.errstring << "\n";
-        }
-        std::cout << "Done.\n";
-    }*/
-
     std::string usage = "Usage: spoon [-s] (inputfile) (outputfile)\n";
     std::string ifilename, ofilename;
-    bool have_ifilename, have_ofilename;
+    bool have_ifilename = false, have_ofilename = false;
     bool strip_unused_functions = false;
     bool compile_to_ram = false;
+    bool export_symbols = false;
     // Don't know why but it doesn't work on Linux without this code...
-    for (int i = 1; i < argc; i++)
-        argv[i][0] = 1 + (--argv[i][0]); // it's a no-op
+    /*for (int i = 1; i < argc; i++)
+        argv[i][0] = 1 + (--argv[i][0]); // it's a no-op*/
     try
     {
         for (int i = 1; i < argc; i++)
@@ -83,12 +54,22 @@ int main(int argc, char **argv)
                 switch (argv[i][1])
                 {
                 case 's':
+                    #ifdef EBUG
                     std::cout << "received option strip\n";
+                    #endif
                     strip_unused_functions = true;
                     break;
                 case 'r':
+                    #ifdef EBUG
                     std::cout << "received option compile-to-ram\n";
+                    #endif
                     compile_to_ram = true;
+                    break;
+                case 'e':
+                    #ifdef EBUG
+                    std::cout << "Received option export\n";
+                    #endif // EBUG
+                    export_symbols = true;
                     break;
                 default:
                     throw(error(usage));
@@ -150,9 +131,12 @@ int main(int argc, char **argv)
         for (unsigned int i = 0; i < machinecode.size(); i++)
             outfile.put(machinecode[i]);
         outfile.close();
-        std::fstream deffile(ofilename + ".def", std::ios::out | std::ios::binary);
-        deffile << l.getdefstring();
-        deffile.close();
+        if (export_symbols)
+        {
+            std::fstream deffile(ofilename + ".def", std::ios::out | std::ios::binary);
+            deffile << l.getdefstring();
+            deffile.close();
+        }
     }
     catch (error e)
     {

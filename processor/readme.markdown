@@ -352,7 +352,7 @@ The terms *input* and *output* are used relative to the computer, i.e. *out* den
 Flash Board
 -----------
 
-This board contains a half-megabyte A29040B (soon to be SST39SF040, for 4k sectors instead of 64k) flash chip, and the input and output registers to control it.
+This board contains a half-megabyte SST39SF040 flash chip, and the input and output registers to control it.
 
 Hardware-wise there's nothing particularly complicated going on - it's the software that works the magic on this board.
 

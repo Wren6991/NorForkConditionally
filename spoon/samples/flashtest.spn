@@ -5,6 +5,7 @@ const pointer flash_mid = 0xc003;
 const pointer flash_low = 0xc004;
 const pointer flash_in = 0xc005;
 const pointer flash_out = 0xc006;
+const pointer kbd_in = 0xc007;
 
 const int flashsig_oe = 0x40;
 const int flashsig_we = 0x80;
@@ -184,6 +185,13 @@ function runprogram(pointer filename)
     }
 }
 
+function char getchar()
+{
+    getchar = 0;
+    while (!getchar)
+        getchar = read(kbd_in);
+}
+
 function pointer getstring()
 {
     var char buffer[20];
@@ -193,8 +201,7 @@ function pointer getstring()
     var int nwritten = 0;
     while (true)   // until newline
     {
-        while(!and(read(debugin), 0x80));
-        c = and(read(debugin), 0x7f);
+        c = getchar();
         if (equal(c, 10))
         {
             break;
@@ -204,8 +211,8 @@ function pointer getstring()
             if (nwritten)
             {
                 nwritten = decrement(nwritten);
-                write(' ', cursorp);
                 cursorp = decrementPointer(cursorp);
+                write(' ', cursorp);
             }
         }
         else

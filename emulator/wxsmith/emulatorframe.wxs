@@ -4,6 +4,7 @@
 		<size>800,600</size>
 		<bg>wxSYS_COLOUR_BTNFACE</bg>
 		<id_arg>0</id_arg>
+		<handler function="OnKeyDown" entry="EVT_KEY_DOWN" />
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
 			<object class="sizeritem">
 				<object class="wxBoxSizer" variable="frontpanelsizer" member="no">

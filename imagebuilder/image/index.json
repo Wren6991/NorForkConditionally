@@ -1,0 +1,17 @@
+[
+	{
+		"name": "hello",
+		"nsectors": 1,
+		"file": "hello.bin"
+	},
+	{
+		"name": "manage",
+		"nsectors": 3,
+		"file": "manage.bin"
+	},
+	{
+		"name": "sampletext",
+		"nsectors": 1,
+		"file": "sampletext.txt"
+	}
+]

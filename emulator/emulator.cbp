@@ -82,6 +82,7 @@
 		<Unit filename="emulatorApp.h" />
 		<Unit filename="emulatorMain.cpp" />
 		<Unit filename="emulatorMain.h" />
+		<Unit filename="keyboardcontroller.h" />
 		<Unit filename="led.cpp" />
 		<Unit filename="led.h" />
 		<Unit filename="peripheral.h" />

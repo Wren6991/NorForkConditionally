@@ -23,11 +23,22 @@ bool emulatorApp::OnInit()
     wxInitAllImageHandlers();
     if ( wxsOK )
     {
-    	emulatorFrame* Frame = new emulatorFrame(0);
+    	Frame = new emulatorFrame(0);
     	Frame->Show();
     	SetTopWindow(Frame);
     }
     //*)
     return wxsOK;
 
+}
+
+int emulatorApp:: FilterEvent(wxEvent& event)
+{
+    if (event.GetEventType() == wxEVT_KEY_DOWN)
+    {
+        wxKeyEvent &keyevent = (wxKeyEvent&)event;
+        if (!(keyevent.AltDown() || keyevent.ControlDown()))
+            Frame->OnKeyDown(keyevent);
+    }
+    return -1;  // pass on to other handlers.
 }

@@ -1,0 +1,7 @@
+#include "stddefs"
+#include "samples/flashtest.bin.def"
+
+function int main()
+{
+    printlineanddump("Hello world!");
+}

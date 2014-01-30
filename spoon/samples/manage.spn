@@ -1,0 +1,133 @@
+#include "stddefs"
+#include "samples/flashtest.bin.def"
+
+function printhelp()
+{
+    printlineanddump("Manager commands:");
+    printlineanddump("ls create del cp cat");
+    printlineanddump("size run help exit");
+}
+
+function int strequal(pointer stra, pointer strb)
+{
+    strequal = !strcmp(stra, strb);
+}
+
+function main()
+{
+    printhelp();
+    while (true)
+    {
+        var char cmdbuff[32];
+        memset(cmdbuff, 0, 32);
+        strcpy(cmdbuff, getstring());
+        var pointer argstring = addPointer(cmdbuff, instr(cmdbuff, ' '));
+        if (equal(read(argstring), ' '))
+        {
+            write(0, argstring);
+            argstring = incrementPointer(argstring);
+        }
+        if (strequal(cmdbuff, "ls"))
+        {
+            printlineanddump("Any key to scroll.");
+            var pointer recordaddress = 0;
+            var int count = 3;
+            while (true)
+            {
+                readflashnbytes(0, recordaddress, currentfilerecord, 16);
+                if (equal(currentfilerecord[15], 0xff))
+                    break;
+                count = decrement(count);
+                if (!count)
+                {
+                    count = 3;
+                    getchar();
+                }
+                if (currentfilerecord[15])
+                {
+                    printlineanddump(addPointer(currentfilerecord, 3));
+                }
+                recordaddress = addPointer(recordaddress, 16);
+            }
+        }
+        else if (strequal(cmdbuff, "create"))
+        {
+            if (!second(strlen(argstring)))
+                printlineanddump("Usg: create [filenm]");
+            else
+            {
+                createfile(argstring, 1);
+                printlineanddump("Done.");
+            }
+        }
+        else if (strequal(cmdbuff, "del"))
+        {
+            var pointer tablepos = findfile(argstring);
+            if (equal(first(tablepos), 0xff))
+                printlineanddump("No such file.");
+            else
+                deletefile(tablepos);
+            printlineanddump("Done.");
+        }
+        else if (strequal(cmdbuff, "cp"))
+        {
+            var pointer targetname = addPointer(argstring, instr(argstring, ' '));
+            if (lessthan(second(strlen(targetname)), 2))
+            {
+                printlineanddump("Usg: cp [src] [dest]");
+            }
+            else
+            {
+                write(0, targetname);
+                targetname = incrementPointer(targetname);
+                printlineanddump("Copying");
+                printlineanddump(argstring);
+                printlineanddump("to");
+                printlineanddump(targetname);
+            }
+        }
+        else if (strequal(cmdbuff, "cat"))
+        {
+            var pointer tablepos = findfile(argstring);
+            if (equal(first(tablepos), 0xff))
+            {
+                printlineanddump("Not found.");
+                continue;
+            }
+            else
+            {
+                printlineanddump("Press q to quit, or");
+                printlineanddump("any key to scroll.");
+                while (!equal(getchar(), 'q'))
+                {
+                    readflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]), screenbuffer, 80);
+                    dumpscreenbuffer();
+                    var pointer p = addPointer(pair(currentfilerecord[1], currentfilerecord[2]), 80);
+                    if (currentfilerecord[1] && !first(p))
+                        currentfilerecord[0] = increment(currentfilerecord[0]);
+                    currentfilerecord[1] = first(p);
+                    currentfilerecord[2] = second(p);
+                }
+            }
+        }
+        else if (strequal(cmdbuff, "run"))
+        {
+            runprogram(argstring);
+        }
+        else if (strequal(cmdbuff, "size"))
+        {
+            findfile(argstring);
+            printline(int2hexstr(currentfilerecord[15]));
+            printtobuffer(" sector(s).", 63);
+            dumpscreenbuffer();
+        }
+        else if (strequal(cmdbuff, "help"))
+        {
+            printhelp();
+        }
+        else
+        {
+            printlineanddump("Type 'help' for cmds.");
+        }
+    }
+}
