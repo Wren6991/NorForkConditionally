@@ -5,12 +5,7 @@ function printhelp()
 {
     printlineanddump("Manager commands:");
     printlineanddump("ls create del cp cat");
-    printlineanddump("size run help exit");
-}
-
-function int strequal(pointer stra, pointer strb)
-{
-    strequal = !strcmp(stra, strb);
+    printlineanddump("size run help");
 }
 
 function main()
@@ -80,10 +75,7 @@ function main()
             {
                 write(0, targetname);
                 targetname = incrementPointer(targetname);
-                printlineanddump("Copying");
-                printlineanddump(argstring);
-                printlineanddump("to");
-                printlineanddump(targetname);
+                copyfile(argstring, targetname);
             }
         }
         else if (strequal(cmdbuff, "cat"))

@@ -1,0 +1,44 @@
+#include "stddefs"
+#include "samples/flashtest.bin.def"
+
+var int buffer[4096];
+
+
+function main()
+{
+    printlineanddump("File name:");
+    var pointer tablepos = findfile(getstring());
+    if (equal(first(tablepos), 0xff))
+    {
+        printlineanddump("Not found.");
+        runprogram("manage");
+        return;
+    }
+    readflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]), buffer, 4096);
+    var pointer cursorpos = 0;
+    var pointer screenpos = screenbuffer;
+    while (true)
+    {
+        emptyscreenbuffer();
+        var pointer bufferpos = buffer;
+        var pointer printpos = screenpos;
+        var int linecount = 4;
+        while (linecount)
+        {
+            printpos = strcpy(printpos, int2hexstr(first(bufferpos)));
+            printpos = strcpy(printpos, int2hexstr(second(bufferpos)));
+            printpos = strcpy(printpos, ":   ");
+            var int charcount = 4;
+            while (charcount)
+            {
+                printpos = strcpy(printpos, int2hexstr(read(bufferpos)));
+                bufferpos = incrementPointer(bufferpos);
+                printpos = strcpy(printpos, " ");
+                charcount = decrement(charcount);
+            }
+            linecount = decrement(linecount);
+        }
+        dumpscreenbuffer();
+        buffer[0] = getchar();
+    }
+}

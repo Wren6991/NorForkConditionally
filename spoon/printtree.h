@@ -13,8 +13,4 @@ void printtree(vardeclaration *decl, int indentation);
 void printtree(statement *stat, int indentation);
 void printtree(expression *expr);
 
-
-
-
-
 #endif // PRINTTREE_H_INCLUDED

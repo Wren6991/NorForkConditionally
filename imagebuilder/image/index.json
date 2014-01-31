@@ -6,12 +6,17 @@
 	},
 	{
 		"name": "manage",
-		"nsectors": 3,
+		"nsectors": 2,
 		"file": "manage.bin"
 	},
 	{
 		"name": "sampletext",
 		"nsectors": 1,
 		"file": "sampletext.txt"
+	},
+	{
+		"name": "hexedit",
+		"nsectors": 1,
+		"file": "hexedit.bin"
 	}
 ]

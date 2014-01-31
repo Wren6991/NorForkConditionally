@@ -76,6 +76,11 @@ function int strcmp(pointer sa, pointer sb)
         strcmp = 1;
 }
 
+function int strequal(pointer stra, pointer strb)
+{
+    strequal = !strcmp(stra, strb);
+}
+
 function int instr(pointer str, char tofind)
 {
     var char c = read(str);
