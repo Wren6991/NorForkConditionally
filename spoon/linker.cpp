@@ -91,10 +91,12 @@ void linker::emit_nfc2(linkval x, linkval y)
 // clear temp; set temp to not(x);  invert temp and branch on result.
 void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previous, bool invert)
 {
+    //amend_previous = false; /// /// /// ///
+    bool emit_full = !amend_previous;
     if (amend_previous)
     {
         if (testloc.gethighbyte() != buffer[index - 8] || testloc.getlowbyte() != buffer[index - 7])
-            throw(error("Linker error: option amend_previous used but previous instruction does not write to testloc"));
+            emit_full = true;
         if (!invert)
         {
             buffer[index - 2] = dest.gethighbyte(); // branch on zero
@@ -106,7 +108,7 @@ void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previou
             buffer[index - 3] = dest.getlowbyte();
         }
     }
-    else
+    if (emit_full)
     {
         padto8bytes();
         linkval temploc = vars.addvar("__brztemp", type_int);
@@ -125,10 +127,8 @@ void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previou
             write16(dest);  // dest if non zero
             write16(next);
         }
+        vars.remove("__brztemp");
     }
-
-
-    vars.remove("__brztemp");
 }
 
 void linker::emit_branchifnonzero(linkval testloc, linkval dest, bool amend_previous)
@@ -603,12 +603,22 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             }
             else
             {
-                linkval temploc = vars.addvar("__firsttemp", type_int);
-                vars.push_temp_scope();             // The scope is pushed partly to clean up variables as soon as possible, but largely so that the evaluations take place in a valid scope to avoid internal clobbering.
-                emit_copy(evaluate(args[0]), temploc);
+                vars.push_temp_scope(); // The scope is pushed partly to clean up variables as soon as possible, but largely so that the evaluations take place in a valid scope to avoid internal clobbering.
+                linkval resultloc = evaluate(args[0]);
                 vars.pop_temp_scope();
-                vars.remove_on_pop("__firsttemp");
-                return temploc;
+                if (givenpreferred)
+                {
+                    emit_copy(resultloc, preferred);
+                    return preferred;
+                }
+                else
+                {
+                    linkval temploc = vars.addvar("__firsttemp", type_int);
+                    emit_copy(resultloc, temploc);
+                    vars.remove_on_pop("__firsttemp");
+                    return temploc;
+                }
+
             }
         }
         else if (name == "second")
@@ -619,23 +629,42 @@ linkval linker::linkbuiltinfunction(std::vector<expression*> &args, std::string 
             }
             else
             {
-                linkval temploc = vars.addvar("__secondtemp", type_int);
                 vars.push_temp_scope();
-                emit_copy(evaluate(args[0]) + 1, temploc);
+                linkval resultloc = evaluate(args[0]) + 1;
                 vars.pop_temp_scope();
-                vars.remove_on_pop("__secondtemp");
-                return temploc;
+                if (givenpreferred)
+                {
+                    emit_copy(resultloc, preferred);
+                    return preferred;
+                }
+                else
+                {
+                    linkval temploc = vars.addvar("__secondtemp", type_int);
+                    emit_copy(resultloc, temploc);
+                    vars.remove_on_pop("__secondtemp");
+                    return temploc;
+                }
             }
         }
         else if (name == "pair")
         {
             linkval temploc = vars.addvar("__pairtemp", type_pointer);
             vars.push_temp_scope();
-            emit_copy(evaluate(args[0], true, temploc), temploc);
-            emit_copy(evaluate(args[1], true, temploc + 1), temploc + 1);
+            if (givenpreferred)
+            {
+                emit_copy(evaluate(args[0], true, temploc), temploc);               // We still use temploc for the first byte, in case the expression depends upon the pointer at preferredloc.
+                emit_copy(evaluate(args[1], true, preferred + 1), preferred + 1);   // The second byte goes straight to where it needs to go, as there are no further evaluations that may depend on it.
+                emit_copy(temploc, preferred);
+            }
+            else
+            {
+                emit_copy(evaluate(args[0], true, temploc), temploc);
+                emit_copy(evaluate(args[1], true, temploc + 1), temploc + 1);
+            }
+
             vars.pop_temp_scope();
             vars.remove_on_pop("__pairtemp");
-            return temploc;
+            return givenpreferred ? preferred : temploc;
         }
         else if (name == "write")
         {
@@ -790,13 +819,14 @@ void linker::link(if_stat* ifs)
     vars.push_temp_scope();
     std::string elselabel = getlabel();
     std::string endlabel = getlabel();
+    unsigned int address_before_evaluate = current_address;
     linkval testloc = linker::evaluate(ifs->expr);
-    emit_branchifzero(testloc, linkval(elselabel));
+    emit_branchifzero(testloc, linkval(elselabel) );//,current_address != address_before_evaluate);   // the top of an if-statement has no associated label, so it's reasonable to not emit an instruction for the branch
     link(ifs->ifblock);
     if (ifs->elseblock)
     {
         // finished the if clause: nonconditional jump past else clause.
-        emit_branchalways(linkval(endlabel), true);
+        emit_branchalways(linkval(endlabel), true);         // the same is not true for the else jump, so always_emit is true.
         savelabel(elselabel, current_address);
         link(ifs->elseblock);
     }
@@ -820,7 +850,9 @@ void linker::link(while_stat *whiles)
     vars.addvar(toplabel, type_label);
     vars.addvar(exitlabel, type_label);
     savelabel(toplabel, current_address);
-    emit_branchifzero(evaluate(whiles->expr), exitlabel);
+    unsigned int address_before_evaluate = current_address;
+    linkval result = evaluate(whiles->expr);
+    emit_branchifzero(result, exitlabel  );//, current_address != address_before_evaluate);   // if we have generated code in the course of evaluating the condition then we are free to use amend_previous (otherwise possibly not!)
     link(whiles->blk);
     // jump unconditionally to top:
     emit_branchalways(linkval(toplabel), true);
@@ -949,7 +981,9 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
         linkval return_loc = givenpreferred ? preferred : vars.addvar("__lnottemp", type_int);
         std::string skiplabel = getlabel();
         emit_nfc2(return_loc, getconstaddress(0xff));
-        emit_branchifnonzero(evaluate(expr->args[0]), skiplabel);
+        unsigned int address_before_evaluate = current_address;
+        linkval result = evaluate(expr->args[0]);
+        emit_branchifnonzero(result, skiplabel, false && current_address != address_before_evaluate); // use option amend_previous to avoid spurious copy of expression result if there has been code generated.
         emit_nfc2(return_loc, getconstaddress(~1));
         savelabel(skiplabel, current_address);
         if(!givenpreferred)
@@ -960,8 +994,9 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
     {
         linkval return_loc = givenpreferred ? preferred : vars.addvar("__landtemp", type_int);
         std::string skiplabel = getlabel();
+        unsigned int address_before_evaluate = current_address;
         emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
-        emit_branchifzero(return_loc, skiplabel);
+        emit_branchifzero(return_loc, skiplabel, false && current_address != address_before_evaluate);
         emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
         savelabel(skiplabel, current_address);
         if (!givenpreferred)
@@ -972,8 +1007,9 @@ linkval linker::evaluate(expression *expr, bool givenpreferred, linkval preferre
     {
         linkval return_loc = givenpreferred ? preferred : vars.addvar("__lortemp", type_int);
         std::string skiplabel = getlabel();
+        unsigned int address_before_evaluate = current_address;
         emit_copy(evaluate(expr->args[0], true, return_loc), return_loc);
-        emit_branchifnonzero(return_loc, skiplabel);
+        emit_branchifnonzero(return_loc, skiplabel, false && current_address != address_before_evaluate);
         emit_copy(evaluate(expr->args[1], true, return_loc), return_loc);
         savelabel(skiplabel, current_address);
         if (!givenpreferred)

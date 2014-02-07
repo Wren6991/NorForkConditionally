@@ -87,7 +87,7 @@ void vardict::remove(std::string name)
     // sanity check:
     std::map<std::string, variable*>::iterator iter = vars.find(name);
     if (iter == vars.end())
-        throw(error("Error: tried to free non-existent variable! (Link-time)"));
+        throw_error("Error: tried to free non-existent variable \"" << name << "\"! (Link-time)");
     variable *var = iter->second;
     // release the memory:
     if (var->offset >= 0)   // registervar() doesn't allocate memory, so it sets offset to -1.

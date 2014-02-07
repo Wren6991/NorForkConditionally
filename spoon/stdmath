@@ -146,6 +146,16 @@ function pointer addPointer(pointer p, int offset)
         addPointer = pair(first(p), bottom);
 }
 
+function pointer subtractPointer(pointer p, int offset)
+{
+    var int bottom;
+    bottom = subtract(second(p), offset);
+    if (lessthan(second(p), offset))
+        subtractPointer = pair(decrement(first(p)), bottom);
+    else
+        subtractPointer = pair(first(p), bottom);
+}
+
 function int lessthanPointer(pointer a, pointer b)
 {
     if (lessthan(first(a), first(b)))
@@ -154,4 +164,16 @@ function int lessthanPointer(pointer a, pointer b)
         lessthanPointer = lessthan(second(a), second(b));
     else
         lessthanPointer = 0;
+}
+
+function int16 add16(int16 a, int16 b)
+{
+    add16 = addPointer(a, second(b));
+    add16 = pair(add(first(add16), first(b)), second(add16));
+}
+
+function int16 subtract16(int16 a, int16 b)
+{
+    subtract16 = subtractPointer(a, second(b));
+    subtract16 = pair(subtract(first(subtract16), first(b)), second(subtract16));
 }

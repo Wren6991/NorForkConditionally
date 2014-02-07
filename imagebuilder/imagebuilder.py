@@ -3,10 +3,10 @@ import json
 
 SECTOR_SIZE = 4096
 
-#if len(sys.argv) < 2:
-#    print("Usage: imagebuilder.py [image directory]", file=sys.stderr)
+if len(sys.argv) < 2:
+    print("Usage: imagebuilder.py [image directory]", file=sys.stderr)
 
-folderpath = "image" #sys.argv[1]
+folderpath = sys.argv[1]
 
 indexfile = open(folderpath + "/index.json", "r")
 index = json.load(indexfile)

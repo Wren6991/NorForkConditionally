@@ -16,7 +16,7 @@
 	},
 	{
 		"name": "hexedit",
-		"nsectors": 1,
+		"nsectors": 2,
 		"file": "hexedit.bin"
 	}
 ]

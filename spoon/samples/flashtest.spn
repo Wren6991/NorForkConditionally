@@ -137,6 +137,22 @@ function pointer findfile(pointer filename)
     }
 }
 
+function erasefilesectors(int sector, int nsectors)
+{
+    var int newmidbyte = add(currentfilerecord[1], shiftleftn(sector, 4));
+    var int topbyte = currentfilerecord[0];
+    if (lessthan(newmidbyte, currentfilerecord[1]))
+        topbyte = increment(topbyte);
+    eraseflashsectors(topbyte, pair(newmidbyte, currentfilerecord[2]), nsectors);
+}
+
+/*function writesectortofile(int sector, pointer datap)
+{
+    var pointer toptwo = addPointer(pair(currentfilerecord[0], currentfilerecord[1]), shiftleftn(sector, 4));
+    erasefilesectors(sector, 1);
+    programflashnbytes(first(toptwo), pair(second(toptwo), currentfilerecord[2]), datap, 4096);
+}*/
+
 function deletefile(pointer tablepos)
 {
     programflashbyte(0, addPointer(tablepos, 15), 0);
@@ -256,6 +272,12 @@ function runprogram(pointer filename)
     }
 }
 
+function exitprogram()
+{
+    runprogram("manage");
+    goto 0x0000;
+}
+
 function char getchar()
 {
     getchar = 0;
@@ -305,6 +327,8 @@ function main()
 {
     wakescreen();
     emptyscreenbuffer();
+    printlineanddump("Welcome to Fork OS!");
+    printlineanddump("(c) Luke Wren 2013");
     runprogram("manage");
 }
 
