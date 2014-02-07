@@ -1,5 +1,5 @@
 #include "stddefs"
-#include "samples/flashtest.bin.def"
+#include "flashtest.bin.def"
 
 var int buffer[4096];
 

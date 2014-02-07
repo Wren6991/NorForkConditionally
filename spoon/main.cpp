@@ -1,3 +1,11 @@
+#ifdef _WIN32
+    #include <direct.h>
+    #define getcwd _getcwd
+    #define FILE_SEP_CHAR "\\"
+#else
+    #include <unistd.h>
+    #define FILE_SEP_CHAR "/"
+#endif
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -33,6 +41,10 @@ void printout(std::vector<char> buffer, bool printasbytes = true)
     }
 }
 
+int imax(int a, int b)
+{
+    return a > b ? a : b;
+}
 
 int main(int argc, char **argv)
 {
@@ -95,6 +107,17 @@ int main(int argc, char **argv)
         }
         if (!(have_ifilename && have_ofilename))
             throw(error(usage));
+        std::string ifiledirectory;
+        if (ifilename.substr(0, 1) == "/" || ifilename.substr(1, 1) == ":")
+            ifiledirectory = ifilename.substr(0, imax(ifilename.rfind("/"), ifilename.rfind("\\"))) + FILE_SEP_CHAR;
+        else
+        {
+            char *buffer = new char[1024];
+            getcwd(buffer, 1024);
+            ifiledirectory = std::string(buffer) + FILE_SEP_CHAR + ifilename.substr(0, imax(ifilename.rfind("/"), ifilename.rfind("\\"))) + FILE_SEP_CHAR;
+            delete buffer;
+        }
+        std::cout << "Working directory: " << ifiledirectory;
         std::fstream sourcefile(ifilename, std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {
@@ -108,7 +131,7 @@ int main(int argc, char **argv)
         source.push_back(0);
         sourcefile.close();
         std::vector<token> tokens = tokenize(&source[0]);
-        parser p(tokens, ifilename);
+        parser p(tokens, ifilename, ifiledirectory);
         program *prog = p.getprogram();
         //printtree(prog);
         compiler c;

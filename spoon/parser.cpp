@@ -29,9 +29,10 @@ int intfromstring(std::string str)
 
 
 // Set up the type dicts and the state vars
-parser::parser(std::vector<token> tokens_, std::string _filename)
+parser::parser(std::vector<token> tokens_, std::string _filename, std::string _filedirectory)
 {
     filename = _filename;
+    filedirectory = _filedirectory;
     typestrings["char"] = type_int;
     typestrings["int"] = type_int;
     typestrings["int16"] = type_pointer;
@@ -135,20 +136,26 @@ void parser::do_preprocessor(program *prog)
         if (includedfiles.find(lastt.value) != includedfiles.end())
             return;
         includedfiles.insert(lastt.value);
-        std::fstream includefile(lastt.value, std::ios::in | std::ios::binary);
-        if (!includefile.is_open())
+        std::string includefiledirectory = filedirectory;
+        std::fstream *includefile = new std::fstream(filedirectory + lastt.value, std::ios::in | std::ios::binary);
+        if (!includefile->is_open())
         {
-            throw(error(std::string("Error: could not open include file ") + lastt.value));
+            delete includefile;
+            includefile = new std::fstream(lastt.value, std::ios::in | std::ios::binary);
+            includefiledirectory = "";
+            if (!includefile->is_open())
+                throw(error(std::string("Error: could not open include file ") + lastt.value));
         }
-        includefile.seekg(0, std::ios::end);
-        int sourcelength = includefile.tellg();
-        includefile.seekg(0, std::ios::beg);
+        includefile->seekg(0, std::ios::end);
+        int sourcelength = includefile->tellg();
+        includefile->seekg(0, std::ios::beg);
         std::vector<char> source(sourcelength);
-        includefile.read(&source[0], sourcelength);
+        includefile->read(&source[0], sourcelength);
         source.push_back(0);
-        includefile.close();
+        includefile->close();
+        delete includefile;
         std::vector<token> includetokens = tokenize(&source[0]);
-        parser p(includetokens, lastt.value);
+        parser p(includetokens, lastt.value, includefiledirectory);
         p.includedfiles = includedfiles;
         program *includedefs = p.getprogram();
         includedfiles = p.includedfiles;

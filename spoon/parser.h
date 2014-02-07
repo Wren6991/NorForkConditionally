@@ -11,6 +11,7 @@
 class parser
 {
     std::string filename;
+    std::string filedirectory;
     std::vector<token> tokens;
     std::map <std::string, type_enum> typestrings;
     std::set <std::string> includedfiles;
@@ -21,7 +22,7 @@ class parser
     bool accept(token_type_enum type);
     void expect(token_type_enum type);
     public:
-    parser(std::vector<token> tokens_, std::string _filename = "file");
+    parser(std::vector<token> tokens_, std::string _filename = "file", std::string _filedirectory = "");
 
     program* getprogram();
     void do_preprocessor(program *prog);
