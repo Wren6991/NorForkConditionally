@@ -36,18 +36,6 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<ExtraCommands>
-			<Add after="./bin/Debug/spoon -e samples/flashtest.spn samples/flashtest.bin" />
-			<Add after="./bin/Debug/spoon -r samples/manage.spn samples/manage.bin" />
-			<Add after="./bin/Debug/spoon -r samples/exporttest.spn samples/hello.bin" />
-			<Add after="./bin/Debug/spoon -r samples/hexedit.spn samples/hexedit.bin" />
-			<Add after="cp samples/flashtest.bin ..\imagebuilder\flashtest.bin" />
-			<Add after="cp samples/manage.bin ..\imagebuilder\image\manage.bin" />
-			<Add after="cp samples/hello.bin ..\imagebuilder\image\hello.bin" />
-			<Add after="cp samples/hexedit.bin ..\imagebuilder\image\hexedit.bin" />
-			<Add after="..\imagebuilder\imagebuilder.py" />
-			<Mode after="always" />
-		</ExtraCommands>
 		<Unit filename="builtins.h" />
 		<Unit filename="compiler.cpp" />
 		<Unit filename="compiler.h" />
@@ -67,6 +55,7 @@
 		<Unit filename="samples/add.spn" />
 		<Unit filename="samples/array.spn" />
 		<Unit filename="samples/beep.spn" />
+		<Unit filename="samples/brainf.spn" />
 		<Unit filename="samples/empty.spn" />
 		<Unit filename="samples/equal.spn" />
 		<Unit filename="samples/exporttest.spn" />
@@ -74,8 +63,10 @@
 		<Unit filename="samples/flashtest.spn" />
 		<Unit filename="samples/helloworld.spn" />
 		<Unit filename="samples/hexedit.spn" />
+		<Unit filename="samples/iftest.spn" />
 		<Unit filename="samples/logicoperators.spn" />
 		<Unit filename="samples/manage.spn" />
+		<Unit filename="samples/movetest.spn" />
 		<Unit filename="samples/new.spn" />
 		<Unit filename="samples/screen.spn" />
 		<Unit filename="samples/screen.test.spn" />

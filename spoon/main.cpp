@@ -15,9 +15,6 @@
 #include "compiler.h"
 #include "linker.h"
 
-#define _s(str) #str
-#define _xs(str) _s(str)
-
 
 void printout(std::vector<char> buffer, bool printasbytes = true)
 {
@@ -117,7 +114,7 @@ int main(int argc, char **argv)
             ifiledirectory = std::string(buffer) + FILE_SEP_CHAR + ifilename.substr(0, imax(ifilename.rfind("/"), ifilename.rfind("\\"))) + FILE_SEP_CHAR;
             delete buffer;
         }
-        std::cout << "Working directory: " << ifiledirectory;
+        //std::cout << "Working directory: " << ifiledirectory << "\n";
         std::fstream sourcefile(ifilename, std::ios::in | std::ios::binary);
         if (!sourcefile.is_open())
         {

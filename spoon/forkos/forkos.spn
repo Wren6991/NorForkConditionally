@@ -1,0 +1,334 @@
+#include "stdscreen"
+
+const pointer flash_sig = 0xc002;
+const pointer flash_mid = 0xc003;
+const pointer flash_low = 0xc004;
+const pointer flash_in = 0xc005;
+const pointer flash_out = 0xc006;
+const pointer kbd_in = 0xc007;
+
+const int flashsig_oe = 0x40;
+const int flashsig_we = 0x80;
+const int flashsig_oe_we = 0xc0;
+
+var int flash_signal_byte;
+
+function writeflashsignal(int signal)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0x3f), and(signal, 0xc0));
+    output(flash_signal_byte, flash_sig);
+}
+
+function writeflashsignalpulse(int signal1, int signal2)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0x3f), and(signal1, 0xc0));
+    var int sig_byte_2 = or(and(flash_signal_byte, 0x3f), and(signal2, 0xc0));
+    output(flash_signal_byte, flash_sig);
+    output(sig_byte_2, flash_sig);
+    output(flash_signal_byte, flash_sig);
+}
+
+function writeflashaddress(int top, pointer rest)
+{
+    flash_signal_byte = or(and(flash_signal_byte, 0xc0), and(top, 0x07));
+    output(flash_signal_byte, flash_sig);
+    output(first(rest), flash_mid);
+    output(second(rest), flash_low);
+}
+
+function int readflashbyte(int top, pointer rest)
+{
+    writeflashsignal(flashsig_we);
+    writeflashaddress(top, rest);
+    readflashbyte = read(flash_out);
+}
+
+// This doesn't actually perform a write,  unless the correct security sequence is used.
+function int writeflashbyte(int top, pointer rest, int data)
+{
+    writeflashaddress(top, rest);
+    output(data, flash_in);
+    writeflashsignalpulse(flashsig_oe_we, flashsig_oe);
+}
+
+function programflashbyte(int top, pointer rest, int data)
+{
+    writeflashbyte(0x00, 0x5555, 0xaa);
+    writeflashbyte(0x00, 0x2aaa, 0x55);
+    writeflashbyte(0x00, 0x5555, 0xa0);
+    writeflashbyte(top, rest, data);
+    // a 20 us wait is necessary but during write operations the processing time will be sufficient
+}
+
+function readflashnbytes(int top, pointer rest, pointer dest, int16 count)
+{
+    var int c1 = increment(first(count)), c2 = second(count);
+    while (c1)
+    {
+        while (c2)
+        {
+            write(readflashbyte(top, rest), dest);
+            rest = incrementPointer(rest);
+            if (!(first(rest) || second(rest)))
+                top = increment(top);
+            dest = incrementPointer(dest);
+            c2 = decrement(c2);
+        }
+        c2 = 0xff;
+        c1 = decrement(c1);
+    }
+}
+
+function programflashnbytes(int top, pointer rest, pointer datap, int16 count)
+{
+    while (or(first(count), second(count)))
+    {
+        programflashbyte(top, rest, read(datap));
+        rest = incrementPointer(rest);
+        if (!(first(rest) || second(rest)))
+            top = increment(top);
+        datap = incrementPointer(datap);
+        count = decrementPointer(count);
+    }
+}
+
+function eraseflashsectors(int top, pointer rest, int count)
+{
+    while (count)
+    {
+        writeflashbyte(0x00, 0x5555, 0xaa);
+        writeflashbyte(0x00, 0x2aaa, 0x55);
+        writeflashbyte(0x00, 0x5555, 0x80);
+        writeflashbyte(0x00, 0x5555, 0xaa);
+        writeflashbyte(0x00, 0x2aaa, 0x55);
+        writeflashbyte(top, rest, 0x30);
+        var int newfirst = add(first(rest), 0x10);  // 0x10 << 8 bits = 4096 bytes (1 sector)
+        if (lessthan(newfirst, first(rest)))
+            top = increment(top);
+        rest = pair(newfirst, second(rest));
+        count = decrement(count);
+    }
+}
+
+// each file record: 16 bytes:
+// 3 bytes: start address
+// 12 bytes: name (always null terminated so 11 characters)
+// 1 bytes: n sectors (0 if empty record, ff sentinel value if last record)
+// the sentinel record is never used as a valid record - it's usually all ffs.
+var char currentfilerecord[16];
+function pointer findfile(pointer filename)
+{
+    findfile = 0xffff;
+    var pointer recordaddress = 0;
+    while (true)
+    {
+        readflashnbytes(0, recordaddress, currentfilerecord, 16);
+        if (equal(currentfilerecord[15], 0xff))
+            break;
+        if (currentfilerecord[15])
+        {
+            if (!strcmp(filename, addPointer(currentfilerecord, 3)))
+            {
+                findfile = recordaddress;
+                return;
+            }
+        }
+        recordaddress = addPointer(recordaddress, 16);
+    }
+}
+
+function erasefilesectors(int sector, int nsectors)
+{
+    var int newmidbyte = add(currentfilerecord[1], shiftleftn(sector, 4));
+    var int topbyte = currentfilerecord[0];
+    if (lessthan(newmidbyte, currentfilerecord[1]))
+        topbyte = increment(topbyte);
+    eraseflashsectors(topbyte, pair(newmidbyte, currentfilerecord[2]), nsectors);
+}
+
+/*function writesectortofile(int sector, pointer datap)
+{
+    var pointer toptwo = addPointer(pair(currentfilerecord[0], currentfilerecord[1]), shiftleftn(sector, 4));
+    erasefilesectors(sector, 1);
+    programflashnbytes(first(toptwo), pair(second(toptwo), currentfilerecord[2]), datap, 4096);
+}*/
+
+function deletefile(pointer tablepos)
+{
+    programflashbyte(0, addPointer(tablepos, 15), 0);
+}
+
+function pointer findfilespace(int nsectors)
+{
+    // Algorithm: Assume we can place the file at the start.
+    // For each file in the FAT, if it overlaps with our file, move our file to the end of that file.
+    // Repeat this loop until there are no more moves. (Yeah O(n^2) I know.)
+    var pointer filestart = 0x0010; // divided by 256 bytes so we can use 16 bit maths.
+    var int filesize = shiftleftn(nsectors, 4);
+    var pointer fileend = addPointer(filestart, filesize);
+    var int hasmoved;
+    while (true)
+    {
+        hasmoved = false;
+        var pointer recordaddress = 0x0000;
+        while (true)
+        {
+            readflashnbytes(0, recordaddress, currentfilerecord, 16);
+            if (equal(currentfilerecord[15], 0xff))
+                break;
+            if (currentfilerecord[15])
+            {
+                var pointer blockstart = pair(currentfilerecord[0], currentfilerecord[1]);
+                var pointer blockend = addPointer(blockstart, shiftleftn(currentfilerecord[15], 4));
+                if (lessthanPointer(filestart, blockend) && lessthanPointer(blockstart, fileend))
+                {
+                    filestart = blockend;
+                    fileend = addPointer(filestart, filesize);
+                    hasmoved = true;
+                    break;
+                }
+            }
+            recordaddress = addPointer(recordaddress, 16);
+        }
+        if (!hasmoved)
+            break;
+    }
+    findfilespace = filestart;
+}
+
+function createfile(pointer filename, int nsectors)
+{
+    var pointer recordaddress = findfile(filename);
+    if (!equal(first(recordaddress), 0xff))
+        deletefile(recordaddress);
+    recordaddress = 0;
+    while (true)
+    {
+        readflashnbytes(0, recordaddress, currentfilerecord, 16);
+        if (equal(currentfilerecord[15], 0xff))
+            break;
+        recordaddress = addPointer(recordaddress, 16);
+    }
+    var pointer space = findfilespace(nsectors);
+    var int topaddress = first(space);
+    var pointer rest = pair(second(space), 0x00);
+    memset(currentfilerecord, 0, 16);
+    currentfilerecord[0] = topaddress;
+    currentfilerecord[1] = first(rest);
+    currentfilerecord[2] = second(rest);
+    memcpy(addPointer(currentfilerecord, 3), filename, 10);
+    currentfilerecord[15] = nsectors;
+    eraseflashsectors(topaddress, rest, nsectors);
+    programflashnbytes(0, recordaddress, currentfilerecord, 16);
+}
+
+function copyfile(pointer srcname, pointer destname)
+{
+    if (equal(first(findfile(srcname)), 0xff))
+    {
+        printlineanddump("Not found.");
+        return;
+    }
+    var int srctop = currentfilerecord[0];
+    var pointer srcrest = pair(currentfilerecord[1], currentfilerecord[2]);
+    var int sectorcount = currentfilerecord[15];
+    var int16 bytecount = pair(shiftleftn(currentfilerecord[15], 4), 0x00);
+    if (!equal(first(findfile(destname)), 0xff))
+    {
+        printlineanddump("File already exists.");
+        return;
+    }
+    createfile(destname, sectorcount);
+    var int desttop = currentfilerecord[0];
+    var pointer destrest = pair(currentfilerecord[1], currentfilerecord[2]);
+    while (first(bytecount) || second(bytecount))
+    {
+        programflashbyte(desttop, destrest, readflashbyte(srctop, srcrest));
+        srcrest = incrementPointer(srcrest);
+        if (!(first(srcrest) || second(srcrest)))
+            srctop = increment(srctop);
+        destrest = incrementPointer(destrest);
+        if (!(first(destrest) || second(destrest)))
+            desttop = increment(desttop);
+        bytecount = decrementPointer(bytecount);
+    }
+}
+
+function runprogram(pointer filename)
+{
+    printlineanddump("Running program:");
+    printlineanddump(filename);
+    var pointer recordpos = findfile(filename);
+    if (equal(first(recordpos), 0xff))
+    {
+        printlineanddump("Not found.");
+    }
+    else
+    {
+        var int16 filesize = pair(shiftleftn(currentfilerecord[15], 4), 0x00);
+        readflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]),
+                        0x8000, filesize);
+        goto 0x8000;
+    }
+}
+
+function exitprogram()
+{
+    runprogram("manage");
+    goto 0x0000;
+}
+
+function char getchar()
+{
+    getchar = 0;
+    while (!getchar)
+        getchar = read(kbd_in);
+}
+
+function pointer getstring()
+{
+    var char buffer[20];
+    memset(buffer, 0, 20);
+    printlineanddump(">");
+    var pointer cursorp = buffer;
+    var char c = 0;
+    var int nwritten = 0;
+    while (true)   // until newline
+    {
+        c = getchar();
+        if (equal(c, 10))
+        {
+            break;
+        }
+        else if (equal(c, 8))
+        {
+            if (nwritten)
+            {
+                nwritten = decrement(nwritten);
+                cursorp = decrementPointer(cursorp);
+                write(0, cursorp);
+            }
+        }
+        else
+        {
+            nwritten = increment(nwritten);
+            write(c, cursorp);
+            cursorp = incrementPointer(cursorp);
+        }
+        memset(addPointer(screenbuffer, 61), ' ', 19);
+        printtobuffer(buffer, 61);
+        dumpscreenbuffer();
+        while (and(read(debugin), 0x80));
+    }
+    getstring = buffer;
+}
+
+function main()
+{
+    wakescreen();
+    emptyscreenbuffer();
+    printlineanddump("Welcome to Fork OS!");
+    printlineanddump("(c) Luke Wren 2013");
+    runprogram("manage");
+}
+

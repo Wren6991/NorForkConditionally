@@ -1,0 +1,100 @@
+#include "stddefs"
+#include "forkos.spn.bin.def"
+
+var int buffer[4096];
+
+function main()
+{
+    printlineanddump("File name:");
+    var pointer filename = getstring();
+    var pointer tablepos = findfile(filename);
+    if (equal(first(tablepos), 0xff))
+    {
+        printlineanddump("Creating file...");
+        createfile(filename, 1);
+    }
+    readflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]), buffer, 4096);
+    var pointer cursorpos = 0;
+    var pointer scrollpos = 0x0000;
+    while (true)
+    {
+        emptyscreenbuffer();
+        var pointer index = add16(buffer, scrollpos);
+        var pointer printpos = screenbuffer;
+        var int linecount = 4;
+        while (linecount)
+        {
+            printpos = strcpy(printpos, int2hexstr(first(index)));
+            printpos = strcpy(printpos, int2hexstr(second(index)));
+            printpos = strcpy(printpos, ":   ");
+            var int charcount = 4;
+            while (charcount)
+            {
+                printpos = strcpy(printpos, int2hexstr(read(index)));
+                index = incrementPointer(index);
+                printpos = strcpy(printpos, " ");
+                charcount = decrement(charcount);
+            }
+            linecount = decrement(linecount);
+        }
+        var int cursorscreenpos = second(subtract16(cursorpos, scrollpos));
+        printtobuffer(">", read(addPointer({7, 10, 13, 16, 27, 30, 33, 36, 47, 50, 53, 56, 67, 70, 73, 76}, cursorscreenpos)));
+        dumpscreenbuffer();
+        var char c = getchar();
+        if (!((lessthan(c, '0') || lessthan('9', c)) && (lessthan(c, 'a') || lessthan('f', c))))
+        {
+            var pointer byteloc = add16(buffer, cursorpos);
+            var int data = read(byteloc);
+            data = shiftleftn(data, 4);
+            if (lessthan('9', c))
+                data = or(data, add(subtract(c, 'a'), 10));
+            else
+                data = or(data, subtract(c, '0'));
+            write(data, byteloc);
+        }
+        else if (equal(c, 'x'))
+        {
+            printlineanddump("Save first (y/n/c)?");
+            var char c = getchar();
+            if (equal(c, 'y'))
+            {
+                printlineanddump("Saving...");
+                erasefilesectors(0, 1);
+                programflashnbytes(currentfilerecord[0], pair(currentfilerecord[1], currentfilerecord[2]), buffer, 4096);
+                printlineanddump("Done.");
+                goto 0x0000;
+            }
+            else if (equal(c, 'n'))
+            {
+                exitprogram();
+            }
+        }
+        else
+        {
+            if (equal(c, 'j'))
+            {
+                if (first(cursorpos) || second(cursorpos))
+                    cursorpos = decrementPointer(cursorpos);
+            }
+            else if (equal(c, 'l') || equal(c, ' '))
+            {
+                cursorpos = incrementPointer(cursorpos);
+            }
+            else if (equal(c, 'i'))
+            {
+                if (lessthanPointer(3, cursorpos))
+                    cursorpos = add16(cursorpos, 0xfffc);
+            }
+            else if (equal(c, 'k'))
+            {
+                cursorpos = addPointer(cursorpos, 4);
+                if (lessthanPointer(0xfff, cursorpos))
+                    cursorpos = 0xfff;
+            }
+            if (lessthanPointer(addPointer(scrollpos, 15), cursorpos))
+                scrollpos = addPointer(scrollpos, 4);
+            if (lessthanPointer(cursorpos, scrollpos))
+                scrollpos = add16(cursorpos, 0xfffc);   // -4 in two's complement
+        }
+    }
+}

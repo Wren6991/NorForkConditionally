@@ -1,0 +1,117 @@
+#include "stddefs"
+#include "forkos.spn.bin.def"
+
+var int pctop;
+var pointer pcrest;
+var char currentchar;
+
+var char memorybuffer[4096];
+
+var pointer memp;
+
+function putchar(char c)
+{
+    var char str[2];
+    str[0] = c;
+    str[1] = 0;
+    printlineanddump(str);
+}
+
+function pcincrement()
+{
+    pcrest = incrementPointer(pcrest);
+    if (!(first(pcrest) || second(pcrest)))
+        pctop = increment(pctop);
+    currentchar = readflashbyte(pctop, pcrest);
+}
+
+function pcdecrement()
+{
+    if (!(first(pcrest) || second(pcrest)))
+        pctop = decrement(pctop);
+    pcrest = decrementPointer(pcrest);
+    currentchar = readflashbyte(pctop, pcrest);
+}
+
+function memwrite(char data)
+{
+    write(data, add16(memorybuffer, memp));
+}
+
+function char memread()
+{
+    memread = read(add16(memorybuffer, memp));
+}
+
+function main()
+{ 
+    printlineanddump("Clearing memory...");
+    memset(memorybuffer, 0xaf, 4096);
+    while (true)
+    {
+        printlineanddump("File name:");
+        var pointer recordoffset = findfile(getstring());
+        if (!equal(first(recordoffset), 0xff))
+            break;
+        printlineanddump("Not found.");
+    }
+    pctop = currentfilerecord[0];
+    pcrest = pair(currentfilerecord[1], currentfilerecord[2]);
+    memp = 0x0000;
+    currentchar = readflashbyte(pctop, pcrest);
+    while (currentchar)
+    {
+        if (equal(currentchar, '+'))
+        {
+            printlineanddump(int2hexstr(memread()));
+            printtobuffer(int2hexstr(increment(memread())), 3);
+            memwrite(increment(memread()));
+            printtobuffer(int2hexstr(memread()), 6);
+            dumpscreenbuffer();
+        }
+        else if (equal(currentchar, '-'))
+        {
+            memwrite(decrement(memread()));
+        }
+        else if (equal(currentchar, '>'))
+        {
+            memp = incrementPointer(memp);
+            memp = pair(and(first(memp), 0x0f), second(memp));
+        }
+        else if (equal(currentchar, '<'))
+        {
+            memp = decrementPointer(memp);
+            memp = pair(and(first(memp), 0x0f), second(memp));
+        }
+        else if (equal(currentchar, '.'))
+        {
+            var char str[2];
+            str[0] = memread();
+            str[1] = 0;
+            printlineanddump(str);
+        }
+        else if (equal(currentchar, ','))
+        {
+            memwrite(getchar());
+        }
+        else if (equal(currentchar, '['))
+        {
+            if (!memread())
+            {
+                while (currentchar && !equal(currentchar, ']'))
+                    pcincrement();
+            }
+        }
+        else if (equal(currentchar, ']'))
+        {
+            if (memread())
+            {
+                while (currentchar && !equal(currentchar, '['))
+                    pcdecrement();
+            }
+        }
+        putchar(currentchar);
+        pcincrement();
+    }
+    printlineanddump("Done.");     
+}

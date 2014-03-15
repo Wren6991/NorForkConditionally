@@ -18,5 +18,15 @@
 		"name": "hexedit",
 		"nsectors": 2,
 		"file": "hexedit.bin"
+	},
+	{
+		"name": "brainf",
+		"nsectors": 2,
+		"file": "brainf.bin"
+	},
+	{
+		"name": "sample.bf",
+		"nsectors": 1,
+		"file": "sample.bf"
 	}
 ]

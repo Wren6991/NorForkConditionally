@@ -1,0 +1,7 @@
+#include "stddefs"
+#include "forkos.spn.bin.def"
+
+function int main()
+{
+    printlineanddump("Hello world!");
+}

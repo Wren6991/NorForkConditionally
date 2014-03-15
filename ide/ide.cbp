@@ -63,7 +63,12 @@
 			<Add library="libwxbase30u.a" />
 			<Add library="libwxpng.a" />
 			<Add library="libwxmsw30u_stc.a" />
+			<Add library="libwxmsw30u_adv.a" />
 		</Linker>
+		<Unit filename="LogDialog.cpp" />
+		<Unit filename="LogDialog.h" />
+		<Unit filename="OptionsDialog.cpp" />
+		<Unit filename="OptionsDialog.h" />
 		<Unit filename="ideApp.cpp" />
 		<Unit filename="ideApp.h" />
 		<Unit filename="ideMain.cpp" />
@@ -71,6 +76,8 @@
 		<Unit filename="resource.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="wxsmith/LogDialog.wxs" />
+		<Unit filename="wxsmith/OptionsDialog.wxs" />
 		<Unit filename="wxsmith/ideframe.wxs" />
 		<Extensions>
 			<code_completion />
@@ -81,6 +88,8 @@
 				<gui name="wxWidgets" src="ideApp.cpp" main="ideFrame" init_handlers="necessary" language="CPP" />
 				<resources>
 					<wxFrame wxs="wxsmith/ideframe.wxs" src="ideMain.cpp" hdr="ideMain.h" fwddecl="0" i18n="1" name="ideFrame" language="CPP" />
+					<wxDialog wxs="wxsmith/LogDialog.wxs" src="LogDialog.cpp" hdr="LogDialog.h" fwddecl="0" i18n="1" name="LogDialog" language="CPP" />
+					<wxDialog wxs="wxsmith/OptionsDialog.wxs" src="OptionsDialog.cpp" hdr="OptionsDialog.h" fwddecl="0" i18n="1" name="OptionsDialog" language="CPP" />
 				</resources>
 			</wxsmith>
 		</Extensions>

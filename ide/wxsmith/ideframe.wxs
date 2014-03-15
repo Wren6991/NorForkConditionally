@@ -4,24 +4,25 @@
 		<title>SpoonIDE - Untitled</title>
 		<size>800,600</size>
 		<fg>wxSYS_COLOUR_BTNFACE</fg>
+		<bg>wxSYS_COLOUR_BTNFACE</bg>
 		<id_arg>0</id_arg>
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
 			<orient>wxVERTICAL</orient>
-			<object class="sizeritem">
-				<object class="wxButton" name="DUMMY_SAVEAS_BUTTON" variable="Button1" member="yes">
-					<label>Label</label>
-					<size>0,0</size>
-					<hidden>1</hidden>
-					<handler function="OnSaveAsClicked" entry="EVT_BUTTON" />
-				</object>
-				<flag>wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-				<border>5</border>
-			</object>
 			<object class="sizeritem">
 				<object class="wxNotebook" name="ID_NOTEBOOK1" variable="Pages" member="yes">
 					<handler function="OnPagesPageChanged" entry="EVT_NOTEBOOK_PAGE_CHANGED" />
 				</object>
 				<flag>wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+				<border>5</border>
+				<option>5</option>
+			</object>
+			<object class="sizeritem">
+				<object class="wxButton" name="DUMMY_SAVEAS_BUTTON" variable="Button1" member="yes">
+					<label>Label</label>
+					<hidden>1</hidden>
+					<handler function="OnSaveAsClicked" entry="EVT_BUTTON" />
+				</object>
+				<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 				<border>5</border>
 				<option>1</option>
 			</object>
@@ -29,9 +30,9 @@
 		<object class="wxToolBar" name="ID_TOOLBAR1" variable="ToolBar1" member="yes">
 			<style>wxTB_HORIZONTAL|wxTB_NODIVIDER|wxNO_BORDER</style>
 			<object class="tool" name="TOOL_NEW" variable="ToolBarItem1" member="yes">
-				<label>New</label>
+				<label>Message Log</label>
 				<bitmap>icons\page_add.png</bitmap>
-				<tooltip>New file</tooltip>
+				<tooltip>Message log</tooltip>
 				<handler function="OnNewClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="tool" name="TOOL_OPEN" variable="ToolBarItem2" member="yes">
@@ -53,21 +54,29 @@
 				<handler function="OnCloseClicked" entry="EVT_TOOL" />
 			</object>
 			<object class="separator" />
+			<object class="tool" name="TOOL_BUILD" variable="ToolBarItem6" member="yes">
+				<label>Build</label>
+				<bitmap>icons\cog_add.png</bitmap>
+				<tooltip>Build files</tooltip>
+				<handler function="OnBuildClicked" entry="EVT_TOOL" />
+			</object>
+			<object class="tool" name="TOOL_OPTIONS" variable="ToolBarItem7" member="yes">
+				<label>Options</label>
+				<bitmap>icons/wrench.png</bitmap>
+				<tooltip>Build options</tooltip>
+				<handler function="OnToolBarOptionsClicked" entry="EVT_TOOL" />
+			</object>
+			<object class="tool" name="TOOL_LOG" variable="ToolBarItem9" member="yes">
+				<label>Message Log</label>
+				<bitmap>icons/comments.png</bitmap>
+				<tooltip>Message log</tooltip>
+				<handler function="OnToolBarMessageLogClicked" entry="EVT_TOOL" />
+			</object>
 			<object class="tool" name="TOOL_RUN" variable="ToolBarItem5" member="yes">
 				<label>Run</label>
 				<bitmap>icons\resultset_next.png</bitmap>
 				<tooltip>Run in simulator</tooltip>
 				<handler function="OnRunClicked" entry="EVT_TOOL" />
-			</object>
-			<object class="tool" name="TOOL_CONNECT" variable="ToolBarItem6" member="yes">
-				<label>Connect</label>
-				<bitmap>icons\disconnect.png</bitmap>
-				<tooltip>Connect to device</tooltip>
-			</object>
-			<object class="tool" name="TOOL_DOWNLOAD" variable="ToolBarItem7" member="yes">
-				<label>Download</label>
-				<bitmap>icons\arrow_down.png</bitmap>
-				<tooltip>Download to device</tooltip>
 			</object>
 			<object class="separator" />
 			<object class="tool" name="TOOL_ABOUT" variable="ToolBarItem8" member="yes">

@@ -22,6 +22,9 @@
 #include <wx/statbmp.h>
 #include <wx/stc/stc.h>
 
+#include "LogDialog.h"
+#include "OptionsDialog.h"
+
 struct page
 {
     wxStyledTextCtrl *Text;
@@ -62,19 +65,24 @@ class ideFrame: public wxFrame
         void OnRunClicked(wxCommandEvent& event);
         void OnPagesPageChanged(wxNotebookEvent& event);
         void OnCloseClicked(wxCommandEvent& event);
+        void OnPagesPageChanged1(wxNotebookEvent& event);
+        void OnToolBarMessageLogClicked(wxCommandEvent& event);
+        void OnToolBarOptionsClicked(wxCommandEvent& event);
+        void OnBuildClicked(wxCommandEvent& event);
         //*)
         void OnTextChange(wxStyledTextEvent &event);
 
         //(*Identifiers(ideFrame)
-        static const long DUMMY_SAVEAS_BUTTON;
         static const long ID_NOTEBOOK1;
+        static const long DUMMY_SAVEAS_BUTTON;
         static const long TOOL_NEW;
         static const long TOOL_OPEN;
         static const long TOOL_SAVE;
         static const long TOOL_CLOSE;
+        static const long TOOL_BUILD;
+        static const long TOOL_OPTIONS;
+        static const long TOOL_LOG;
         static const long TOOL_RUN;
-        static const long TOOL_CONNECT;
-        static const long TOOL_DOWNLOAD;
         static const long TOOL_ABOUT;
         static const long ID_TOOLBAR1;
         //*)
@@ -84,6 +92,7 @@ class ideFrame: public wxFrame
         //(*Declarations(ideFrame)
         wxToolBarToolBase* ToolBarItem4;
         wxToolBar* ToolBar1;
+        wxToolBarToolBase* ToolBarItem9;
         wxToolBarToolBase* ToolBarItem3;
         wxButton* Button1;
         wxFileDialog* dlgOpen;
@@ -98,6 +107,8 @@ class ideFrame: public wxFrame
         //*)
         wxStyledTextCtrl *Text;
         MyStatusBar *StatusBar;
+        LogDialog *Log;
+        OptionsDialog *Options;
 
         bool filehaschanged;
         std::string filepath;
@@ -105,10 +116,12 @@ class ideFrame: public wxFrame
         std::vector <page> pagelist;
         int currentpage;
 
+        void LogMessage(std::string message, bool nostatus = false);
         void SetFileName(std::string path, bool hasbeenmodified = false);
         void AddPage();
         void CloseCurrentPage();
         void OnStatusBarResize(wxSizeEvent &event);
+        bool BuildFile(std::string filename, bool strip, bool exportdefs, bool compiletoram);
 
         DECLARE_EVENT_TABLE()
 };

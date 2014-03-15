@@ -5,12 +5,12 @@
 #include "stddefs"
 #include "stdmath"
 
-function memset(pointer dest, int value, int count)
+function memset(pointer dest, int value, int16 count)
 {
-    while (count)
+    while (first(count) || second(count))
     {
         write(value, dest);
-        count = decrement(count);
+        count = decrementPointer(count);
         dest = incrementPointer(dest);
     }
 }
