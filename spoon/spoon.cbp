@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-r samples/hexedit.spn samples/hexedit.bin" />
+				<Option parameters="samples/wrong.spn samples/wrong.spn.bin" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DEBUG" />

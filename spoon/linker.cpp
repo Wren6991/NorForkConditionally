@@ -32,8 +32,9 @@ uint16_t getconstaddress(uint8_t val)
 
 linker::linker()
 {
+    // Mark all of the builtin funcs as defined but with NULL definitions
     defined_funcs["nfc"] = 0;
-    defined_funcs["nfc4"] = 0;  // hardcoded funcs
+    defined_funcs["nfc4"] = 0;
     defined_funcs["val"] = 0;
     defined_funcs["read"] = 0;
     defined_funcs["write"] = 0;
@@ -49,6 +50,7 @@ linker::linker()
     buffer.reserve(ROM_SIZE);
 }
 
+// Make note of a label's location and store it in the substitution table
 void linker::savelabel(std::string name, linkval current_address)
 {
     valtable[name] = current_address;
@@ -133,16 +135,17 @@ void linker::emit_branchifzero(linkval testloc, linkval dest, bool amend_previou
 
 void linker::emit_branchifnonzero(linkval testloc, linkval dest, bool amend_previous)
 {
+    // simple shim for emit_branchifzero
     emit_branchifzero(testloc, dest, amend_previous, true);
 }
 
 void linker::emit_branchalways(linkval dest, bool always_emit)
 {
     padto8bytes();
-    // check if the last instruction points at this one:
+    // Check if the last instruction points at this one:
     if (!always_emit && last_instruction_points_to_this_one())
-
     {
+        // If so we can just retroactively amend it to the new jump target.
         buffer[index - 4] = dest.gethighbyte();
         buffer[index - 3] = dest.getlowbyte();
         buffer[index - 2] = dest.gethighbyte();
@@ -150,6 +153,7 @@ void linker::emit_branchalways(linkval dest, bool always_emit)
     }
     else
     {
+        // Otherwise do a pointless copy (a NOP) and jump from this instruction.
         linkval temploc = vars.addvar("__bratemp", type_int);
         write16(temploc);
         write16(temploc);
@@ -189,7 +193,7 @@ void linker::emit_copy_inverted(linkval src, linkval dest)
 void linker::emit_writeconst(uint8_t val, linkval dest)
 {
     emit_nfc2(dest, getconstaddress(0xff));
-    if (val)    // no need to do this if 0, as already cleared.
+    if (val)    // no need to do this if 0, as already cleared once.
         emit_nfc2(dest, getconstaddress(~val));
 }
 
@@ -366,6 +370,7 @@ void linker::link(funcdef* fdef)
     vars.push_function_scope();
     if (!fdef->exported)
     {
+        // Save the start label, link the body and save the end label.
         std::string returnstat_target = makeguid("__return", (long)fdef);
         vars.addvar(returnstat_target, type_label);
         savelabel(fdef->name + ":__startvector", current_address);
@@ -377,6 +382,7 @@ void linker::link(funcdef* fdef)
     }
     else
     {
+        // If this is an exported function existing else where, we just need to make public its location.
         savelabel(fdef->name + ":__startvector", fdef->exportvectors[0]);
     }
     exportfuncdef(fdef);

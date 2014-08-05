@@ -28,5 +28,10 @@
 		"name": "sample.bf",
 		"nsectors": 1,
 		"file": "sample.bf"
+	},
+	{
+		"name": "greeter",
+		"nsectors": 2,
+		"file": "greeter.spn.bin"
 	}
 ]
